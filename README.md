@@ -2,9 +2,16 @@
 
 [中文版](./README-CN.md)
 
-A Rust OS kernel autonomously implemented by Claude Code (Sonnet 4.6) — just barely capable of running a real Linux nginx web server on QEMU.
+A Rust OS kernel autonomously implemented by Claude Code — just barely capable of running a real Linux nginx web server on QEMU.
 
-## Prompt (Translation)
+Two runs, two models, same goal:
+
+| Branch | Model | Duration | Cost |
+|--------|-------|----------|------|
+| [opus](https://github.com/wangrunji0408/iJiegeOS/tree/opus) | Claude Opus 4.6 | ~2h 46min | ~? |
+| [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 hours | ~$60 |
+
+## Prompt
 
 ```
 You are the AI-Jiege. Your task is to write a RISC-V OS kernel in Rust from scratch,
@@ -18,6 +25,23 @@ work in the current directory. Keep working until the goal is achieved.
 ⏵⏵ bypass permissions on
 
 ## Timeline
+
+### Opus 4.6 — 2h 46min
+
+![Opus Timeline](figures/opus-timeline.jpeg)
+
+Claude Code ran for **~2h 46min**.
+
+| Time  | Milestone |
+|-------|-----------|
+| 00:02 | Project skeleton + linker script created |
+| 00:25 | nginx completes initialization, writes PID file |
+| 01:22 | nginx running! Enters epoll event loop |
+| 02:21 | TCP connection detected, nginx receives HTTP request |
+| 02:45 | Fix virtio-net recv + epoll data bug |
+| 02:46 | nginx returns HTTP 200 🎉 |
+
+### Sonnet 4.6 — 16 hours
 
 Claude Code ran for **16 hours** with no human intervention. The total cost was approximately $60.
 
@@ -33,7 +57,7 @@ Claude Code ran for **16 hours** with no human intervention. The total cost was 
 | 10:00 | curl first receives response (connection reset) |
 | 16:00 | nginx returns HTTP 200 with complete welcome page 🎉 |
 
-The git history is a complete record exported from the Claude Code session logs.
+The git history for both branches is a complete record exported from Claude Code session logs.
 
 ## Demo
 
