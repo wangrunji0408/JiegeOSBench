@@ -4,11 +4,12 @@
 
 一个完全由 Claude Code 自主实现的 Rust 操作系统内核——刚刚好能够在 QEMU 上运行真实的 Linux nginx web 服务器。
 
-两次实验，两个模型，同一个目标：
+三次实验，多个模型，同一个目标：
 
 | 分支 | 模型 | 耗时 | 成本 |
 |------|------|------|------|
-| [opus](https://github.com/wangrunji0408/iJiegeOS/tree/opus) | Claude Opus 4.6 | ~2小时46分 | ~? |
+| [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — |
+| [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — |
 | [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 小时 | ~$60 |
 
 ## 提示词
@@ -22,6 +23,25 @@ Linux nginx server，从外面能访问网站。必须运行nginx官方binary，
 ⏵⏵ bypass permissions on
 
 ## 时间线
+
+### Opus 4.7 — 65分钟
+
+![Opus 4.7 Timeline](figures/opus47-timeline.png)
+
+Claude Code 运行时长约 **65分钟**。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:02 | 内核启动，通过 OpenSBI 打印 |
+| 00:19 | 内存管理初始化 |
+| 00:21 | 虚拟内存 + 分页开启 |
+| 00:27 | syscall 实现 |
+| 00:30 | 端到端 HTTP 通（内核内置 HTTP 服务） |
+| 00:31 | ELF DYN（动态链接可执行文件）加载 |
+| 00:36 | nginx 打印版本号，退出时 fault |
+| 00:41 | nginx 配置测试通过 |
+| 00:43 | nginx bind + listen 成功 |
+| 00:45 | nginx 官方 binary 返回 HTTP 200 🎉 |
 
 ### Opus 4.6 — 2小时46分
 

@@ -4,11 +4,12 @@
 
 A Rust OS kernel autonomously implemented by Claude Code — just barely capable of running a real Linux nginx web server on QEMU.
 
-Two runs, two models, same goal:
+Three runs, multiple models, same goal:
 
 | Branch | Model | Duration | Cost |
 |--------|-------|----------|------|
-| [opus](https://github.com/wangrunji0408/iJiegeOS/tree/opus) | Claude Opus 4.6 | ~2h 46min | ~? |
+| [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — |
+| [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — |
 | [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 hours | ~$60 |
 
 ## Prompt
@@ -25,6 +26,25 @@ work in the current directory. Keep working until the goal is achieved.
 ⏵⏵ bypass permissions on
 
 ## Timeline
+
+### Opus 4.7 — 65min active (3h 32min total)
+
+![Opus 4.7 Timeline](figures/opus47-timeline.png)
+
+Claude Code ran for **~65 minutes**.
+
+| Time (active) | Milestone |
+|---------------|----------|
+| 00:02 | Kernel boots, prints via OpenSBI |
+| 00:19 | Memory management initialized |
+| 00:21 | Virtual memory + paging ON |
+| 00:27 | syscalls implemented |
+| 00:30 | End-to-end HTTP working (built-in kernel HTTP server) |
+| 00:31 | ELF DYN (dynamic linked binary) loading |
+| 00:36 | nginx prints version, exits with fault |
+| 00:41 | nginx config test passes |
+| 00:43 | nginx bind + listen succeeds |
+| 00:45 | nginx official binary returns HTTP 200 🎉 |
 
 ### Opus 4.6 — 2h 46min
 
