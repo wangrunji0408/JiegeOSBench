@@ -33,7 +33,8 @@ pub fn mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: isize, off: 
     t.map_range(va, len, pte_flags);
 
     if flags & MAP_ANONYMOUS == 0 {
-        // file-backed: copy contents
+        // file-backed: copy contents page-by-page via physical addresses,
+        // since the mapping may lack write permission (e.g. text segments)
         let e = t.fds.get(fd as usize).ok_or(EBADF)?;
         let FdObj::File { data, .. } = &e.obj else {
             return Err(EBADF);
@@ -42,7 +43,21 @@ pub fn mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: isize, off: 
         if off < d.len() {
             let n = len.min(d.len() - off);
             let src = &d[off..off + n];
-            unsafe { core::ptr::copy_nonoverlapping(src.as_ptr(), va as *mut u8, n) };
+            let mut copied = 0;
+            while copied < n {
+                let page_va = crate::mm::page_down(va + copied);
+                let pa = *t.pages.get(&page_va).unwrap();
+                let page_off = (va + copied) - page_va;
+                let chunk = (PAGE_SIZE - page_off).min(n - copied);
+                unsafe {
+                    core::ptr::copy_nonoverlapping(
+                        src.as_ptr().add(copied),
+                        (pa + page_off) as *mut u8,
+                        chunk,
+                    );
+                }
+                copied += chunk;
+            }
         }
     }
     let _ = flags & MAP_SHARED; // shared anon: same behavior in single-process world
