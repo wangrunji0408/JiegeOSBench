@@ -242,9 +242,9 @@ unsafe fn init_device_modern(base: usize) -> bool {
     reg_w(base, 0x014, 1); // word1
     let feat1 = reg_r(base, REG_DEVICE_FEATURES);
     let want0: u32 = (1 << 5) | (1 << 16); // MAC + STATUS
-    let want1: u32 = 1; // VIRTIO_F_VERSION_1
+    let want1: u32 = 1; // VIRTIO_F_VERSION_1（强制协商）
     let neg0 = feat0 & want0;
-    let neg1 = feat1 & want1;
+    let neg1 = want1; // 强制，不等 feat1
     reg_w(base, 0x024, 0); // DriverFeaturesSel = 0
     reg_w(base, REG_DRIVER_FEATURES, neg0);
     reg_w(base, 0x024, 1);
