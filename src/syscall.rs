@@ -634,7 +634,7 @@ fn sys_listen(fd: usize, _backlog: usize) -> isize {
     if let Some(s) = p.sock_table.get(fd) {
         s.kind = crate::process::SockKind::TcpListener;
     }
-    crate::println!("[listen fd={} id={} port={}]", fd, id, port);
+    crate::println!("[listen fd={} id={} port={} pid={}]", fd, id, port, crate::sched::current_pid());
     0
 }
 
