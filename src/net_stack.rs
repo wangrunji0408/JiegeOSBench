@@ -279,35 +279,7 @@ static mut EPOLL_INSTANCES: Vec<Option<EpollInstance>> = Vec::new();
 pub fn epoll_create() -> isize {
     unsafe {
         let id = EPOLL_INSTANCES.len();
-        let mut inst = EpollInstance { watched: Vec::new() };
-        // 自动把所有已 listen 的 socket 加入新 epoll
-        let sockets = SOCKETS.as_mut().unwrap();
-        for sock_idx in 0..SOCK_MAP.len() {
-            if let Some(h) = SOCK_MAP[sock_idx] {
-                let s = sockets.get_mut::<TcpSocket>(h);
-                if s.is_listening() {
-                    // 查对应 fd
-                    let p = match crate::sched::current_process() {
-                        Some(p) => p,
-                        None => break,
-                    };
-                    let mut found_fd = None;
-                    for fd in 3..p.sock_table.entries.len() {
-                        if let Some(e) = p.sock_table.entries.get(fd).and_then(|x| x.as_ref()) {
-                            if e.handle == sock_idx {
-                                found_fd = Some(fd);
-                                break;
-                            }
-                        }
-                    }
-                    if let Some(fd) = found_fd {
-                        crate::println!("[net] auto-add listen fd={} to epoll {}", fd, id);
-                        inst.watched.push((fd, EPOLLIN, sock_idx, fd as u64));
-                    }
-                }
-            }
-        }
-        EPOLL_INSTANCES.push(Some(inst));
+        EPOLL_INSTANCES.push(Some(EpollInstance { watched: Vec::new() }));
         (0x8000 | id) as isize
     }
 }
