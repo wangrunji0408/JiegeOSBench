@@ -256,7 +256,8 @@ fn sys_read(fd: usize, buf: usize, count: usize) -> isize {
     };
     if let Some(id) = sock_id {
         let mut tmp = [0u8; 4096];
-        let n = crate::net_stack::socket_recv(id, &mut tmp[..count.min(tmp.len())]);
+        let cap = tmp.len().min(count);
+        let n = crate::net_stack::socket_recv(id, &mut tmp[..cap]);
         if n > 0 {
             unsafe { user_write(buf, tmp.as_ptr(), n); }
         }
