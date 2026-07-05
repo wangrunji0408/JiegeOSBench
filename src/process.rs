@@ -52,6 +52,7 @@ pub struct Process {
     pub fd_table: Vec<Option<FdEntry>>,
     pub tid_address: usize,
     pub set_child_tid: usize,
+    pub next_mmap: usize,
 }
 
 impl Process {
