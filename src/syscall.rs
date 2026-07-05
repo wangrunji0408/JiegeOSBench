@@ -447,6 +447,13 @@ fn sys_accept(fd: usize) -> isize {
 }
 
 fn sys_sendto(fd: usize, buf: usize, len: usize) -> isize {
+    let id = {
+        let p = match current_process() { Some(p) => p, None => return -3 };
+        match p.sock_table.get(fd) {
+            Some(s) => s.handle,
+            None => return -9,
+        }
+    };
     let mut tmp = [0u8; 4096];
     let mut total = 0usize;
     let mut p = buf;
@@ -454,7 +461,7 @@ fn sys_sendto(fd: usize, buf: usize, len: usize) -> isize {
     while remaining > 0 {
         let n = remaining.min(tmp.len());
         unsafe { user_read(tmp.as_mut_ptr(), p, n); }
-        let sent = crate::net_stack::socket_send_from_fd(fd, &tmp[..n]);
+        let sent = crate::net_stack::socket_send(id, &tmp[..n]);
         if sent == 0 {
             break;
         }
@@ -466,8 +473,15 @@ fn sys_sendto(fd: usize, buf: usize, len: usize) -> isize {
 }
 
 fn sys_recvfrom(fd: usize, buf: usize, len: usize) -> isize {
+    let id = {
+        let p = match current_process() { Some(p) => p, None => return -3 };
+        match p.sock_table.get(fd) {
+            Some(s) => s.handle,
+            None => return -9,
+        }
+    };
     let mut tmp = [0u8; 4096];
-    let n = crate::net_stack::socket_recv_from_fd(fd, &mut tmp[..len.min(tmp.len())]);
+    let n = crate::net_stack::socket_recv(id, &mut tmp[..len.min(tmp.len())]);
     if n > 0 {
         unsafe { user_write(buf, tmp.as_ptr(), n); }
     }
