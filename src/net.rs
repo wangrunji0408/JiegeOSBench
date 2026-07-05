@@ -472,3 +472,19 @@ pub fn irq_handler() {
         }
     }
 }
+
+/// 检查 TX 完成情况，回收 desc
+pub fn poll_tx() {
+    let d = unsafe { driver() };
+    unsafe { core::arch::asm!("fence r, rw"); }
+    let tx_used = unsafe { (*d.tx.used).idx };
+    if tx_used != d.tx.last_used {
+        crate::println!("[net] TX used.idx={} last={}", tx_used, d.tx.last_used);
+    }
+    while d.tx.last_used != tx_used {
+        let ue = unsafe { &(*d.tx.used).ring[d.tx.last_used as usize % d.tx.num] };
+        let desc_idx = ue.idx as u16;
+        d.tx.last_used = d.tx.last_used.wrapping_add(1);
+        d.tx.free_desc(desc_idx);
+    }
+}
