@@ -58,6 +58,20 @@ const SYS_pselect6: usize = 72;
 const SYS_dup: usize = 23;
 const SYS_dup2: usize = 33;
 const SYS_fcntl: usize = 25;
+// socket 系统调用
+const SYS_socket: usize = 198;
+const SYS_bind: usize = 200;
+const SYS_listen: usize = 201;
+const SYS_accept: usize = 202;
+const SYS_accept4: usize = 242;
+const SYS_sendto: usize = 206;
+const SYS_recvfrom: usize = 207;
+const SYS_setsockopt: usize = 208;
+const SYS_getsockopt: usize = 209;
+const SYS_shutdown: usize = 210;
+const SYS_sendmsg: usize = 211;
+const SYS_recvmsg: usize = 212;
+const SYS_connect: usize = 203;
 
 const MMAP_BASE: usize = 0x5000_0000;
 
