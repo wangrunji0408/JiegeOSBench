@@ -141,30 +141,34 @@ const HTTP_BODY: &str = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-L
 /// 内核 HTTP 服务器主循环
 pub fn http_serve_step() {
     poll();
-    let h = match unsafe { LISTEN_HANDLE } {
-        Some(h) => h,
-        None => return,
-    };
     unsafe {
+        if SOCKETS.is_none() {
+            return;
+        }
         let sockets = SOCKETS.as_mut().unwrap();
-        let s = sockets.get_mut::<TcpSocket>(h);
-        let st = s.state();
-        match st {
-            TcpState::Established => {
-                if s.can_send() {
-                    let mut buf = [0u8; 1024];
-                    let _ = s.recv_slice(&mut buf);
-                    let _ = s.send_slice(HTTP_BODY.as_bytes());
-                    // 优雅关闭，让数据+FIN发出
-                    let _ = s.close();
+        for i in 0..HANDLES.len() {
+            let h = match HANDLES[i] {
+                Some(h) => h,
+                None => continue,
+            };
+            let s = sockets.get_mut::<TcpSocket>(h);
+            let st = s.state();
+            match st {
+                TcpState::Established => {
+                    if s.can_send() {
+                        let mut buf = [0u8; 1024];
+                        let _ = s.recv_slice(&mut buf);
+                        let _ = s.send_slice(HTTP_BODY.as_bytes());
+                        let _ = s.close();
+                    }
                 }
+                TcpState::Closed => {
+                    // 重新 listen
+                    s.abort();
+                    let _ = s.listen(LISTEN_PORT);
+                }
+                _ => {}
             }
-            TcpState::Closed | TcpState::TimeWait | TcpState::FinWait1 | TcpState::FinWait2 => {
-                // 连接结束（或强制结束），重新 listen 接受下一个连接
-                s.abort();
-                let _ = s.listen(LISTEN_PORT);
-            }
-            _ => {}
         }
     }
 }
