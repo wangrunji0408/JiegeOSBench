@@ -161,7 +161,8 @@ fn do_syscall(nr: usize, a: [usize; 6]) -> SysResult {
         113 => time::clock_gettime(a[0], a[1]),
         114 => time::clock_getres(a[0], a[1]),
         115 => time::clock_nanosleep(a[0], a[1], a[2], a[3]),
-        122 => proc::sched_getaffinity(a[0], a[1], a[2]),
+        122 => Ok(0), // sched_setaffinity
+        123 => proc::sched_getaffinity(a[0], a[1], a[2]),
         124 => Ok(0), // sched_yield
         129 | 130 | 131 => Ok(0), // kill/tkill/tgkill (no other procs)
         132 => Ok(0), // sigaltstack
