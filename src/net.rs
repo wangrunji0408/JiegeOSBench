@@ -224,6 +224,63 @@ unsafe fn init_device(base: usize) -> bool {
     true
 }
 
+unsafe fn init_device_modern(base: usize) -> bool {
+    reg_w(base, REG_STATUS, 0);
+    reg_w(base, REG_STATUS, S_ACK | S_DRIVER);
+    let feat = reg_r(base, REG_DEVICE_FEATURES);
+    // 选 deviceFeatures 第 0 页（bit 0..31）
+    reg_w(base, 0x014, 0); // DeviceFeaturesSel
+    let feat0 = reg_r(base, REG_DEVICE_FEATURES);
+    let want: u32 = (1 << 5) | (1 << 16); // MAC + STATUS
+    let negotiated = feat0 & want;
+    reg_w(base, 0x024, 0); // DriverFeaturesSel
+    reg_w(base, REG_DRIVER_FEATURES, negotiated);
+    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_FEATURES_OK);
+    let st = reg_r(base, REG_STATUS);
+    if st & S_FEATURES_OK == 0 {
+        crate::println!("[net] modern FEATURES_OK not accepted");
+        return false;
+    }
+
+    let rx = match VirtQueue::new() { Some(q) => q, None => return false };
+    let tx = match VirtQueue::new() { Some(q) => q, None => return false };
+
+    setup_queue_modern(base, 0, &rx);
+    setup_queue_modern(base, 1, &tx);
+
+    let mut mac = [0u8; 6];
+    for i in 0..6 {
+        mac[i] = read_volatile((base + REG_CONFIG + i) as *const u8);
+    }
+    NET = Some(NetDriver { base, rx, tx, mac });
+    fill_rx_with_base(&mut NET.as_mut().unwrap().rx, base);
+
+    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_FEATURES_OK | S_DRIVER_OK);
+    let st = reg_r(base, REG_STATUS);
+    crate::println!("[net] modern status={:#x} feat0={:#x} neg={:#x}", st, feat0, negotiated);
+    true
+}
+
+unsafe fn setup_queue_modern(base: usize, idx: usize, vq: &VirtQueue) {
+    reg_w(base, REG_QUEUE_SEL, idx as u32);
+    let nmax = reg_r(base, REG_QUEUE_NUM_MAX) as usize;
+    let n = nmax.min(vq.num);
+    crate::println!("[net] mqueue {} nmax={} n={}", idx, nmax, n);
+    let desc_pa = vq.base_pa;
+    let avail_pa = vq.base_pa + 16 * VQ_SIZE;
+    let used_pa = vq.base_pa + 4096;
+    reg_w(base, REG_QUEUE_NUM, n as u32);
+    reg_w(base, REG_QUEUE_DESC_LOW, (desc_pa & 0xffffffff) as u32);
+    reg_w(base, REG_QUEUE_DESC_HIGH, (desc_pa >> 32) as u32);
+    reg_w(base, REG_QUEUE_DRIVER_LOW, (avail_pa & 0xffffffff) as u32);
+    reg_w(base, REG_QUEUE_DRIVER_HIGH, (avail_pa >> 32) as u32);
+    reg_w(base, REG_QUEUE_DEVICE_LOW, (used_pa & 0xffffffff) as u32);
+    reg_w(base, REG_QUEUE_DEVICE_HIGH, (used_pa >> 32) as u32);
+    reg_w(base, REG_QUEUE_READY, 1);
+    let rdy = reg_r(base, REG_QUEUE_READY);
+    crate::println!("[net] mqueue {} ready={}", idx, rdy);
+}
+
 unsafe fn setup_queue(base: usize, idx: usize, vq: &VirtQueue) {
     reg_w(base, REG_QUEUE_SEL, idx as u32);
     let nmax = reg_r(base, REG_QUEUE_NUM_MAX) as usize;
