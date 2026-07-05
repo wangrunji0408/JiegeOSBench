@@ -118,19 +118,16 @@ pub fn poll() {
     }
 }
 
-fn tcp_buffer() -> SocketBuffer<'static> {
-    let rx = Box::leak(vec![0u8; 16384].into_boxed_slice());
-    let tx = Box::leak(vec![0u8; 16384].into_boxed_slice());
-    SocketBuffer::new(rx, tx)
+fn new_sock() -> TcpSocket<'static> {
+    TcpSocket::new(vec![0u8; 16384], vec![0u8; 16384])
 }
 
 /// 创建一个 TCP socket，返回内核 sock id
 pub fn new_tcp_socket() -> Option<usize> {
     unsafe {
         let sockets = SOCKETS.as_mut()?;
-        let sock = TcpSocket::new(tcp_buffer(), tcp_buffer());
+        let sock = new_sock();
         let h = sockets.add(sock);
-        // 存入映射
         let id = SOCK_MAP.len();
         SOCK_MAP.push(Some(h));
         Some(id)
