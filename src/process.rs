@@ -87,6 +87,7 @@ pub struct Process {
     pub brk: usize,
     pub brk_start: usize,
     pub fd_table: FdTable,
+    pub sock_table: SockTable,
     pub tid_address: usize,
     pub set_child_tid: usize,
     pub next_mmap: usize,
