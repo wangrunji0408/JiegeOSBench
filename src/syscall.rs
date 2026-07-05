@@ -231,6 +231,7 @@ pub fn do_syscall(cx: &mut TrapContext) {
         SYS_getrusage => 0,
         SYS_sched_yield => 0,
         SYS_sigaltstack => 0,
+        SYS_rt_sigsuspend => 0, // 不阻塞，立即返回（让 worker 继续）
         SYS_rt_sigreturn => 0,
         SYS_setsid => 0,
         SYS_setgid | SYS_setuid | SYS_setpgid => 0,
