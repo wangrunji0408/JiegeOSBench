@@ -84,6 +84,11 @@ pub fn load_elf(elf: &[u8], pt: &PageTable) -> Result<LoadedElf, &'static str> {
         let p_filesz = read_u64(elf, ph + 32) as usize;
         let p_memsz = read_u64(elf, ph + 40) as usize;
 
+        // 若该段包含 ELF 程序头表，记录其虚拟地址
+        if e_phoff >= p_offset && e_phoff < p_offset + p_filesz {
+            phdr_va = p_vaddr + (e_phoff - p_offset);
+        }
+
         let mut perm = PTE_U | PTE_A | PTE_D;
         if p_flags & 4 != 0 {
             perm |= PTE_R;
