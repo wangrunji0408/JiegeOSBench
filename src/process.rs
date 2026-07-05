@@ -1,7 +1,7 @@
 //! 用户进程：独立地址空间 + 内核栈 + TrapContext + fd 表 + 初始栈。
 
 use alloc::boxed::Box;
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use crate::mm::frame::FRAME_ALLOCATOR;
 use crate::mm::page_table::{
