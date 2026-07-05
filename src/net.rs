@@ -253,6 +253,12 @@ unsafe fn init_device_modern(base: usize) -> bool {
     reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_FEATURES_OK | S_DRIVER_OK);
     let st = reg_r(base, REG_STATUS);
     crate::println!("[net] modern status={:#x} feat0={:#x} neg={:#x}", st, feat0, negotiated);
+    // 校验队列确实启用
+    reg_w(base, REG_QUEUE_SEL, 0);
+    if reg_r(base, REG_QUEUE_READY) != 1 {
+        crate::println!("[net] modern RX queue not ready, fallback");
+        return false;
+    }
     true
 }
 
