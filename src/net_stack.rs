@@ -138,6 +138,9 @@ pub fn new_tcp_socket() -> Option<usize> {
 }
 
 fn get_handle(id: usize) -> Option<SocketHandle> {
+    if id == usize::MAX {
+        return None; // eventfd/pipe 标记
+    }
     unsafe { SOCK_MAP.get(id).copied().flatten() }
 }
 
