@@ -18,7 +18,8 @@ pub const HEAP_SIZE: usize = 16 * 1024 * 1024; // 16MB 内核堆
 pub fn init() {
     let kernel_end = unsafe { (__kernel_end as *const () as usize) };
     frame::init(kernel_end);
-    heap::init();
+    heap::init_heap();
+    // 页表切换必须在堆可用之后
     page_table::init_kernel();
 }
 
