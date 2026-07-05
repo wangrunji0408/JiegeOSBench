@@ -141,6 +141,7 @@ pub fn http_serve_step() {
         let sockets = SOCKETS.as_mut().unwrap();
         let s = sockets.get_mut::<TcpSocket>(h);
         let st = s.state();
+        crate::println!("[http] socket state = {:?}", st);
         if st == TcpState::Established {
             // 读请求
             let mut req = [0u8; 512];
