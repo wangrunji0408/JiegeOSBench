@@ -199,8 +199,8 @@ unsafe fn init_device(base: usize) -> bool {
     reg_w(base, REG_STATUS, 0);
     reg_w(base, REG_STATUS, S_ACK | S_DRIVER);
     let feat = reg_r(base, REG_DEVICE_FEATURES);
-    let negotiated: u32 = 0; // 不协商任何 feature，用默认
-    let _ = feat;
+    let want: u32 = (1 << 0) | (1 << 1) | (1 << 5); // CSUM + GUEST_CSUM + MAC
+    let negotiated = feat & want;
     reg_w(base, REG_DRIVER_FEATURES, negotiated);
 
     let mut rx = match VirtQueue::new() { Some(q) => q, None => return false };
