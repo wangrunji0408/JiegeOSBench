@@ -328,6 +328,9 @@ pub fn send_packet(data: &[u8]) -> bool {
         a.idx = a.idx.wrapping_add(1);
     }
     unsafe { reg_w(d.base, REG_QUEUE_NOTIFY, 1); }
+    // 检查 TX used 是否推进
+    let tx_used = unsafe { (*d.tx.used).idx };
+    crate::println!("[net] TX avail.idx={} used.idx={}", unsafe { (*d.tx.avail).idx }, tx_used);
     true
 }
 
