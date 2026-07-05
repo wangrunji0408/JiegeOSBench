@@ -204,28 +204,42 @@ fn schedule() {
     unsafe { crate::task::switch_to(cur_ctx_ptr, next_ctx_ptr); }
 }
 
-/// 首次进入调度：切到第一个就绪进程
+/// 首次进入调度：切到第一个就绪进程；无进程则直接进 idle
 pub fn run_first_task() -> ! {
-    let s = SCHED.lock();
-    let next = s.pick_next().expect("no process to run");
-    let nptr = s.procs[next].as_ref().unwrap().as_ref() as *const Process as *mut Process;
-    let next_ctx_ptr = unsafe { &mut (*nptr).task_ctx as *mut TaskContext };
-    unsafe { (*nptr).state = TaskState::Running; }
-    let next_root = unsafe { (*nptr).root_pa };
-    s.current = next;
-    CURRENT_PROC.store(nptr as usize, Ordering::SeqCst);
-    set_satp_for(Some(next_root));
-    unsafe { SCHED.unlock(); }
-    crate::println!("[sched] starting first process (pid at slot {})", next);
-    let dummy = unsafe { &mut IDLE_CTX as *mut TaskContext };
-    unsafe { crate::task::switch_to(dummy, next_ctx_ptr); }
-    // 切回 idle 时会回到这里
-    crate::println!("[sched] idle context resumed");
-    idle_loop();
+    let next = {
+        let s = SCHED.lock();
+        s.pick_next()
+    };
+    match next {
+        Some(next) => {
+            let s = SCHED.lock();
+            let nptr = s.procs[next].as_ref().unwrap().as_ref() as *const Process as *mut Process;
+            let next_ctx_ptr = unsafe { &mut (*nptr).task_ctx as *mut TaskContext };
+            unsafe { (*nptr).state = TaskState::Running; }
+            let next_root = unsafe { (*nptr).root_pa };
+            s.current = next;
+            CURRENT_PROC.store(nptr as usize, Ordering::SeqCst);
+            set_satp_for(Some(next_root));
+            unsafe { SCHED.unlock(); }
+            crate::println!("[sched] starting first process (slot {})", next);
+            let dummy = unsafe { &mut IDLE_CTX as *mut TaskContext };
+            unsafe { crate::task::switch_to(dummy, next_ctx_ptr); }
+            crate::println!("[sched] idle context resumed");
+            idle_loop();
+        }
+        None => {
+            crate::println!("[sched] no process, entering idle (net httpd)");
+            idle_loop();
+        }
+    }
 }
 
 fn idle_loop() -> ! {
     loop {
+        // 跑网络协议栈 + 内核 HTTP 服务器
+        crate::net_stack::poll();
+        crate::net_stack::http_serve_step();
+        // 让时钟中断有机会切入进程（若有的话）
         unsafe { core::arch::asm!("wfi"); }
     }
 }
