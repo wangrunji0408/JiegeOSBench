@@ -19,6 +19,7 @@ mod elf;
 mod process;
 mod vfs;
 mod net;
+mod net_stack;
 mod net;
 mod vfs;
 
