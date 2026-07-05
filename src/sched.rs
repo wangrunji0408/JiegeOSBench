@@ -197,6 +197,7 @@ fn schedule() {
     unsafe { (*next_proc_ptr).state = TaskState::Running; }
     let next_root = unsafe { (*next_proc_ptr).root_pa };
     s.current = next;
+    CURRENT_PROC.store(next_proc_ptr as usize, Ordering::SeqCst);
     set_satp_for(Some(next_root));
     unsafe { SCHED.unlock(); }
     unsafe { crate::task::switch_to(cur_ctx_ptr, next_ctx_ptr); }
