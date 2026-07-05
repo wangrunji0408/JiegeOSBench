@@ -87,6 +87,7 @@ pub extern "C" fn rust_main() -> ! {
 
     set_stvec();
     println!("[boot] stvec set");
+    net::init();
     timer::init();
     println!("[boot] timer armed @ 100Hz");
     enable_interrupts();
