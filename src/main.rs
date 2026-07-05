@@ -3,6 +3,8 @@
 #![no_main]
 #![feature(asm_const)]
 
+extern crate alloc;
+
 mod uart;
 mod sbi;
 mod console;
@@ -11,8 +13,10 @@ mod timer;
 mod irq;
 mod syscall;
 mod sched;
+mod mm;
 
 use core::arch::{global_asm, asm};
+use alloc::boxed::Box;
 
 // 引入启动汇编
 global_asm!(include_str!("entry.S"));
