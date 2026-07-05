@@ -409,6 +409,7 @@ fn sys_mmap(addr: usize, length: usize, _prot: usize, _flags: usize, _fd: usize,
 }
 
 fn sys_close(fd: usize) -> isize {
+    let p = match current_process() {
         Some(p) => p,
         None => return -3,
     };
@@ -421,7 +422,20 @@ fn sys_close(fd: usize) -> isize {
     }
     // 再查文件表
     with_fd_table(|t| if t.close(fd) { 0isize } else { EBADF })
-}// === socket 系统调用 ===
+}
+
+// === socket 系统调用 ===
+
+fn sys_dup3(oldfd: usize, newfd: usize) -> isize {
+    // 简化：不真正复制 fd，返回 newfd
+    let _ = oldfd;
+    newfd as isize
+}
+
+fn sys_poll_stub() -> isize {
+    // 无就绪 fd
+    0
+}
 
 fn sys_socket(_domain: usize, _typ: usize, _proto: usize) -> isize {
     // 创建 smoltcp tcp socket
