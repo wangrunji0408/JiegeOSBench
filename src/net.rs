@@ -64,7 +64,7 @@ pub struct UsedElem {
 }
 
 #[repr(C, align(4))]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct UsedRing {
     pub flags: u16,
     pub idx: u16,
