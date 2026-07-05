@@ -134,14 +134,27 @@ pub fn do_syscall(cx: &mut TrapContext) {
         SYS_nanosleep => 0,
         SYS_getrandom => sys_getrandom(a0, a1, a2),
         SYS_prlimit64 => sys_prlimit64(a0, a1, a2, a3),
-        SYS_close => sys_close(a0),
+        SYS_close => {
+            with_fd_table(|t| if t.close(a0) { 0isize } else { EBADF })
+        }
         SYS_dup => EBADF,
         SYS_dup2 => EBADF,
         SYS_fcntl => 0,
-        SYS_openat => ENOENT,
-        SYS_fstat | SYS_stat => sys_fstat(a0, a1),
-        SYS_lseek => 0,
-        SYS_getcwd => ENOENT,
+        SYS_openat => sys_openat(a0, a1, a2, a3),
+        SYS_fstat => sys_fstat(a0, a1),
+        SYS_stat => sys_stat(a0, a1),
+        SYS_newfstatat => sys_newfstatat(a0, a1, a2, a3),
+        SYS_lseek => sys_lseek(a0, a1, a2),
+        SYS_getcwd => {
+            // 返回 "/"
+            if a0 != 0 && a1 >= 2 {
+                unsafe { core::ptr::write_volatile(a0 as *mut u8, b'/'); }
+                unsafe { core::ptr::write_volatile((a0+1) as *mut u8, 0); }
+                2
+            } else {
+                EINVAL
+            }
+        }
         SYS_readlink | SYS_readlinkat => ENOENT,
         SYS_clone | SYS_execve => ENOSYS,
         SYS_ppoll | SYS_pselect6 => ENOSYS,
