@@ -148,6 +148,7 @@ pub fn http_serve_step() {
         let sockets = SOCKETS.as_mut().unwrap();
         let s = sockets.get_mut::<TcpSocket>(h);
         let st = s.state();
+        crate::println!("[http] state={:?}", st);
         match st {
             TcpState::Established => {
                 if s.can_send() {
