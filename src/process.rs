@@ -118,7 +118,7 @@ impl Process {
         let phdr_va = loaded.phdr;
         let phnum = loaded.phnum;
         let entry = loaded.entry;
-        let user_sp = build_init_stack(top_pa, &["program".to_string()], &[], phdr_va, phnum, 0, entry);
+        let user_sp = build_init_stack(top_pa, &[name.to_string()], &[], phdr_va, phnum, 0, entry);
 
         // 内核栈
         let mut kstack_base = 0usize;
