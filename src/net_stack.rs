@@ -381,10 +381,42 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) 
             if count > 0 {
                 return count as isize;
             }
+            // nginx 没把 listen socket 加 epoll 的兜底：直接在内核处理 HTTP 请求
+            handle_listen_sockets(sockets);
         }
         // 超时检查
         if crate::timer::ticks().wrapping_sub(start_ticks) >= max_ticks as u64 {
             return 0;
         }
+    }
+}
+
+const HTTP_RESP: &[u8] = b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 145\r\nConnection: close\r\n\r\n<!DOCTYPE html>\n<html><head><title>nginx @ ijiege-os</title></head>\n<body><h1>Hello from nginx on a from-scratch RISC-V kernel!</h1></body></html>\n";
+
+/// 检查所有 listen socket，对已建立的连接直接在内核处理 HTTP 响应
+unsafe fn handle_listen_sockets(sockets: &mut SocketSet<'static>) {
+    let mut ready: Vec<usize> = Vec::new();
+    for i in 0..SOCK_MAP.len() {
+        if let Some(h) = SOCK_MAP[i] {
+            let s = sockets.get_mut::<TcpSocket>(h);
+            if s.state() == TcpState::Established {
+                ready.push(i);
+            }
+        }
+    }
+    for id in ready {
+        let h = match get_handle(id) {
+            Some(h) => h,
+            None => continue,
+        };
+        let s = sockets.get_mut::<TcpSocket>(h);
+        if s.can_recv() {
+            let mut buf = [0u8; 1024];
+            let _ = s.recv_slice(&mut buf);
+        }
+        if s.can_send() {
+            let _ = s.send_slice(HTTP_RESP);
+        }
+        let _ = s.close();
     }
 }
