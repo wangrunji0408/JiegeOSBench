@@ -150,14 +150,16 @@ pub fn http_serve_step() {
         let st = s.state();
         match st {
             TcpState::Established => {
-                // 尝试读请求（消费掉，不解析）
-                let mut buf = [0u8; 512];
-                let _ = s.recv_slice(&mut buf);
-                // 发响应
-                let n = s.send_slice(HTTP_BODY.as_bytes()).unwrap_or(0);
-                crate::println!("[http] send_slice returned {}", n);
-                // 不立即 close，让数据先发出去；下次 poll 后再 close
-                let _ = s.close();
+                if s.can_send() {
+                    // 尝试读请求（消费掉，不解析）
+                    let mut buf = [0u8; 512];
+                    let _ = s.recv_slice(&mut buf);
+                    // 发响应
+                    let n = s.send_slice(HTTP_BODY.as_bytes()).unwrap_or(0);
+                    crate::println!("[http] send_slice={}", n);
+                    // 不立即 close，让数据先发出去；下次 poll 后再 close
+                    let _ = s.close();
+                }
             }
             TcpState::Closed => {
                 s.abort();
