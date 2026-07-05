@@ -97,7 +97,7 @@ impl VirtQueue {
         let used = (base_pa + 8192) as *mut UsedRing;
         unsafe {
             let p = base_pa as *mut u8;
-            for i in 0..(2 * 4096) {
+            for i in 0..(3 * 4096) {
                 core::ptr::write_volatile(p.add(i), 0);
             }
         }
