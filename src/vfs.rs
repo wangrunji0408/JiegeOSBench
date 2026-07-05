@@ -7,8 +7,12 @@ use alloc::vec::Vec;
 /// 嵌入的根文件系统文件表
 pub static FILES: &[(&str, &[u8])] = &[
     ("/etc/hostname", b"ijiege-os\n"),
-    ("/etc/passwd", b"root:x:0:0:root:/root:/bin/sh\n"),
-    ("/etc/group", b"root:x:0:\n"),
+    ("/etc/passwd", b"root:x:0:0:root:/root:/bin/sh\nnobody:x:65534:65534:nobody:/:/bin/sh\n"),
+    ("/etc/group", b"root:x:0:\nnogroup:x:65534:\n"),
+    ("/etc/nsswitch.conf", b"passwd: files\ngroup: files\nshadow: files\nhosts: files dns\n"),
+    ("/etc/services", b"http\t80/tcp\n"),
+    ("/etc/protocols", b"tcp\t6\tTCP\nudp\t17\tUDP\n"),
+    ("/etc/localtime", b""),
     ("/index.html", b"<!DOCTYPE html>\n<html><head><title>ijiege-os</title></head>\n<body><h1>Hello from nginx on a from-scratch RISC-V kernel!</h1></body></html>\n"),
     ("/www/index.html", b"<!DOCTYPE html>\n<html><head><title>nginx @ ijiege-os</title></head>\n<body><h1>Hello from nginx on a from-scratch RISC-V kernel!</h1><p>Served by nginx official binary.</p></body></html>\n"),
     ("/nginx.conf", b"daemon off;\nmaster_process off;\nworker_processes 1;\nevents { worker_connections 16; }\nhttp {\n    access_log off;\n    error_log /dev/null;\n    server { listen 80; root /www; index index.html; }\n}\n"),
