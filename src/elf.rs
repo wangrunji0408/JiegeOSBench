@@ -39,6 +39,8 @@ pub struct ProgramHeader {
 pub struct LoadedElf {
     pub entry: usize,
     pub brk_start: usize, // 可用于 brk 的起始（最大段尾，页对齐）
+    pub phdr: usize,     // 程序头表虚拟地址
+    pub phnum: usize,
 }
 
 fn read_u32(b: &[u8], off: usize) -> u32 {
