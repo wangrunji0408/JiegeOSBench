@@ -63,6 +63,7 @@ const SYS_setrlimit: usize = 164;
 const SYS_getrusage: usize = 165;
 const SYS_sched_yield: usize = 124;
 const SYS_sigaltstack: usize = 132;
+const SYS_rt_sigsuspend: usize = 133;
 const SYS_rt_sigreturn: usize = 139;
 const SYS_setsid: usize = 157;
 const SYS_setgid: usize = 144;
