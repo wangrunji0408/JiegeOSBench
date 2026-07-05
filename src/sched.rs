@@ -171,6 +171,14 @@ pub fn clone_child(flags: usize, stack: usize, ptid: usize, _ctid: usize) -> isi
         }
     }
     let child_pid = next_pid();
+    // 复制父进程的 fd_table 和 sock_table（共享底层 socket）
+    let (parent_fd_table, parent_sock_table) = {
+        let p = s.procs[cur].as_ref().unwrap();
+        let pp = p.as_ref() as *const Process as *mut Process;
+        let fd_table = unsafe { (*pp).fd_table.clone() };
+        let sock_table = unsafe { (*pp).sock_table.clone() };
+        (fd_table, sock_table)
+    };
     let child = Process {
         pid: child_pid,
         task_ctx: crate::task::TaskContext {
@@ -185,8 +193,8 @@ pub fn clone_child(flags: usize, stack: usize, ptid: usize, _ctid: usize) -> isi
         name: "nginx-worker",
         brk: parent_brk,
         brk_start: parent_brk_start,
-        fd_table: crate::vfs::FdTable::new(),
-        sock_table: crate::process::SockTable::new(),
+        fd_table: parent_fd_table,
+        sock_table: parent_sock_table,
         tid_address: if ptid != 0 { ptid } else { parent_tid_addr },
         set_child_tid: ptid,
         next_mmap: parent_next_mmap,
