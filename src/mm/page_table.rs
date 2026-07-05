@@ -3,6 +3,7 @@
 use core::ptr::{read_volatile, write_volatile};
 use crate::mm::address::*;
 use crate::mm::frame::FRAME_ALLOCATOR;
+use crate::mm::MEMORY_TOP;
 
 pub const PAGE_SIZE: usize = 4096;
 
