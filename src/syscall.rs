@@ -233,6 +233,18 @@ pub fn do_syscall(cx: &mut TrapContext) {
         SYS_chroot => 0,
         SYS_umask => 0,
         SYS_mkdirat => 0,
+        SYS_pread64 => 0,
+        SYS_sched_getaffinity => {
+            // 写入空的 affinity mask（8 字节，CPU 0）
+            if a2 != 0 {
+                unsafe { core::ptr::write_volatile(a2 as *mut u8, 1); }
+            }
+            8
+        }
+        SYS_getppid => 1,
+        SYS_sysinfo => 0,
+        SYS_prctl => 0,
+        SYS_unshare => 0,
         SYS_kill => 0,
         _ => {
             crate::println!("[syscall] unsupported num={}", num);
