@@ -504,14 +504,13 @@ fn sys_pread64(fd: usize, buf: usize, count: usize, offset: usize) -> isize {
 }
 
 fn sys_socketpair(_d: usize, _t: usize, _p: usize, sv: usize) -> isize {
-    // 返回两个 pipe fd
     if sv != 0 {
         let p = match current_process() { Some(p) => p, None => return -3 };
         let fd1 = p.sock_table.alloc(crate::process::SockFd {
-            handle: 0, local_port: 0, kind: crate::process::SockKind::Pipe,
+            handle: usize::MAX, local_port: 0, kind: crate::process::SockKind::Pipe,
         });
         let fd2 = p.sock_table.alloc(crate::process::SockFd {
-            handle: 0, local_port: 0, kind: crate::process::SockKind::Pipe,
+            handle: usize::MAX, local_port: 0, kind: crate::process::SockKind::Pipe,
         });
         unsafe {
             core::ptr::write_volatile(sv as *mut i32, fd1 as i32);
