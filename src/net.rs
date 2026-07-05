@@ -220,12 +220,12 @@ unsafe fn init_device(base: usize) -> bool {
 
     NET = Some(NetDriver { base, rx, tx, mac });
 
-    // 先投递 RX 缓冲，再 DRIVER_OK
-    fill_rx_with_base(&mut NET.as_mut().unwrap().rx, base);
-
+    // 先 DRIVER_OK 让设备 started，再投递 RX 缓冲并 notify
     reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_DRIVER_OK);
     let st = reg_r(base, REG_STATUS);
     crate::println!("[net] status={:#x} feat={:#x} neg={:#x}", st, feat, negotiated);
+
+    fill_rx_with_base(&mut NET.as_mut().unwrap().rx, base);
     true
 }
 
