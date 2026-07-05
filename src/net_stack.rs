@@ -378,40 +378,6 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) 
                     count += 1;
                 }
             }
-            // 额外检查：当前进程的 listen socket 是否就绪
-            if count < maxevents {
-                let proc_ptr: *mut crate::process::Process = match crate::sched::current_process() {
-                    Some(p) => p as *mut crate::process::Process,
-                    None => return -3,
-                };
-                let p = unsafe { &mut *proc_ptr };
-                for fd in 3..p.sock_table.entries.len() {
-                    if count >= maxevents {
-                        break;
-                    }
-                    let (sock_id, is_listener) = match p.sock_table.entries.get(fd).and_then(|x| x.as_ref()) {
-                        Some(e) => (e.handle, e.kind == crate::process::SockKind::TcpListener),
-                        None => continue,
-                    };
-                    if !is_listener {
-                        continue;
-                    }
-                    let h = match get_handle(sock_id) {
-                        Some(h) => h,
-                        None => continue,
-                    };
-                    let s = sockets.get_mut::<TcpSocket>(h);
-                    let st = s.state();
-                    if st == TcpState::Established {
-                        let off = events + count * 16;
-                        unsafe {
-                            core::ptr::write_volatile(off as *mut u32, EPOLLIN);
-                            core::ptr::write_volatile((off + 8) as *mut u64, fd as u64);
-                        }
-                        count += 1;
-                    }
-                }
-            }
             if count > 0 {
                 return count as isize;
             }
