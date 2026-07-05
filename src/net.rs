@@ -48,7 +48,7 @@ pub struct VqDesc {
 }
 
 #[repr(C, align(2))]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct AvailRing {
     pub flags: u16,
     pub idx: u16,
