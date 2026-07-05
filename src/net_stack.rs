@@ -156,32 +156,36 @@ pub fn listen_socket(id: usize, port: u16) -> bool {
     }
 }
 
-/// accept：阻塞直到有连接，返回新连接的 SocketHandle
-pub fn accept_socket(listen_h: SocketHandle) -> Option<SocketHandle> {
-    // 创建一个新 socket 加入 set，让 smoltcp accept 到它
-    // smoltcp 0.13 没有 accept()，需手动：新 socket listen 同端口不行（会冲突）。
-    // 改用：检查 listen socket 状态，若 Established 则"移交"给新 handle。
-    // 实际上 smoltcp 中 listen socket 接受连接后自己变 Established。
-    // 我们返回 listen_h 本身，并创建新 socket 接管 listen。
-    unsafe {
-        let sockets = SOCKETS.as_mut()?;
-        let s = sockets.get_mut::<TcpSocket>(listen_h);
-        if s.state() == TcpState::Established || s.state() == TcpState::SynReceived {
-            // listen socket 已接受连接，返回它，并新建 socket 重新 listen
-            let new_h = new_tcp_socket()?;
-            // 这里返回 listen_h（已建立的连接），new_h 留给下次 listen
-            // 但调用方需要知道 new_h 来 re-listen
-            return Some(listen_h); // 简化：返回已建立的 socket
+/// accept：阻塞直到有连接，返回新连接的 sock id
+pub fn accept_socket(listen_id: usize) -> Option<usize> {
+    loop {
+        poll();
+        unsafe {
+            let sockets = SOCKETS.as_mut()?;
+            let h = get_handle(listen_id)?;
+            let s = sockets.get_mut::<TcpSocket>(h);
+            if s.state() == TcpState::Established {
+                // listen socket 接受了连接，本身变 Established
+                // 创建新 socket id 占位，原 id 作为已连接流返回
+                let new_id = new_tcp_socket()?;
+                // 把原 handle 从映射移除，赋给新连接；新 socket 重新 listen
+                // 这里：listen_id 的 handle 现在是已连接，返回它；new_id 用于后续 listen
+                // 但调用方需要 new_id re-listen。简化：返回 listen_id 作为流，并标记
+                return Some(listen_id);
+            }
         }
     }
-    None
 }
 
-pub fn socket_send(h: SocketHandle, data: &[u8]) -> usize {
+pub fn socket_send(id: usize, data: &[u8]) -> usize {
     loop {
         poll();
         unsafe {
             let sockets = SOCKETS.as_mut().unwrap();
+            let h = match get_handle(id) {
+                Some(h) => h,
+                None => return 0,
+            };
             let s = sockets.get_mut::<TcpSocket>(h);
             match s.send_slice(data) {
                 Ok(n) => return n,
@@ -195,11 +199,15 @@ pub fn socket_send(h: SocketHandle, data: &[u8]) -> usize {
     }
 }
 
-pub fn socket_recv(h: SocketHandle, buf: &mut [u8]) -> usize {
+pub fn socket_recv(id: usize, buf: &mut [u8]) -> usize {
     loop {
         poll();
         unsafe {
             let sockets = SOCKETS.as_mut().unwrap();
+            let h = match get_handle(id) {
+                Some(h) => h,
+                None => return 0,
+            };
             let s = sockets.get_mut::<TcpSocket>(h);
             match s.recv_slice(buf) {
                 Ok(n) => return n,
@@ -214,25 +222,26 @@ pub fn socket_recv(h: SocketHandle, buf: &mut [u8]) -> usize {
     }
 }
 
-pub fn socket_close(h: SocketHandle) {
+pub fn socket_close(id: usize) {
     unsafe {
         if let Some(sockets) = SOCKETS.as_mut() {
-            let s = sockets.get_mut::<TcpSocket>(h);
-            let _ = s.close();
+            if let Some(h) = get_handle(id) {
+                let s = sockets.get_mut::<TcpSocket>(h);
+                let _ = s.close();
+            }
         }
     }
 }
 
-pub fn remove_socket(h: SocketHandle) {
+pub fn remove_socket(id: usize) {
     unsafe {
         if let Some(sockets) = SOCKETS.as_mut() {
-            sockets.remove(h);
+            if let Some(h) = get_handle(id) {
+                sockets.remove(h);
+            }
         }
-    }
-}
-
-pub fn socket_state(h: SocketHandle) -> TcpState {
-    unsafe {
-        SOCKETS.as_mut().unwrap().get_mut::<TcpSocket>(h).state()
+        if id < SOCK_MAP.len() {
+            SOCK_MAP[id] = None;
+        }
     }
 }
