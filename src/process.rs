@@ -92,11 +92,11 @@ impl Process {
         let root_pa = pt.root_pa;
         core::mem::forget(pt);
 
-        let mut fd_table: Vec<Option<FdEntry>> = Vec::new();
-        fd_table.resize_with(16, || None);
-        fd_table[0] = Some(FdEntry { kind: FdKind::Stdio });
-        fd_table[1] = Some(FdEntry { kind: FdKind::Stdio });
-        fd_table[2] = Some(FdEntry { kind: FdKind::Stdio });
+        let mut fd_table = crate::vfs::FdTable::new();
+        // 0/1/2 占位为 stdout/stderr 入口（read/write 时按 fd 特判）
+        fd_table.open("/dev/stdin", 0);
+        fd_table.open("/dev/stdout", 0);
+        fd_table.open("/dev/stderr", 0);
 
         Some(Box::new(Process {
             pid,
