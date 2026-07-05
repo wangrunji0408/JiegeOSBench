@@ -341,6 +341,7 @@ fn sys_read(fd: usize, buf: usize, count: usize) -> isize {
 
 fn sys_openat(_dirfd: usize, path: usize, flags: usize, _mode: usize) -> isize {
     let path_str = unsafe { read_user_string(path, 255) }.unwrap_or_default();
+    crate::println!("[open {} flags={:#x}]", path_str, flags);
     let fd = with_fd_table(|t| t.open(&path_str, flags));
     match fd {
         Some(f) => f as isize,
