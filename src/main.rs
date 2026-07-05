@@ -12,7 +12,7 @@ use core::arch::global_asm;
 // 引入启动汇编
 global_asm!(include_str!("entry.S"));
 
-/// 链接脚本提供的内核镜像结束符号
+// 链接脚本提供的内核镜像结束符号
 extern "C" {
     fn __kernel_end();
 }
