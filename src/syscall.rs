@@ -173,6 +173,15 @@ pub fn do_syscall(cx: &mut TrapContext) {
         SYS_readlink | SYS_readlinkat => ENOENT,
         SYS_clone | SYS_execve => ENOSYS,
         SYS_ppoll | SYS_pselect6 => ENOSYS,
+        SYS_socket => sys_socket(a0, a1, a2),
+        SYS_bind => sys_bind(a0, a1, a2),
+        SYS_listen => sys_listen(a0, a1),
+        SYS_accept | SYS_accept4 => sys_accept(a0),
+        SYS_connect => 0,
+        SYS_sendto | SYS_sendmsg => sys_sendto(a0, a1, a2),
+        SYS_recvfrom | SYS_recvmsg => sys_recvfrom(a0, a1, a2),
+        SYS_setsockopt | SYS_getsockopt => 0,
+        SYS_shutdown => 0,
         SYS_kill => 0,
         _ => {
             crate::println!("[syscall] unsupported num={}", num);
