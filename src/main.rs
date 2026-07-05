@@ -17,6 +17,7 @@ mod task;
 mod mm;
 mod elf;
 mod process;
+mod vfs;
 
 use core::arch::{global_asm, asm};
 use alloc::boxed::Box;
