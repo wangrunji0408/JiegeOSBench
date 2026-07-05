@@ -34,7 +34,7 @@ const S_DRIVER: u32 = 2;
 const S_DRIVER_OK: u32 = 4;
 const S_FEATURES_OK: u32 = 8;
 
-pub const VQ_SIZE: usize = 8;
+pub const VQ_SIZE: usize = 256;
 pub const PKT_BUF: usize = 1514;
 const NET_HDR_LEN: usize = 10;
 
