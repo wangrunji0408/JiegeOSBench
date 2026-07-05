@@ -52,6 +52,9 @@ impl Device for NetDev {
                 got = true;
             });
             self.has_rx = got;
+            if got {
+                crate::println!("[net] rx {} bytes", self.rx_buf.len());
+            }
         }
         if self.has_rx {
             self.has_rx = false;
