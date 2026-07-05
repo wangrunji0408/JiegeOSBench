@@ -151,14 +151,14 @@ pub fn http_serve_step() {
         crate::println!("[http] state={:?}", st);
         match st {
             TcpState::Established => {
-                if s.can_send() {
-                    // 尝试读请求（消费掉，不解析）
+                let cs = s.can_send();
+                let cr = s.can_recv();
+                crate::println!("[http] Established can_send={} can_recv={}", cs, cr);
+                if cs {
                     let mut buf = [0u8; 512];
-                    let _ = s.recv_slice(&mut buf);
-                    // 发响应
+                    let rn = s.recv_slice(&mut buf).unwrap_or(0);
                     let n = s.send_slice(HTTP_BODY.as_bytes()).unwrap_or(0);
-                    crate::println!("[http] send_slice={}", n);
-                    // 不立即 close，让数据先发出去；下次 poll 后再 close
+                    crate::println!("[http] recv={} send={}", rn, n);
                     let _ = s.close();
                 }
             }
