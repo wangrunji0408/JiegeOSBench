@@ -97,7 +97,6 @@ pub fn init() {
         });
         let _ = iface.routes_mut().add_default_ipv4_route(
             Ipv4Address::new(GATEWAY[0], GATEWAY[1], GATEWAY[2], GATEWAY[3]),
-            now,
         );
         IFACE = Some(iface);
         SOCKETS = Some(SocketSet::new(Vec::new()));
