@@ -79,6 +79,17 @@ impl<T> Spinlock<T> {
 static SCHED: Spinlock<Scheduler> = Spinlock::new(Scheduler::new());
 static TICK_COUNT: AtomicU64 = AtomicU64::new(0);
 static mut IDLE_CTX: TaskContext = TaskContext::zero();
+static CURRENT_PROC: AtomicUsize = AtomicUsize::new(0); // 当前进程裸指针；0=idle
+
+/// 当前进程（syscall 路径无锁获取）
+pub fn current_process() -> Option<&'static mut Process> {
+    let p = CURRENT_PROC.load(Ordering::SeqCst);
+    if p == 0 {
+        None
+    } else {
+        unsafe { Some(&mut *(p as *mut Process)) }
+    }
+}
 
 /// 注册一个进程
 pub fn spawn(elf: &[u8], name: &'static str) -> usize {
