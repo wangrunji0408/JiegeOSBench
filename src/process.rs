@@ -43,6 +43,8 @@ pub struct SockFd {
 pub enum SockKind {
     TcpListener, // 监听 socket
     TcpStream,   // 已连接
+    Eventfd,     // eventfd 占位
+    Pipe,        // pipe 占位
 }
 
 pub struct SockTable {
