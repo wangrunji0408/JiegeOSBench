@@ -46,7 +46,7 @@ static mut BOOT_STACK: Stack = Stack([0; BOOT_STACK_SIZE]);
 
 #[no_mangle]
 extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
-    clear_bss();
+    // .bss is zero: QEMU RAM starts zeroed and -kernel only copies filesz
     println!("\n[jiege-os] booting on hart {}", hartid);
     mm::init();
     trap::init();
