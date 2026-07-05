@@ -31,6 +31,51 @@ extern "C" {
 /// 文件描述符表（来自 vfs 模块）
 pub type FdTable = crate::vfs::FdTable;
 
+/// socket fd 表项
+#[derive(Clone)]
+pub struct SockFd {
+    pub handle: usize, // smoltcp SocketHandle 的内核内部索引
+    pub local_port: u16,
+    pub kind: SockKind,
+}
+
+#[derive(Clone, PartialEq)]
+pub enum SockKind {
+    TcpListener, // 监听 socket
+    TcpStream,   // 已连接
+}
+
+pub struct SockTable {
+    pub entries: Vec<Option<SockFd>>,
+}
+
+impl SockTable {
+    pub fn new() -> Self {
+        let mut entries: Vec<Option<SockFd>> = Vec::new();
+        entries.resize_with(16, || None);
+        Self { entries }
+    }
+    pub fn alloc(&mut self, s: SockFd) -> usize {
+        for i in 0..self.entries.len() {
+            if self.entries[i].is_none() {
+                self.entries[i] = Some(s);
+                return i;
+            }
+        }
+        let i = self.entries.len();
+        self.entries.push(Some(s));
+        i
+    }
+    pub fn get(&mut self, fd: usize) -> Option<&mut SockFd> {
+        self.entries.get_mut(fd).and_then(|x| x.as_mut())
+    }
+    pub fn close(&mut self, fd: usize) {
+        if fd < self.entries.len() {
+            self.entries[fd] = None;
+        }
+    }
+}
+
 pub struct Process {
     pub pid: usize,
     pub task_ctx: TaskContext,
