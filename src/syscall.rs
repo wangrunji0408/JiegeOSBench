@@ -601,6 +601,7 @@ fn sys_bind(fd: usize, addr: usize, _len: usize) -> isize {
         None => return -9,
     };
     s.local_port = port;
+    crate::println!("[bind fd={} port={}]", fd, port);
     0
 }
 
@@ -622,6 +623,7 @@ fn sys_listen(fd: usize, _backlog: usize) -> isize {
     if let Some(s) = p.sock_table.get(fd) {
         s.kind = crate::process::SockKind::TcpListener;
     }
+    crate::println!("[listen fd={} id={} port={}]", fd, id, port);
     0
 }
 
