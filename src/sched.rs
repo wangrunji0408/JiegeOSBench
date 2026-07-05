@@ -174,6 +174,7 @@ fn schedule() {
                 &(p.as_ref().task_ctx) as *const TaskContext as *mut TaskContext
             };
             s.current = MAX_PROCS;
+            CURRENT_PROC.store(0, Ordering::SeqCst);
             set_satp_for(None);
             let idle_ptr = unsafe { &mut IDLE_CTX as *mut TaskContext };
             unsafe { SCHED.unlock(); }
