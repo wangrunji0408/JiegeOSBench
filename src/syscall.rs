@@ -268,17 +268,30 @@ fn sys_close(fd: usize) -> isize {
 }
 
 fn sys_fstat(fd: usize, statbuf: usize) -> isize {
-    // 填一个最小化的 stat 结构（Linux riscv stat：128 字节左右）
-    // st_mode=0, st_size=0, 其余 0
+    // Linux RISC-V struct stat (asm-generic)，136 字节
     if statbuf == 0 {
         return EFAULT;
     }
     let _ = fd;
-    for i in 0..256usize {
+    // 先清零
+    for i in 0..144usize {
         unsafe { core::ptr::write_volatile((statbuf + i) as *mut u8, 0); }
+    }
+    unsafe {
+        // st_nlink @ 16
+        core::ptr::write_volatile((statbuf + 16) as *mut u64, 1);
+        // st_mode @ 24: S_IFREG | 0644 = 0x81a4
+        core::ptr::write_volatile((statbuf + 24) as *mut u32, 0x81a4);
+        // st_size @ 48
+        core::ptr::write_volatile((statbuf + 48) as *mut i64, 0);
+        // st_blksize @ 56
+        core::ptr::write_volatile((statbuf + 56) as *mut u64, 4096);
+        // st_blocks @ 64
+        core::ptr::write_volatile((statbuf + 64) as *mut u64, 0);
     }
     0
 }
+
 
 fn sys_uname(buf: usize) -> isize {
     if buf == 0 {
