@@ -125,6 +125,8 @@ pub fn poll() {
             return;
         }
         crate::net::kick_rx();
+        // 检查 TX 完成情况
+        crate::net::poll_tx();
         let iface = IFACE.as_mut().unwrap();
         let dev = DEV.as_mut().unwrap();
         let sockets = SOCKETS.as_mut().unwrap();
