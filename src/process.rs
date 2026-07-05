@@ -28,16 +28,8 @@ extern "C" {
     fn __restore();
 }
 
-/// 文件描述符表项
-#[derive(Clone)]
-pub struct FdEntry {
-    pub kind: FdKind,
-}
-
-#[derive(Clone, PartialEq)]
-pub enum FdKind {
-    Stdio, // 0/1/2
-}
+/// 文件描述符表（来自 vfs 模块）
+pub type FdTable = crate::vfs::FdTable;
 
 pub struct Process {
     pub pid: usize,
@@ -49,7 +41,7 @@ pub struct Process {
     pub name: &'static str,
     pub brk: usize,
     pub brk_start: usize,
-    pub fd_table: Vec<Option<FdEntry>>,
+    pub fd_table: FdTable,
     pub tid_address: usize,
     pub set_child_tid: usize,
     pub next_mmap: usize,
