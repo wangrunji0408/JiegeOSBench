@@ -104,20 +104,21 @@ pub fn init() {
         IFACE = Some(iface);
         SOCKETS = Some(SocketSet::new(Vec::new()));
 
-        // 创建监听 socket
-        let rx = Box::leak(vec![0u8; 16384].into_boxed_slice());
-        let tx = Box::leak(vec![0u8; 16384].into_boxed_slice());
-        let mut sock = TcpSocket::new(SocketBuffer::new(rx), SocketBuffer::new(tx));
-        let _ = sock.listen(LISTEN_PORT);
-        let h = SOCKETS.as_mut().unwrap().add(sock);
-        LISTEN_HANDLE = Some(h);
+        // 创建多个监听 socket，支持并发连接
+        for i in 0..4 {
+            let rx = Box::leak(vec![0u8; 16384].into_boxed_slice());
+            let tx = Box::leak(vec![0u8; 16384].into_boxed_slice());
+            let mut sock = TcpSocket::new(SocketBuffer::new(rx), SocketBuffer::new(tx));
+            let _ = sock.listen(LISTEN_PORT);
+            let h = SOCKETS.as_mut().unwrap().add(sock);
+            HANDLES[i] = Some(h);
+        }
 
         crate::println!("[net] smoltcp up @ 10.0.2.15, listening tcp/{}", LISTEN_PORT);
     }
     // 发送 gratuitous ARP 让 slirp 网关学习本机 MAC
     crate::net::send_gratuitous_arp();
     crate::net::send_gratuitous_arp();
-    crate::net::dump_tx();
 }
 
 pub fn poll() {
