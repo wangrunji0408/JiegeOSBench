@@ -487,47 +487,58 @@ fn sys_close(fd: usize) -> isize {
 // === socket 系统调用 ===
 
 fn sys_dup3(oldfd: usize, newfd: usize) -> isize {
-    // 把 oldfd 的内容复制到 newfd
+    sys_dup_to(oldfd, newfd)
+}
+
+/// 把 oldfd 复制到指定 newfd（或最小可用 fd 若 newfd=-1）
+fn sys_dup_to(oldfd: usize, newfd: usize) -> isize {
     let p = match current_process() {
         Some(p) => p,
         None => return -3,
     };
-    // 先尝试 socket 表
+    // socket 表
     if let Some(s) = p.sock_table.get(oldfd) {
         let entry = s.clone();
-        // 关闭 newfd 原内容
         p.sock_table.close(newfd);
-        if newfd < p.sock_table.entries.len() {
-            p.sock_table.entries[newfd] = Some(entry);
-        } else {
-            while p.sock_table.entries.len() <= newfd {
-                p.sock_table.entries.push(None);
-            }
-            p.sock_table.entries[newfd] = Some(entry);
+        while p.sock_table.entries.len() <= newfd {
+            p.sock_table.entries.push(None);
         }
+        p.sock_table.entries[newfd] = Some(entry);
         return newfd as isize;
     }
     // 文件表
-    let entry = with_fd_table(|t| {
-        if let Some(f) = t.fds.get(oldfd).and_then(|x| x.as_ref()) {
-            let f = f.clone();
-            if newfd < t.fds.len() {
-                t.fds[newfd] = Some(f.clone());
-            }
-            Some(f)
-        } else {
-            None
-        }
-    });
-    if entry.is_some() {
-        // 再次设置 newfd
+    let entry = with_fd_table(|t| t.fds.get(oldfd).and_then(|x| x.as_ref()).cloned());
+    if let Some(f) = entry {
         let p = current_process().unwrap();
-        if newfd < p.fd_table.fds.len() {
-            // 已设置
+        while p.fd_table.fds.len() <= newfd {
+            p.fd_table.fds.push(None);
         }
+        p.fd_table.fds[newfd] = Some(f);
         return newfd as isize;
     }
     -9
+}
+
+fn sys_fcntl(fd: usize, cmd: usize, arg: usize) -> isize {
+    match cmd {
+        0 | 1030 => {
+            // F_DUPFD / F_DUPFD_CLOEXEC：分配最小可用 fd >= arg
+            let p = match current_process() { Some(p) => p, None => return -3 };
+            let start = arg.max(3);
+            // 找最小可用
+            let mut newfd = start;
+            loop {
+                let in_sock = p.sock_table.entries.get(newfd).map(|x| x.is_some()).unwrap_or(false);
+                let in_file = p.fd_table.fds.get(newfd).map(|x| x.is_some()).unwrap_or(false);
+                if !in_sock && !in_file {
+                    break;
+                }
+                newfd += 1;
+            }
+            sys_dup_to(fd, newfd)
+        }
+        _ => 0,
+    }
 }
 
 fn sys_poll_stub() -> isize {
