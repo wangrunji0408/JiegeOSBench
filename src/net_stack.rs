@@ -332,8 +332,11 @@ pub fn epoll_ctl(epfd: usize, op: usize, fd: usize, event: usize) -> isize {
 const EPOLLIN: u32 = 1;
 const EPOLLOUT: u32 = 4;
 
-pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize) -> isize {
+pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) -> isize {
     let epoll_id = epfd & 0x7fff;
+    let start_ticks = crate::timer::ticks();
+    // timeout 单位 ms；tick=10ms
+    let max_ticks = if timeout == -1isize as usize { usize::MAX } else { (timeout / 10).max(1) };
     loop {
         poll();
         unsafe {
@@ -349,7 +352,7 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize) -> isize {
                 }
                 let h = match get_handle(*sock_id) {
                     Some(h) => h,
-                    None => continue, // eventfd/pipe（sock_id=MAX）跳过
+                    None => continue,
                 };
                 let s = sockets.get_mut::<TcpSocket>(h);
                 let st = s.state();
@@ -376,9 +379,12 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize) -> isize {
                 }
             }
             if count > 0 {
-                crate::println!("[epoll_wait] returned {} events", count);
                 return count as isize;
             }
+        }
+        // 超时检查
+        if crate::timer::ticks().wrapping_sub(start_ticks) >= max_ticks {
+            return 0;
         }
     }
 }
