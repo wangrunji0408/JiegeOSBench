@@ -89,8 +89,8 @@ pub extern "C" fn rust_main() -> ! {
     println!("[boot] interrupts enabled");
 
     // 加载并运行用户态测试程序
-    static HELLO_STATIC: &[u8] = include_bytes!("../user/hello_static.elf");
-    sched::spawn(HELLO_STATIC, "hello_static");
+    static TEST_STATIC: &[u8] = include_bytes!("../user/test_static.elf");
+    sched::spawn(TEST_STATIC, "test_static");
 
     println!("[boot] entering scheduler...");
     sched::run_first_task();
