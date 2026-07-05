@@ -488,3 +488,25 @@ pub fn poll_tx() {
         d.tx.free_desc(desc_idx);
     }
 }
+
+/// 调试：dump TX 队列状态
+pub fn dump_tx() {
+    let d = unsafe { driver() };
+    unsafe {
+        let desc0 = &*d.tx.desc;
+        let a = &*d.tx.avail;
+        let u = &*d.tx.used;
+        crate::println!(
+            "[net] TX desc0 addr={:#x} len={} flags={} next={}",
+            desc0.addr, desc0.len, desc0.flags, desc0.next
+        );
+        crate::println!(
+            "[net] TX avail flags={} idx={} ring[0]={} used_event={}",
+            a.flags, a.idx, a.ring[0], a.used_event
+        );
+        crate::println!(
+            "[net] TX used flags={} idx={}",
+            u.flags, u.idx
+        );
+    }
+}
