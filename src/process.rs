@@ -160,6 +160,7 @@ impl Process {
             brk: loaded.brk_start,
             brk_start: loaded.brk_start,
             fd_table,
+            sock_table: SockTable::new(),
             tid_address: 0,
             set_child_tid: 0,
             next_mmap: 0x5000_0000,
