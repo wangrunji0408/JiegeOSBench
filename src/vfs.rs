@@ -33,6 +33,7 @@ pub struct File {
     pub writable: bool, // 写文件（暂只支持内存读写）
 }
 
+#[derive(Clone)]
 pub struct FdTable {
     pub fds: Vec<Option<File>>,
 }
