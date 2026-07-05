@@ -309,6 +309,8 @@ unsafe fn setup_queue(base: usize, idx: usize, vq: &VirtQueue) {
     reg_w(base, REG_QUEUE_NUM, n as u32);
     reg_w(base, REG_QUEUE_ALIGN, 4096);
     reg_w(base, REG_QUEUE_PFN, (vq.base_pa >> 12) as u32);
+    // 某些 QEMU 版本同时检查 QueueReady
+    reg_w(base, REG_QUEUE_READY, 1);
     let pfn_back = reg_r(base, REG_QUEUE_PFN);
     crate::println!("[net] queue {} pfn_back={:#x}", idx, pfn_back);
 }
