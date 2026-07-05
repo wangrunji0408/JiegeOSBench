@@ -197,7 +197,8 @@ pub fn do_syscall(cx: &mut TrapContext) {
         }
         SYS_readlink | SYS_readlinkat => ENOENT,
         SYS_clone | SYS_execve => ENOSYS,
-        SYS_ppoll | SYS_pselect6 => ENOSYS,
+        SYS_clone3 => ENOSYS,
+        SYS_ppoll | SYS_pselect6 | SYS_poll => sys_poll_stub(),
         SYS_socket => sys_socket(a0, a1, a2),
         SYS_bind => sys_bind(a0, a1, a2),
         SYS_listen => sys_listen(a0, a1),
