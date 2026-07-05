@@ -124,27 +124,34 @@ fn tcp_buffer() -> SocketBuffer<'static> {
     SocketBuffer::new(rx, tx)
 }
 
-/// 创建一个 TCP socket，返回 usize 编码的 handle
+/// 创建一个 TCP socket，返回内核 sock id
 pub fn new_tcp_socket() -> Option<usize> {
     unsafe {
         let sockets = SOCKETS.as_mut()?;
         let sock = TcpSocket::new(tcp_buffer(), tcp_buffer());
         let h = sockets.add(sock);
-        Some(usize::from(h))
+        // 存入映射
+        let id = SOCK_MAP.len();
+        SOCK_MAP.push(Some(h));
+        Some(id)
     }
 }
 
-fn handle(u: usize) -> SocketHandle {
-    SocketHandle::from(u)
+fn get_handle(id: usize) -> Option<SocketHandle> {
+    unsafe { SOCK_MAP.get(id).copied().flatten() }
 }
 
-pub fn listen_socket(h: usize, port: u16) -> bool {
+pub fn listen_socket(id: usize, port: u16) -> bool {
     unsafe {
         let sockets = match SOCKETS.as_mut() {
             Some(s) => s,
             None => return false,
         };
-        let s = sockets.get_mut::<TcpSocket>(handle(h));
+        let h = match get_handle(id) {
+            Some(h) => h,
+            None => return false,
+        };
+        let s = sockets.get_mut::<TcpSocket>(h);
         s.listen(port).is_ok()
     }
 }
