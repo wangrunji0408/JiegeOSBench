@@ -95,50 +95,28 @@ pub fn load_elf(elf: &[u8], pt: &PageTable) -> Result<LoadedElf, &'static str> {
         // 按 4KB 映射 [vaddr, vaddr+memsz)
         let start = p_vaddr & !(PAGE_SIZE - 1);
         let end = (p_vaddr + p_memsz + PAGE_SIZE - 1) & !(PAGE_SIZE - 1);
-        let mut pa = crate::mm::frame::FRAME_ALLOCATOR
-            .alloc_zeroed()
-            .ok_or("OOM loading ELF")?;
         let mut va = start;
         while va < end {
-            // 每页分配新帧
-            if va != start {
-                pa = crate::mm::frame::FRAME_ALLOCATOR
-                    .alloc_zeroed()
-                    .ok_or("OOM loading ELF")?;
-            }
-            // 拷贝文件内容到该页
-            let page_dst = pa as *mut u8;
-            let off_in_seg = va as isize - start as isize; // 相对段页起始
-            // 实际上要按 vaddr 偏移计算文件来源
-            let file_off = (va as isize - p_vaddr as isize) + p_offset as isize;
-            let file_len = if file_off >= 0 && (file_off as usize) < p_offset + p_filesz {
-                let remain = p_filesz.saturating_sub(file_off as usize - p_offset);
-                remain.min(PAGE_SIZE - (p_vaddr & (PAGE_SIZE - 1)))
-            } else {
-                0
-            };
-            // 简化：直接按页内偏移拷贝文件数据
-            let page_off = p_vaddr & (PAGE_SIZE - 1); // 段起始在页内偏移
-            let _ = (off_in_seg, page_off);
-            // 计算该页应填充的字节范围
-            let copy_start = if va == start { p_vaddr & (PAGE_SIZE - 1) } else { 0 };
-            let copy_end = if va + PAGE_SIZE >= p_vaddr + p_filesz {
-                (p_vaddr + p_filesz - va).min(PAGE_SIZE)
-            } else {
-                PAGE_SIZE
-            };
-            if copy_end > copy_start {
-                let src_off = p_offset + (va + copy_start - p_vaddr);
-                if src_off + (copy_end - copy_start) <= elf.len() {
+            let pa = crate::mm::frame::FRAME_ALLOCATOR
+                .alloc_zeroed()
+                .ok_or("OOM loading ELF")?;
+            // 该页与文件数据 [p_vaddr, p_vaddr+p_filesz) 的交集
+            let ov_start = va.max(p_vaddr);
+            let ov_end = (va + PAGE_SIZE).min(p_vaddr + p_filesz);
+            if ov_end > ov_start {
+                let dst_off = ov_start - va; // 页内偏移
+                let src_off = p_offset + (ov_start - p_vaddr);
+                if src_off + (ov_end - ov_start) <= elf.len() {
                     unsafe {
                         core::ptr::copy_nonoverlapping(
                             elf.as_ptr().add(src_off),
-                            page_dst.add(copy_start),
-                            copy_end - copy_start,
+                            (pa as *mut u8).add(dst_off),
+                            ov_end - ov_start,
                         );
                     }
                 }
             }
+            // memsz > filesz 的部分（bss）已是零（alloc_zeroed）
             pt.map_page(va, pa, perm);
             va += PAGE_SIZE;
         }
