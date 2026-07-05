@@ -119,6 +119,7 @@ impl Process {
             fd_table,
             tid_address: 0,
             set_child_tid: 0,
+            next_mmap: 0x5000_0000,
         }))
     }
 
