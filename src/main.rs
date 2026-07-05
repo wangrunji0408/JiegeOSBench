@@ -1,8 +1,7 @@
 //! 智能杰哥 RISC-V 内核主入口。
 #![no_std]
 #![no_main]
-#![feature(asm_const)]
-#![feature(panic_info_message)]
+
 
 mod uart;
 mod sbi;
