@@ -30,6 +30,10 @@ impl FdTable {
     pub fn new() -> Self {
         let mut fds: Vec<Option<File>> = Vec::new();
         fds.resize_with(16, || None);
+        // 预置 stdin/stdout/stderr
+        fds[0] = Some(File { path: String::from("/dev/stdin"), data: &[], offset: 0, writable: true });
+        fds[1] = Some(File { path: String::from("/dev/stdout"), data: &[], offset: 0, writable: true });
+        fds[2] = Some(File { path: String::from("/dev/stderr"), data: &[], offset: 0, writable: true });
         Self { fds }
     }
 
