@@ -52,7 +52,6 @@ const SYS_execve: usize = 221;
 const SYS_getcwd: usize = 17;
 const SYS_readlinkat: usize = 78;
 const SYS_readlink: usize = 89;
-const SYS_stat: usize = 80;
 const SYS_writev: usize = 66;
 const SYS_ppoll: usize = 73;
 const SYS_pselect6: usize = 72;
