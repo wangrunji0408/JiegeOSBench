@@ -39,7 +39,7 @@ impl TxToken for TxTok {
     }
 }
 
-impl<'a> Device for &'a mut NetDev {
+impl Device for NetDev {
     type RxToken<'b> = RxTok<'b> where Self: 'b;
     type TxToken<'b> = TxTok where Self: 'b;
 
