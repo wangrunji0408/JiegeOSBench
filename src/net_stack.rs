@@ -148,21 +148,18 @@ pub fn http_serve_step() {
         let sockets = SOCKETS.as_mut().unwrap();
         let s = sockets.get_mut::<TcpSocket>(h);
         let st = s.state();
-        crate::println!("[http] state={:?}", st);
         match st {
             TcpState::Established => {
-                let cs = s.can_send();
-                let cr = s.can_recv();
-                crate::println!("[http] Established can_send={} can_recv={}", cs, cr);
-                if cs {
-                    let mut buf = [0u8; 512];
-                    let rn = s.recv_slice(&mut buf).unwrap_or(0);
-                    let n = s.send_slice(HTTP_BODY.as_bytes()).unwrap_or(0);
-                    crate::println!("[http] recv={} send={}", rn, n);
+                if s.can_send() {
+                    let mut buf = [0u8; 1024];
+                    let _ = s.recv_slice(&mut buf);
+                    let _ = s.send_slice(HTTP_BODY.as_bytes());
+                    // 优雅关闭，让数据+FIN发出
                     let _ = s.close();
                 }
             }
-            TcpState::Closed => {
+            TcpState::Closed | TcpState::TimeWait | TcpState::FinWait1 | TcpState::FinWait2 => {
+                // 连接结束（或强制结束），重新 listen 接受下一个连接
                 s.abort();
                 let _ = s.listen(LISTEN_PORT);
             }
