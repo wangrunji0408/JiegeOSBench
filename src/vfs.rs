@@ -173,24 +173,34 @@ impl FdTable {
     }
 }
 
-/// 由路径查找 stat（openat 失败时用 stat 路径）
+/// 由路径查找 stat（Linux RISC-V struct stat，128 字节）
 pub fn stat_path(path: &str, statbuf: usize) -> bool {
     if statbuf == 0 {
         return false;
     }
-    for i in 0..144usize {
+    // 清零 128 字节
+    for i in 0..128usize {
         unsafe { core::ptr::write_volatile((statbuf + i) as *mut u8, 0); }
     }
-    let len = if path == "/dev/stdin" || path == "/dev/stdout" || path == "/dev/stderr" {
+    let len = if path == "/dev/stdin" || path == "/dev/stdout" || path == "/dev/stderr" || path == "/dev/null" {
         0
     } else {
         FILES.iter().find(|(p, _)| *p == path).map(|(_, d)| d.len()).unwrap_or(0)
     };
     unsafe {
-        core::ptr::write_volatile((statbuf + 16) as *mut u64, 1);
-        core::ptr::write_volatile((statbuf + 24) as *mut u32, 0x81a4);
+        // st_ino@8
+        core::ptr::write_volatile((statbuf + 8) as *mut u64, 1);
+        // st_mode@16 (S_IFREG|0644 = 0x81a4)
+        core::ptr::write_volatile((statbuf + 16) as *mut u32, 0x81a4);
+        // st_nlink@20
+        core::ptr::write_volatile((statbuf + 20) as *mut u32, 1);
+        // st_uid@24, st_gid@28 = 0
+        // st_size@48
         core::ptr::write_volatile((statbuf + 48) as *mut i64, len as i64);
-        core::ptr::write_volatile((statbuf + 56) as *mut u64, 4096);
+        // st_blksize@56
+        core::ptr::write_volatile((statbuf + 56) as *mut u32, 4096);
+        // st_blocks@64
+        core::ptr::write_volatile((statbuf + 64) as *mut u64, ((len + 511) / 512) as u64);
     }
     true
 }
