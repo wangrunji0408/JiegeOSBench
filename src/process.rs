@@ -65,17 +65,21 @@ impl Process {
         let loaded = crate::elf::load_elf(elf, &pt).ok()?;
 
         // 用户栈：映射若干页
+        let mut top_pa = 0usize;
         for i in 0..USER_STACK_PAGES {
             let pa = FRAME_ALLOCATOR.alloc_zeroed()?;
             let va = USER_STACK_TOP - (i + 1) * PAGE_SIZE;
             pt.map_page(va, pa, PTE_R | PTE_W | PTE_U | PTE_A | PTE_D);
+            if i == 0 {
+                top_pa = pa;
+            }
         }
 
-        // 构造初始栈（argc/argv/envp/auxv）
+        // 构造初始栈（argc/argv/envp/auxv）。写物理地址（栈顶页，内核身份映射可直写）
         let phdr_va = loaded.phdr;
         let phnum = loaded.phnum;
         let entry = loaded.entry;
-        let user_sp = build_init_stack(&pt, &["program".to_string()], &[], phdr_va, phnum, 0, entry);
+        let user_sp = build_init_stack(top_pa, &["program".to_string()], &[], phdr_va, phnum, 0, entry);
 
         // 内核栈
         let mut kstack_base = 0usize;
