@@ -105,8 +105,8 @@ pub fn init() {
         SOCKETS = Some(SocketSet::new(Vec::new()));
 
         // 创建监听 socket
-        let rx = Box::leak(Vec::with_capacity(8192).into_boxed_slice());
-        let tx = Box::leak(Vec::with_capacity(8192).into_boxed_slice());
+        let rx = Box::leak(vec![0u8; 16384].into_boxed_slice());
+        let tx = Box::leak(vec![0u8; 16384].into_boxed_slice());
         let mut sock = TcpSocket::new(SocketBuffer::new(rx), SocketBuffer::new(tx));
         let _ = sock.listen(LISTEN_PORT);
         let h = SOCKETS.as_mut().unwrap().add(sock);
