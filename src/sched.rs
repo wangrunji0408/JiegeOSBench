@@ -223,7 +223,9 @@ pub fn run_first_task() -> ! {
             let next_root = unsafe { (*nptr).root_pa };
             s.current = next;
             CURRENT_PROC.store(nptr as usize, Ordering::SeqCst);
+            crate::println!("[sched] before set_satp root={:#x}", next_root);
             set_satp_for(Some(next_root));
+            crate::println!("[sched] after set_satp");
             unsafe { SCHED.unlock(); }
             crate::println!("[sched] starting first process (slot {})", next);
             let dummy = unsafe { &mut IDLE_CTX as *mut TaskContext };
