@@ -1,0 +1,17 @@
+[package]
+name = "ijiege-os"
+version = "0.1.0"
+edition = "2021"
+authors = ["智能杰哥"]
+
+[[bin]]
+name = "kernel"
+path = "src/main.rs"
+
+[dependencies]
+# 无外部依赖，纯 core/alloc
+
+[profile.release]
+opt-level = 3
+debug = true
+lto = false
