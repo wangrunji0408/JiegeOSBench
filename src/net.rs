@@ -307,10 +307,10 @@ unsafe fn setup_queue(base: usize, idx: usize, vq: &VirtQueue) {
     crate::println!("[net] queue {} nmax={} n={} pfn={:#x}", idx, nmax, n, vq.base_pa >> 12);
     reg_w(base, REG_QUEUE_NUM, n as u32);
     reg_w(base, REG_QUEUE_ALIGN, 4096);
-    // 纯 legacy：只写 QueuePFN 激活队列（不要写 modern 寄存器，会让设备切换模式）
+    // 纯 legacy：QueuePFN = 物理地址 >> 12（virtio legacy spec）
     reg_w(base, REG_QUEUE_PFN, (vq.base_pa >> 12) as u32);
     let pfn_back = reg_r(base, REG_QUEUE_PFN);
-    crate::println!("[net] queue {} pfn_back={:#x}", idx, pfn_back);
+    crate::println!("[net] queue {} pfn_back={:#x} (wrote {:#x})", idx, pfn_back, vq.base_pa >> 12);
 }
 
 /// 向 RX 队列投递空缓冲
