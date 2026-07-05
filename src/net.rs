@@ -162,6 +162,13 @@ unsafe fn reg_r(base: usize, off: usize) -> u32 {
 
 pub fn init() {
     unsafe {
+        // 启用 PLIC source 8（virtio-net @ 10008000 的中断）给 S-mode
+        let plic = 0x0c00_0000usize;
+        write_volatile((plic + 8 * 4) as *mut u32, 1); // priority
+        let enable = read_volatile((plic + 0x2000) as *const u32) | (1 << 8);
+        write_volatile((plic + 0x2000) as *mut u32, enable); // S-mode enable
+        write_volatile((plic + 0x20_0000) as *mut u32, 0); // S-mode threshold
+
         for i in 0..32usize {
             let base = 0x1000_1000 + i * 0x1000;
             let magic = reg_r(base, REG_MAGIC);
