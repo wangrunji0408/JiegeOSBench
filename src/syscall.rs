@@ -409,7 +409,6 @@ fn sys_mmap(addr: usize, length: usize, _prot: usize, _flags: usize, _fd: usize,
 }
 
 fn sys_close(fd: usize) -> isize {
-    let p = match current_process() {
         Some(p) => p,
         None => return -3,
     };
