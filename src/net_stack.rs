@@ -119,7 +119,10 @@ pub fn poll() {
 }
 
 fn new_sock() -> TcpSocket<'static> {
-    TcpSocket::new(vec![0u8; 16384], vec![0u8; 16384])
+    TcpSocket::new(
+        SocketBuffer::new(vec![0u8; 16384]),
+        SocketBuffer::new(vec![0u8; 16384]),
+    )
 }
 
 /// 创建一个 TCP socket，返回内核 sock id
