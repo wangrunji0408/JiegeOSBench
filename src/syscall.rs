@@ -220,7 +220,7 @@ pub fn do_syscall(cx: &mut TrapContext) {
         SYS_epoll_create1 => crate::net_stack::epoll_create(),
         SYS_epoll_ctl => crate::net_stack::epoll_ctl(a0, a1, a2, a3),
         SYS_epoll_pwait => crate::net_stack::epoll_wait(a0, a1, a2),
-        SYS_eventfd2 => 0, // 占位 fd=0
+        SYS_eventfd2 => -38, // ENOSYS，nginx 跳过 eventfd
         SYS_pipe2 => -38,
         SYS_dup3 => sys_dup3(a0, a1),
         SYS_madvise => 0,
