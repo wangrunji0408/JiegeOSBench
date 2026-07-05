@@ -99,6 +99,14 @@ impl FrameAllocator {
         self.set_bit(off, false);
     }
 
+    /// 按物理地址标记某帧已用（用于预留堆等区域）
+    pub fn mark_used_pa(&self, pa: usize) {
+        let off = pa_to_pfn(pa).saturating_sub(self.base_pfn);
+        if off < self.num_frames {
+            self.mark_used(off);
+        }
+    }
+
     /// 分配一个 4KB 物理页帧，返回其物理地址；无可用则 None。
     pub fn alloc(&self) -> Option<usize> {
         if !self.inited.load(Ordering::SeqCst) {
