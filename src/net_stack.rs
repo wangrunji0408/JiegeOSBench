@@ -117,6 +117,7 @@ pub fn init() {
     // 发送 gratuitous ARP 让 slirp 网关学习本机 MAC
     crate::net::send_gratuitous_arp();
     crate::net::send_gratuitous_arp();
+    crate::net::dump_tx();
 }
 
 pub fn poll() {
