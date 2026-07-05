@@ -156,22 +156,32 @@ pub fn listen_socket(id: usize, port: u16) -> bool {
     }
 }
 
-/// accept：阻塞直到有连接，返回新连接的 sock id
-pub fn accept_socket(listen_id: usize) -> Option<usize> {
+/// accept：阻塞直到 listen_id 的 socket 进入 Established。
+/// 把已连接 socket 移到新 id 返回，listen_id 接管一个新 listener 继续 listen 同端口。
+pub fn accept_socket(listen_id: usize, port: u16) -> Option<usize> {
     loop {
         poll();
         unsafe {
             let sockets = SOCKETS.as_mut()?;
-            let h = get_handle(listen_id)?;
+            let h = match get_handle(listen_id) {
+                Some(h) => h,
+                None => return None,
+            };
             let s = sockets.get_mut::<TcpSocket>(h);
             if s.state() == TcpState::Established {
-                // listen socket 接受了连接，本身变 Established
-                // 创建新 socket id 占位，原 id 作为已连接流返回
-                let new_id = new_tcp_socket()?;
-                // 把原 handle 从映射移除，赋给新连接；新 socket 重新 listen
-                // 这里：listen_id 的 handle 现在是已连接，返回它；new_id 用于后续 listen
-                // 但调用方需要 new_id re-listen。简化：返回 listen_id 作为流，并标记
-                return Some(listen_id);
+                // 创建新 listener socket
+                let new_sock = TcpSocket::new(tcp_buffer(), tcp_buffer());
+                let new_h = sockets.add(new_sock);
+                let _ = sockets.get_mut::<TcpSocket>(new_h).listen(port);
+                // 分配一个新 id 给新 listener
+                let new_listener_id = SOCK_MAP.len();
+                SOCK_MAP.push(Some(new_h));
+                // 互换：listen_id 指向新 listener，new_listener_id 指向已连接的 h
+                let tmp = SOCK_MAP[listen_id];
+                SOCK_MAP[listen_id] = SOCK_MAP[new_listener_id];
+                SOCK_MAP[new_listener_id] = tmp;
+                // 返回 new_listener_id（已连接流）
+                return Some(new_listener_id);
             }
         }
     }
