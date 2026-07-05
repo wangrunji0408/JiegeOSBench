@@ -222,18 +222,23 @@ unsafe fn init_device(base: usize) -> bool {
 unsafe fn init_device_modern(base: usize) -> bool {
     reg_w(base, REG_STATUS, 0);
     reg_w(base, REG_STATUS, S_ACK | S_DRIVER);
-    let feat = reg_r(base, REG_DEVICE_FEATURES);
-    // 选 deviceFeatures 第 0 页（bit 0..31）
-    reg_w(base, 0x014, 0); // DeviceFeaturesSel
+    // 读 device features word0
+    reg_w(base, 0x014, 0); // DeviceFeaturesSel = 0
     let feat0 = reg_r(base, REG_DEVICE_FEATURES);
-    let want: u32 = (1 << 5) | (1 << 16); // MAC + STATUS
-    let negotiated = feat0 & want;
-    reg_w(base, 0x024, 0); // DriverFeaturesSel
-    reg_w(base, REG_DRIVER_FEATURES, negotiated);
+    reg_w(base, 0x014, 1); // word1
+    let feat1 = reg_r(base, REG_DEVICE_FEATURES);
+    let want0: u32 = (1 << 5) | (1 << 16); // MAC + STATUS
+    let want1: u32 = 1; // VIRTIO_F_VERSION_1
+    let neg0 = feat0 & want0;
+    let neg1 = feat1 & want1;
+    reg_w(base, 0x024, 0); // DriverFeaturesSel = 0
+    reg_w(base, REG_DRIVER_FEATURES, neg0);
+    reg_w(base, 0x024, 1);
+    reg_w(base, REG_DRIVER_FEATURES, neg1);
     reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_FEATURES_OK);
     let st = reg_r(base, REG_STATUS);
     if st & S_FEATURES_OK == 0 {
-        crate::println!("[net] modern FEATURES_OK not accepted");
+        crate::println!("[net] modern FEATURES_OK not accepted (feat0={:#x} feat1={:#x})", feat0, feat1);
         return false;
     }
 
