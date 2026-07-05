@@ -213,6 +213,7 @@ unsafe fn setup_queue(base: usize, idx: usize, vq: &VirtQueue) {
     reg_w(base, REG_QUEUE_SEL, idx as u32);
     let nmax = reg_r(base, REG_QUEUE_NUM_MAX) as usize;
     let n = nmax.min(vq.num);
+    crate::println!("[net] queue {} nmax={} n={} pfn={:#x}", idx, nmax, n, vq.base_pa >> 12);
     reg_w(base, REG_QUEUE_NUM, n as u32);
     reg_w(base, REG_QUEUE_ALIGN, 4096);
     reg_w(base, REG_QUEUE_PFN, (vq.base_pa >> 12) as u32);
