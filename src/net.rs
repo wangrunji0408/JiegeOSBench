@@ -251,7 +251,47 @@ pub fn fill_rx_with_base(vq: &mut VirtQueue, base: usize) {
         posted += 1;
     }
     crate::println!("[net] posted {} rx buffers, avail idx={}", posted, unsafe{(*vq.avail).idx});
-    unsafe { reg_w(base, REG_QUEUE_NOTIFY, 0); }
+    unsafe {
+        core::arch::asm!("fence ow, ow");
+        reg_w(base, REG_QUEUE_NOTIFY, 0);
+    }
+}
+
+/// 重新通知 RX 队列（设备可能错过初始 notify）
+pub fn kick_rx() {
+    unsafe {
+        if let Some(d) = NET.as_mut() {
+            core::arch::asm!("fence ow, ow");
+            reg_w(d.base, REG_QUEUE_NOTIFY, 0);
+        }
+    }
+}
+
+/// 发送一个 gratuitous ARP，让 slirp 网关学习本机 MAC
+pub fn send_gratuitous_arp() {
+    let mac = match unsafe { NET.as_ref() } { Some(d) => d.mac, None => return };
+    let mut pkt = [0u8; 42];
+    // 以太网头
+    pkt[0..6].copy_from_slice(&[0xff; 6]); // 广播
+    pkt[6..12].copy_from_slice(&mac);
+    pkt[12] = 0x08; pkt[13] = 0x06; // ARP
+    // ARP
+    pkt[14] = 0x00; pkt[15] = 0x01; // hardware = ethernet
+    pkt[16] = 0x08; pkt[17] = 0x00; // proto = ipv4
+    pkt[18] = 6; pkt[19] = 4; // HW len, proto len
+    pkt[20] = 0x00; pkt[21] = 0x01; // opcode = request
+    pkt[22..28].copy_from_slice(&mac);
+    pkt[28..32].copy_from_slice(&IFACE_IP);
+    pkt[32..38].copy_from_slice(&mac);
+    pkt[38..42].copy_from_slice(&IFACE_IP);
+    send_packet_raw(&pkt);
+}
+
+const IFACE_IP: [u8; 4] = [10, 0, 2, 15];
+
+/// 发送原始以太网帧（含 net_hdr 前缀由 send_packet 处理）
+fn send_packet_raw(data: &[u8]) {
+    send_packet(data);
 }
 
 /// 发送一个以太网帧（含 net_hdr）。返回是否成功投递。
