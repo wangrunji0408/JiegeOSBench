@@ -1,46 +1,43 @@
-//! 轮转调度器。时钟中断驱动，每个时间片切换一次任务。
+//! 进程调度器：轮转调度用户进程，无就绪进程时切回 idle。
 
 use core::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use alloc::boxed::Box;
-use crate::task::{Task, TaskContext, TaskState};
-use crate::trap::TrapContext;
+use crate::task::{TaskContext, TaskState};
+use crate::process::Process;
+use crate::mm::page_table::{kernel_pt, set_satp};
 
-const MAX_TASKS: usize = 32;
-const TIME_SLICE: u64 = 2; // 每 2 个 tick（20ms）切换一次
+const MAX_PROCS: usize = 32;
+const TIME_SLICE: u64 = 3; // 每 3 tick 切换
 
 struct Scheduler {
-    tasks: [Option<Box<Task>>; MAX_TASKS],
-    current: usize, // 当前运行任务索引；MAX_TASKS 表示无（idle）
-    next_id: usize,
+    procs: [Option<Box<Process>>; MAX_PROCS],
+    current: usize, // 当前进程索引；MAX_PROCS 表示 idle
 }
 
 impl Scheduler {
     const fn new() -> Self {
-        const NONE: Option<Box<Task>> = None;
+        const NONE: Option<Box<Process>> = None;
         Self {
-            tasks: [NONE; MAX_TASKS],
-            current: MAX_TASKS,
-            next_id: 0,
+            procs: [NONE; MAX_PROCS],
+            current: MAX_PROCS,
         }
     }
 
-    /// 找下一个 Ready 任务的索引（从 current+1 起轮转）
     fn pick_next(&self) -> Option<usize> {
-        if self.current == MAX_TASKS {
-            // 从 0 找
-            for i in 0..MAX_TASKS {
-                if let Some(t) = &self.tasks[i] {
-                    if t.state == TaskState::Ready {
+        if self.current == MAX_PROCS {
+            for i in 0..MAX_PROCS {
+                if let Some(p) = &self.procs[i] {
+                    if p.state == TaskState::Ready {
                         return Some(i);
                     }
                 }
             }
             return None;
         }
-        for k in 1..=MAX_TASKS {
-            let i = (self.current + k) % MAX_TASKS;
-            if let Some(t) = &self.tasks[i] {
-                if t.state == TaskState::Ready {
+        for k in 1..=MAX_PROCS {
+            let i = (self.current + k) % MAX_PROCS;
+            if let Some(p) = &self.procs[i] {
+                if p.state == TaskState::Ready {
                     return Some(i);
                 }
             }
@@ -49,7 +46,6 @@ impl Scheduler {
     }
 }
 
-// 自旋锁
 use core::cell::UnsafeCell;
 struct Spinlock<T> {
     locked: AtomicU64,
@@ -82,30 +78,39 @@ impl<T> Spinlock<T> {
 
 static SCHED: Spinlock<Scheduler> = Spinlock::new(Scheduler::new());
 static TICK_COUNT: AtomicU64 = AtomicU64::new(0);
-static CURRENT_CTX_PTR: AtomicUsize = AtomicUsize::new(0); // 当前任务 task_ctx 指针
+static mut IDLE_CTX: TaskContext = TaskContext::zero();
 
-/// 注册一个内核任务
-pub fn spawn(entry: usize, name: &'static str) -> usize {
+/// 注册一个进程
+pub fn spawn(elf: &[u8], name: &'static str) -> usize {
     let s = SCHED.lock();
-    let id = s.next_id;
-    s.next_id += 1;
-    // 找空槽
+    let pid = next_pid();
+    let proc = match Process::from_elf(elf, pid, name) {
+        Some(p) => p,
+        None => {
+            unsafe { SCHED.unlock(); }
+            crate::println!("[sched] failed to load process '{}'", name);
+            return usize::MAX;
+        }
+    };
     let mut slot = None;
-    for i in 0..MAX_TASKS {
-        if s.tasks[i].is_none() {
+    for i in 0..MAX_PROCS {
+        if s.procs[i].is_none() {
             slot = Some(i);
             break;
         }
     }
-    let i = slot.expect("too many tasks");
-    let task = Task::new_kernel(id, entry, name);
-    s.tasks[i] = Some(task);
+    let i = slot.expect("too many procs");
+    s.procs[i] = Some(proc);
     unsafe { SCHED.unlock(); }
-    crate::println!("[sched] spawned task #{} '{}' @ slot {}", id, name, i);
-    id
+    crate::println!("[sched] spawned pid={} '{}' @ slot {}", pid, name, i);
+    pid
 }
 
-/// 时钟中断时调用
+fn next_pid() -> usize {
+    static NEXT: AtomicUsize = AtomicUsize::new(1);
+    NEXT.fetch_add(1, Ordering::SeqCst)
+}
+
 pub fn on_tick() {
     let t = TICK_COUNT.fetch_add(1, Ordering::SeqCst);
     if t % TIME_SLICE != 0 {
@@ -114,99 +119,114 @@ pub fn on_tick() {
     schedule();
 }
 
+fn set_satp_for(proc_root_pa: Option<usize>) {
+    let root = proc_root_pa.unwrap_or_else(|| kernel_pt().root_pa);
+    unsafe { set_satp((8usize << 60) | (root >> 12)); }
+}
+
 fn schedule() {
     let s = SCHED.lock();
     let cur = s.current;
-    // 当前任务若 Running 则置回 Ready
-    if cur != MAX_TASKS {
-        if let Some(t) = &s.tasks[cur] {
-            if t.state == TaskState::Running {
-                // 借用冲突：用 unsafe 设置
+    // 当前进程置回 Ready
+    if cur != MAX_PROCS {
+        if let Some(p) = s.procs[cur].as_ref() {
+            let pp = p.as_ref() as *const Process as *mut Process;
+            if unsafe { (*pp).state } == TaskState::Running {
+                unsafe { (*pp).state = TaskState::Ready; }
             }
         }
     }
     let next = match s.pick_next() {
         Some(n) => n,
         None => {
+            // 无就绪进程：切回 idle（若已在 idle 则直接返回）
+            if cur == MAX_PROCS {
+                unsafe { SCHED.unlock(); }
+                return;
+            }
+            s.current = MAX_PROCS;
+            // 切回 idle：用内核页表
+            set_satp_for(None);
+            let idle_ptr = unsafe { &mut IDLE_CTX as *mut TaskContext };
             unsafe { SCHED.unlock(); }
-            return; // 无其他任务，继续当前
+            unsafe { crate::task::switch_to(idle_ptr, idle_ptr); }
+            // 不会到这（idle_ptr 同时作 cur/next 仅作占位，实际见 run_idle 路径）
+            return;
         }
     };
     if next == cur {
         unsafe { SCHED.unlock(); }
         return;
     }
-    // 取得两个 task_ctx 指针
-    let cur_ctx_ptr = if cur != MAX_TASKS {
-        let t = s.tasks[cur].as_ref().unwrap();
-        // 标记 Ready
-        let tptr = t.as_ref() as *const Task as *mut Task;
-        unsafe { (*tptr).state = TaskState::Ready; }
-        &unsafe { &*tptr }.task_ctx as *const TaskContext as *mut TaskContext
-    } else {
-        // 从 idle 启动：用引导栈上的 dummy 上下文（仅一次性）
-        // 用静态 dummy
-        static mut DUMMY: TaskContext = TaskContext::zero();
-        unsafe { &mut DUMMY as *mut TaskContext }
-    };
-    let next_task_ptr = s.tasks[next].as_ref().unwrap().as_ref() as *const Task as *mut Task;
-    let next_ctx_ptr = unsafe { &mut (*next_task_ptr).task_ctx as *mut TaskContext };
-    unsafe { (*next_task_ptr).state = TaskState::Running; }
-    s.current = next;
-    CURRENT_CTX_PTR.store(next_ctx_ptr as usize, Ordering::SeqCst);
-    unsafe { SCHED.unlock(); }
 
-    // 执行切换
-    unsafe {
-        crate::task::switch_to(cur_ctx_ptr, next_ctx_ptr);
-    }
+    let cur_ctx_ptr: *mut TaskContext = if cur != MAX_PROCS {
+        let p = s.procs[cur].as_ref().unwrap();
+        &(p.as_ref().task_ctx) as *const TaskContext as *mut TaskContext
+    } else {
+        unsafe { &mut IDLE_CTX as *mut TaskContext }
+    };
+    let next_proc_ptr = s.procs[next].as_ref().unwrap().as_ref() as *const Process as *mut Process;
+    let next_ctx_ptr = unsafe { &mut (*next_proc_ptr).task_ctx as *mut TaskContext };
+    unsafe { (*next_proc_ptr).state = TaskState::Running; }
+    let next_root = unsafe { (*next_proc_ptr).root_pa };
+    s.current = next;
+    set_satp_for(Some(next_root));
+    unsafe { SCHED.unlock(); }
+    unsafe { crate::task::switch_to(cur_ctx_ptr, next_ctx_ptr); }
 }
 
-/// 首次进入调度：从 idle/主上下文切换到第一个任务
+/// 首次进入调度：切到第一个就绪进程
 pub fn run_first_task() -> ! {
     let s = SCHED.lock();
-    let next = s.pick_next().expect("no task to run");
-    let next_task_ptr = s.tasks[next].as_ref().unwrap().as_ref() as *const Task as *mut Task;
-    let next_ctx_ptr = unsafe { &mut (*next_task_ptr).task_ctx as *mut TaskContext };
-    unsafe { (*next_task_ptr).state = TaskState::Running; }
+    let next = s.pick_next().expect("no process to run");
+    let nptr = s.procs[next].as_ref().unwrap().as_ref() as *const Process as *mut Process;
+    let next_ctx_ptr = unsafe { &mut (*nptr).task_ctx as *mut TaskContext };
+    unsafe { (*nptr).state = TaskState::Running; }
+    let next_root = unsafe { (*nptr).root_pa };
     s.current = next;
-    CURRENT_CTX_PTR.store(next_ctx_ptr as usize, Ordering::SeqCst);
+    set_satp_for(Some(next_root));
     unsafe { SCHED.unlock(); }
-
-    static mut DUMMY: TaskContext = TaskContext::zero();
-    let dummy = unsafe { &mut DUMMY as *mut TaskContext };
-    crate::println!("[sched] starting first task (slot {})", next);
-    unsafe {
-        crate::task::switch_to(dummy, next_ctx_ptr);
-    }
-    // 不应返回
-    crate::println!("[sched] ERROR: returned from first switch");
-    crate::sbi::shutdown();
+    crate::println!("[sched] starting first process (pid at slot {})", next);
+    let dummy = unsafe { &mut IDLE_CTX as *mut TaskContext };
+    unsafe { crate::task::switch_to(dummy, next_ctx_ptr); }
+    // 切回 idle 时会回到这里
+    crate::println!("[sched] idle context resumed");
+    idle_loop();
 }
 
-/// 当前任务退出
+fn idle_loop() -> ! {
+    loop {
+        unsafe { core::arch::asm!("wfi"); }
+    }
+}
+
+/// 当前进程退出
 pub fn exit_current(code: i32) -> ! {
     let s = SCHED.lock();
     let cur = s.current;
-    if cur != MAX_TASKS {
-        let t = s.tasks[cur].as_ref().unwrap();
-        let tptr = t.as_ref() as *const Task as *mut Task;
-        unsafe { (*tptr).state = TaskState::Exited; }
-        crate::println!("[sched] task '{}' exited (code={})", unsafe {(*tptr).name}, code);
+    if cur != MAX_PROCS {
+        let p = s.procs[cur].as_ref().unwrap();
+        let pp = p.as_ref() as *const Process as *mut Process;
+        unsafe { (*pp).state = TaskState::Exited; }
+        crate::println!("[sched] pid {} '{}' exited (code={})", unsafe {(*pp).pid}, unsafe {(*pp).name}, code);
     }
     unsafe { SCHED.unlock(); }
-    // 切换走，不再返回
     schedule();
-    crate::sbi::shutdown();
+    // 若无其他进程，回到 idle
+    idle_loop();
 }
 
-/// 供 syscall 路径占位使用
-pub fn current_trap_ctx() -> *mut TrapContext {
-    // 当前任务上下文指针的 sp 字段指向其 TrapContext
-    let p = CURRENT_CTX_PTR.load(Ordering::SeqCst) as *const TaskContext;
-    if p.is_null() {
-        core::ptr::null_mut()
-    } else {
-        unsafe { (*p).sp as *mut TrapContext }
+/// 取当前进程（可能在 syscall 中使用）
+pub fn current_process() -> Option<&'static mut Process> {
+    let s = SCHED.lock();
+    let cur = s.current;
+    unsafe { SCHED.unlock(); }
+    if cur == MAX_PROCS {
+        return None;
     }
+    // 重新获取并返回裸指针（避免持有锁）
+    let s = SCHED.lock();
+    let p = s.procs[cur].as_ref().unwrap().as_ref() as *const Process as *mut Process;
+    unsafe { SCHED.unlock(); }
+    unsafe { Some(&mut *p) }
 }
