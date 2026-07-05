@@ -47,6 +47,7 @@ pub struct Task {
 
 extern "C" {
     fn __restore();
+    fn __switch(cur: *mut TaskContext, next: *const TaskContext);
 }
 
 impl Task {
