@@ -218,18 +218,3 @@ pub fn exit_current(code: i32) -> ! {
     // 若无其他进程，回到 idle
     idle_loop();
 }
-
-/// 取当前进程（可能在 syscall 中使用）
-pub fn current_process() -> Option<&'static mut Process> {
-    let s = SCHED.lock();
-    let cur = s.current;
-    unsafe { SCHED.unlock(); }
-    if cur == MAX_PROCS {
-        return None;
-    }
-    // 重新获取并返回裸指针（避免持有锁）
-    let s = SCHED.lock();
-    let p = s.procs[cur].as_ref().unwrap().as_ref() as *const Process as *mut Process;
-    unsafe { SCHED.unlock(); }
-    unsafe { Some(&mut *p) }
-}
