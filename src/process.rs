@@ -58,7 +58,8 @@ impl SockTable {
         Self { entries }
     }
     pub fn alloc(&mut self, s: SockFd) -> usize {
-        for i in 0..self.entries.len() {
+        // 从 3 开始，避开 stdin/stdout/stderr
+        for i in 3..self.entries.len() {
             if self.entries[i].is_none() {
                 self.entries[i] = Some(s);
                 return i;
