@@ -20,6 +20,14 @@ const REG_INT_STATUS: usize = 0x060;
 const REG_INT_ACK: usize = 0x064;
 const REG_STATUS: usize = 0x070;
 const REG_CONFIG: usize = 0x100;
+// modern (v2) 寄存器
+const REG_QUEUE_READY: usize = 0x044;
+const REG_QUEUE_DESC_LOW: usize = 0x080;
+const REG_QUEUE_DESC_HIGH: usize = 0x084;
+const REG_QUEUE_DRIVER_LOW: usize = 0x088;
+const REG_QUEUE_DRIVER_HIGH: usize = 0x08c;
+const REG_QUEUE_DEVICE_LOW: usize = 0x090;
+const REG_QUEUE_DEVICE_HIGH: usize = 0x094;
 
 const S_ACK: u32 = 1;
 const S_DRIVER: u32 = 2;
