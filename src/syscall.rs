@@ -67,6 +67,36 @@ unsafe fn user_write(dst: usize, src: *const u8, n: usize) {
     core::ptr::copy_nonoverlapping(src, dst as *mut u8, n);
 }
 
+/// 从用户空间读 NUL 结尾字符串
+unsafe fn read_user_string(ptr: usize, max: usize) -> Option<alloc::string::String> {
+    use alloc::string::String;
+    let mut buf = [0u8; 256];
+    let mut len = 0;
+    while len < max && len < buf.len() {
+        let b = core::ptr::read_volatile((ptr + len) as *const u8);
+        if b == 0 {
+            break;
+        }
+        buf[len] = b;
+        len += 1;
+    }
+    if len == 0 && max > 0 {
+        // 看第一个字节
+        let b = core::ptr::read_volatile(ptr as *const u8);
+        if b != 0 {
+            buf[0] = b;
+            len = 1;
+        }
+    }
+    Some(String::from(core::str::from_utf8(&buf[..len]).unwrap_or("")))
+}
+
+/// 取当前进程的 fd 表（syscall 路径）
+fn with_fd_table<R>(f: impl FnOnce(&mut crate::vfs::FdTable) -> R) -> R {
+    let p = current_process().expect("no current process in fd syscall");
+    f(&mut p.fd_table)
+}
+
 #[no_mangle]
 pub fn do_syscall(cx: &mut TrapContext) {
     let num = cx.x[17];
