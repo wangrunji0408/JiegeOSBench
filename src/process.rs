@@ -47,6 +47,7 @@ pub enum SockKind {
     Pipe,        // pipe 占位
 }
 
+#[derive(Clone)]
 pub struct SockTable {
     pub entries: Vec<Option<SockFd>>,
 }
