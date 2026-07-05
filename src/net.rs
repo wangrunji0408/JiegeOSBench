@@ -221,6 +221,8 @@ unsafe fn setup_queue(base: usize, idx: usize, vq: &VirtQueue) {
     reg_w(base, REG_QUEUE_NUM, n as u32);
     reg_w(base, REG_QUEUE_ALIGN, 4096);
     reg_w(base, REG_QUEUE_PFN, (vq.base_pa >> 12) as u32);
+    let pfn_back = reg_r(base, REG_QUEUE_PFN);
+    crate::println!("[net] queue {} pfn_back={:#x}", idx, pfn_back);
 }
 
 /// 向 RX 队列投递空缓冲
