@@ -2,6 +2,7 @@
 #![no_std]
 #![no_main]
 #![allow(clippy::missing_safety_doc)]
+#![allow(dead_code)]
 
 extern crate alloc;
 
