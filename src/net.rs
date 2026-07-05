@@ -218,6 +218,9 @@ unsafe fn init_device(base: usize) -> bool {
     for i in 0..6 {
         mac[i] = read_volatile((base + REG_CONFIG + i) as *const u8);
     }
+    // 链路状态（协商了 STATUS 时，config offset 6, bit0=LINK_UP）
+    let link_status = read_volatile((base + REG_CONFIG + 6) as *const u8);
+    crate::println!("[net] link_status={:#x}", link_status);
 
     NET = Some(NetDriver { base, rx, tx, mac });
 
