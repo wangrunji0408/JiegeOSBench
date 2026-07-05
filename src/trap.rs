@@ -8,6 +8,7 @@ global_asm!(include_str!("trap.S"));
 /// Trap 上下文，与 trap.S 的栈布局严格对应（36 字段 = 288 字节，栈分配 304）。
 /// 偏移：x[0..32] -> 0..31*8，sepc=32*8, sstatus=33*8, stval=34*8, scause=35*8
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct TrapContext {
     pub x: [usize; 32],
     pub sepc: usize,
