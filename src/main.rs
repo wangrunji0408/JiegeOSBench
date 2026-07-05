@@ -33,7 +33,7 @@ _start:
     .section .bss.stack,"aw",@nobits
     .globl __boot_stack
 __boot_stack:
-    .space 1024 * 64
+    .space 65536
     .globl __boot_stack_top
 __boot_stack_top:
 "#
