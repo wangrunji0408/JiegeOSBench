@@ -87,7 +87,10 @@ pub extern "C" fn rust_main() -> ! {
 
     // 加载并运行用户态测试程序
     static HELLO_ELF: &[u8] = include_bytes!("../user/hello.elf");
+    static LOOP_ELF: &[u8] = include_bytes!("../user/loop.elf");
     sched::spawn(HELLO_ELF, "hello");
+    sched::spawn(LOOP_ELF, "loopA");
+    sched::spawn(LOOP_ELF, "loopB");
 
     println!("[boot] entering scheduler...");
     sched::run_first_task();
