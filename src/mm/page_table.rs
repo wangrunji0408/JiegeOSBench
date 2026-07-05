@@ -233,8 +233,8 @@ pub fn init_kernel() {
 
     // 身份映射 MMIO 区域（UART 等）：0x10000000 一段
     pt.identity_map_huge_range(0x1000_0000, HUGE_PAGE_SIZE, krw);
-    // PLIC @ 0x0c000000
-    pt.identity_map_huge_range(0x0c00_0000, HUGE_PAGE_SIZE, krw);
+    // PLIC @ 0x0c000000, 4MB
+    pt.identity_map_huge_range(0x0c00_0000, HUGE_PAGE_SIZE * 2, krw);
 
     // 切换到新页表
     unsafe {
