@@ -298,7 +298,7 @@ pub fn epoll_ctl(epfd: usize, op: usize, fd: usize, event: usize) -> isize {
     };
     let sock_id = match sock_id {
         Some(s) => s,
-        None => return -9,
+        None => return 0, // 对非 socket fd（如已关闭的 fd）静默返回成功
     };
     unsafe {
         let inst = match EPOLL_INSTANCES.get_mut(epoll_id).and_then(|x| x.as_mut()) {
