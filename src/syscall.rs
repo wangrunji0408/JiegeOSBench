@@ -192,6 +192,27 @@ pub fn do_syscall(cx: &mut TrapContext) {
 }
 
 fn sys_write(fd: usize, buf: usize, count: usize) -> isize {
+    // socket fd?
+    let sock_id = {
+        let p = match current_process() { Some(p) => p, None => return -3 };
+        p.sock_table.get(fd).map(|s| s.handle)
+    };
+    if let Some(id) = sock_id {
+        let mut tmp = [0u8; 4096];
+        let mut total = 0usize;
+        let mut p = buf;
+        let mut remaining = count;
+        while remaining > 0 {
+            let n = remaining.min(tmp.len());
+            unsafe { user_read(tmp.as_mut_ptr(), p, n); }
+            let sent = crate::net_stack::socket_send(id, &tmp[..n]);
+            if sent == 0 { break; }
+            p += sent;
+            remaining -= sent;
+            total += sent;
+        }
+        return total as isize;
+    }
     let mut tmp = [0u8; 512];
     let mut remaining = count;
     let mut p = buf;
