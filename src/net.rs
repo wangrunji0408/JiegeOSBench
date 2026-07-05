@@ -198,14 +198,13 @@ pub fn init() {
 }
 
 unsafe fn init_device(base: usize) -> bool {
-    reg_w(base, REG_STATUS, 0);
-    reg_w(base, REG_STATUS, S_ACK | S_DRIVER);
-    reg_w(base, 0x014, 0); // DeviceFeaturesSel = 0 (读 bit 0..31)
-    let feat = reg_r(base, REG_DEVICE_FEATURES);
-    let want: u32 = (1 << 0) | (1 << 1) | (1 << 5) | (1 << 16); // CSUM + GUEST_CSUM + MAC + STATUS
+    // 纯 legacy virtio-mmio 初始化，不碰任何 modern 寄存器
+    reg_w(base, REG_STATUS, 0);                       // reset
+    reg_w(base, REG_STATUS, S_ACK | S_DRIVER);        // ack + driver
+    let feat = reg_r(base, REG_DEVICE_FEATURES);       // legacy: 直接读 word0
+    let want: u32 = (1 << 0) | (1 << 1) | (1 << 5);    // CSUM + GUEST_CSUM + MAC
     let negotiated = feat & want;
-    reg_w(base, 0x024, 0); // DriverFeaturesSel = 0
-    reg_w(base, REG_DRIVER_FEATURES, negotiated);
+    reg_w(base, REG_DRIVER_FEATURES, negotiated);      // legacy: 直接写 word0
 
     let mut rx = match VirtQueue::new() { Some(q) => q, None => return false };
     let mut tx = match VirtQueue::new() { Some(q) => q, None => return false };
@@ -218,16 +217,13 @@ unsafe fn init_device(base: usize) -> bool {
     for i in 0..6 {
         mac[i] = read_volatile((base + REG_CONFIG + i) as *const u8);
     }
-    // 链路状态（协商了 STATUS 时，config offset 6, bit0=LINK_UP）
-    let link_status = read_volatile((base + REG_CONFIG + 6) as *const u8);
-    crate::println!("[net] link_status={:#x}", link_status);
 
     NET = Some(NetDriver { base, rx, tx, mac });
 
     // 先投递 RX 缓冲，再 DRIVER_OK
     fill_rx_with_base(&mut NET.as_mut().unwrap().rx, base);
 
-    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_DRIVER_OK | S_FEATURES_OK);
+    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_DRIVER_OK);
     let st = reg_r(base, REG_STATUS);
     crate::println!("[net] status={:#x} feat={:#x} neg={:#x}", st, feat, negotiated);
     true
