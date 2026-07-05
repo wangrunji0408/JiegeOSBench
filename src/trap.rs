@@ -57,6 +57,21 @@ impl TrapContext {
 
 const CAUSE_INTERRUPT_BIT: usize = 1 << (core::mem::size_of::<usize>() * 8 - 1);
 
+fn dump_ctx(cx: &TrapContext) {
+    println!(
+        "  ra={:#x} sp={:#x} gp={:#x} tp={:#x}",
+        cx.x[1], cx.x[2], cx.x[3], cx.x[4]
+    );
+    println!(
+        "  a0={:#x} a1={:#x} a2={:#x} a3={:#x} a4={:#x} a5={:#x} a6={:#x} a7={:#x}",
+        cx.x[10], cx.x[11], cx.x[12], cx.x[13], cx.x[14], cx.x[15], cx.x[16], cx.x[17]
+    );
+    println!(
+        "  s0={:#x} s1={:#x} s2={:#x} s3={:#x}",
+        cx.x[8], cx.x[9], cx.x[18], cx.x[19]
+    );
+}
+
 #[no_mangle]
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     let scause = cx.scause;
