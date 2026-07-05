@@ -416,6 +416,7 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) 
                 return count as isize;
             }
         }
+        // 超时检查
         if crate::timer::ticks().wrapping_sub(start_ticks) >= max_ticks as u64 {
             return 0;
         }
