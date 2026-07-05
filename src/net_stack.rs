@@ -115,6 +115,14 @@ pub fn poll() {
         let dev = DEV.as_mut().unwrap();
         let sockets = SOCKETS.as_mut().unwrap();
         let _ = iface.poll(now(), dev, sockets);
+        // 打印 listen socket 状态
+        if let Some(h) = get_handle(0) {
+            let s = sockets.get_mut::<TcpSocket>(h);
+            let st = s.state();
+            if st != TcpState::Listen {
+                crate::println!("[net] sock 0 state={:?}", st);
+            }
+        }
     }
 }
 
