@@ -180,16 +180,16 @@ pub fn clone_child(flags: usize, stack: usize, ptid: usize, _ctid: usize) -> isi
         },
         kstack_top: new_kstack_top,
         trap_ctx_ptr: ctx_ptr as usize,
-        root_pa: parent_root, // 共享地址空间
+        root_pa: parent_root,
         state: crate::task::TaskState::Ready,
         name: "nginx-worker",
         brk: parent_brk,
         brk_start: parent_brk_start,
-        next_mmap: parent_next_mmap,
         fd_table: crate::vfs::FdTable::new(),
         sock_table: crate::process::SockTable::new(),
         tid_address: if ptid != 0 { ptid } else { parent_tid_addr },
         set_child_tid: ptid,
+        next_mmap: parent_next_mmap,
     };
     // 找空槽
     let mut slot = None;
