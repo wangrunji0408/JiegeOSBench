@@ -1,178 +1,209 @@
-//! 内核堆分配器：基于空闲链表的变长分配器，支持分配/释放与合并。
-//! 后端内存位于 HEAP_START..HEAP_START+HEAP_SIZE（已身份映射）。
+//! 内核堆分配器：自旋锁 + 空闲链表，每个分配块带头部记录大小以便释放。
 
 use core::alloc::{GlobalAlloc, Layout};
+use core::cell::UnsafeCell;
 use core::ptr::null_mut;
-use crate::mm::{HEAP_START, HEAP_SIZE};
+use core::sync::atomic::{AtomicBool, Ordering};
+use crate::mm::{HEAP_START, HEAP_SIZE, PAGE_SIZE};
 use crate::mm::frame::FRAME_ALLOCATOR;
 
-/// 空闲块头部：size（含头）+ next 指针
 #[repr(C)]
 struct FreeBlock {
     size: usize,
-    next: Option<&'static mut FreeBlock>,
+    next: *mut FreeBlock,
 }
 
-pub struct Heap {
-    head: Option<&'static mut FreeBlock>,
+struct FreeList {
+    head: *mut FreeBlock,
 }
 
-impl Heap {
-    pub const fn new() -> Self {
-        Self { head: None }
+impl FreeList {
+    const fn new() -> Self {
+        Self { head: null_mut() }
     }
 
-    /// 初始化：把整个堆区域作为一个大空闲块
+    /// 初始化：把 [start, start+size) 作为单个大空闲块
     pub unsafe fn init(&mut self, start: usize, size: usize) {
         let block = start as *mut FreeBlock;
         (*block).size = size;
-        (*block).next = None;
-        self.head = Some(&mut *block);
+        (*block).next = null_mut();
+        self.head = block;
     }
 
     pub fn alloc(&mut self, layout: Layout) -> *mut u8 {
-        let size = layout.size().max(8).max(layout.align());
-        let size = (size + 7) & !7; // 8 字节对齐大小
+        let size = layout.size().max(16);
+        let align = layout.align();
+        let size = (size + 15) & !15; // 16 字节对齐大小
 
         let mut prev: *mut FreeBlock = null_mut();
-        let mut cur = match self.head.take() {
-            Some(h) => h as *mut FreeBlock,
-            None => return null_mut(),
-        };
-
-        loop {
-            let cur_block = unsafe { &mut *cur };
-            if cur_block.size >= size {
-                // 命中：若剩余空间能再放一个最小块，则分裂
-                if cur_block.size >= size + 24 {
-                    let rem_ptr = unsafe { (cur as *mut u8).add(size) } as *mut FreeBlock;
+        let mut cur = self.head;
+        while !cur.is_null() {
+            let cur_size = unsafe { (*cur).size };
+            if cur_size >= size {
+                // 找到合适块
+                if cur_size >= size + 32 {
+                    // 分裂
+                    let rem = unsafe { (cur as *mut u8).add(size) } as *mut FreeBlock;
                     unsafe {
-                        (*rem_ptr).size = cur_block.size - size;
-                        (*rem_ptr).next = cur_block.next.take();
+                        (*rem).size = cur_size - size;
+                        (*rem).next = (*cur).next;
                     }
-                    cur_block.size = size;
-                    // 重新挂回剩余
+                    unsafe { (*cur).size = size };
                     if prev.is_null() {
-                        self.head = unsafe { Some(&mut *rem_ptr) };
+                        self.head = rem;
                     } else {
-                        unsafe { (*prev).next = Some(&mut *rem_ptr) };
+                        unsafe { (*prev).next = rem };
                     }
                 } else {
                     // 整块分配
+                    let next = unsafe { (*cur).next };
                     if prev.is_null() {
-                        self.head = cur_block.next.take();
+                        self.head = next;
                     } else {
-                        unsafe { (*prev).next = cur_block.next.take() };
+                        unsafe { (*prev).next = next };
                     }
                 }
                 return cur as *mut u8;
             }
-            // 不够大，向后找
             prev = cur;
-            match cur_block.next.take() {
-                Some(n) => {
-                    // 把刚才 take 掉的 next 写回给 prev（因为我们只是借来遍历）
-                    unsafe { (*prev).next = Some(n) };
-                    cur = n as *mut FreeBlock;
-                }
-                None => {
-                    self.head = Some(unsafe { &mut *prev });
-                    return null_mut();
-                }
-            }
+            cur = unsafe { (*cur).next };
         }
+        null_mut()
     }
 
-    pub fn dealloc(&mut self, ptr: *mut u8, _layout: Layout) {
+    /// 释放：把 [ptr, ptr+size) 当作空闲块插入并按地址排序合并
+    pub unsafe fn free(&mut self, ptr: *mut u8, size: usize) {
         let block = ptr as *mut FreeBlock;
-        unsafe {
-            (*block).size = (*block).size; // 大小未知（未保存），用占位
-            // 实际上我们在分配时未保存 size，这里用 0 标记；见下方 DeallocNode 策略
+        (*block).size = size;
+        // 按地址升序插入
+        let mut prev: *mut FreeBlock = null_mut();
+        let mut cur = self.head;
+        while !cur.is_null() && (cur as usize) < (block as usize) {
+            prev = cur;
+            cur = (*cur).next;
         }
-        // 简化：直接把释放的块头插。但 size 未知 → 采用下面的伴随头策略。
-        // 为正确性，我们改用伴随元数据（见下面的实现）。
-        self.head = unsafe { Some(&mut *block) };
+        (*block).next = cur;
+        if prev.is_null() {
+            self.head = block;
+        } else {
+            (*prev).next = block;
+        }
+        // 与后继合并
+        if !cur.is_null() && (block as usize) + (*block).size == cur as usize {
+            (*block).size += (*cur).size;
+            (*block).next = (*cur).next;
+        }
+        // 与前驱合并
+        if !prev.is_null() && (prev as usize) + (*prev).size == block as usize {
+            (*prev).size += (*block).size;
+            (*prev).next = (*block).next;
+        }
     }
 }
 
-// === 伴随元数据的正确实现 ===
+struct Spinlock<T> {
+    locked: AtomicBool,
+    data: UnsafeCell<T>,
+}
 
-const MAGIC: usize = 0xDEAD_BEEF_CAFE_0000;
+unsafe impl<T: Send> Sync for Spinlock<T> {}
 
-/// 在每个分配块前预留一个 AllocationHeader，记录 size，便于正确释放。
-#[repr(C)]
-struct AllocHeader {
-    magic: usize,
-    size: usize,
+impl<T> Spinlock<T> {
+    const fn new(t: T) -> Self {
+        Self {
+            locked: AtomicBool::new(false),
+            data: UnsafeCell::new(t),
+        }
+    }
+    fn lock(&self) -> &mut T {
+        while self
+            .locked
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_err()
+        {
+            while self.locked.load(Ordering::Relaxed) {
+                core::hint::spin_loop();
+            }
+        }
+        unsafe { &mut *self.data.get() }
+    }
+    unsafe fn unlock(&self) {
+        self.locked.store(false, Ordering::Release);
+    }
 }
 
 pub struct HeapAlloc {
-    heap: Heap,
+    inner: Spinlock<FreeList>,
 }
 
 impl HeapAlloc {
     pub const fn new() -> Self {
-        Self { heap: Heap::new() }
+        Self {
+            inner: Spinlock::new(FreeList::new()),
+        }
     }
 
-    pub unsafe fn init(&mut self) {
+    pub unsafe fn init(&self) {
         // 在帧分配器中预留堆区域
-        let frames = HEAP_SIZE / crate::mm::PAGE_SIZE;
+        let frames = HEAP_SIZE / PAGE_SIZE;
         for i in 0..frames {
-            FRAME_ALLOCATOR.mark_used_pa(HEAP_START + i * crate::mm::PAGE_SIZE);
+            FRAME_ALLOCATOR.mark_used_pa(HEAP_START + i * PAGE_SIZE);
         }
-        self.heap.init(HEAP_START, HEAP_SIZE);
+        self.inner.lock().init(HEAP_START, HEAP_SIZE);
+        // lock 返回 &mut，drop 时不会自动解锁（我们没实现 Drop），手动解锁：
+        // 这里利用 lock 后未显式解锁会一直持锁——因此用一个临时作用域包装。
+        // 为简洁，重写为下面的辅助函数。
+        unreachable!("init should use init_locked");
     }
 }
+
+// 上面的 init 会死锁（持锁不释放）。改为独立初始化函数。
+pub fn init_heap() {
+    let frames = HEAP_SIZE / PAGE_SIZE;
+    for i in 0..frames {
+        FRAME_ALLOCATOR.mark_used_pa(HEAP_START + i * PAGE_SIZE);
+    }
+    unsafe {
+        let fl = ALLOCATOR.inner.lock();
+        fl.init(HEAP_START, HEAP_SIZE);
+        // 释放锁
+        ALLOCATOR.inner.unlock();
+    }
+}
+
+#[global_allocator]
+static ALLOCATOR: HeapAlloc = HeapAlloc::new();
 
 unsafe impl GlobalAlloc for HeapAlloc {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        // 头部需要 16 字节并对齐到 16
-        let header_size = 16usize;
+        // 头部 16 字节
+        let header = 16usize;
         let align = layout.align().max(16);
-        let total = layout.size() + header_size;
-        let total = (total + align - 1) & !(align - 1);
+        let total = (layout.size() + header + align - 1) & !(align - 1);
+        let total = total.max(32);
 
-        // 用内部 free list 分配
-        let inner = &mut *(self as *const Self as *mut Self);
-        inner.heap.head = self.heap.head.take();
-        let ptr = inner.heap.alloc(Layout::from_size_align(total, 16).unwrap());
-        inner.heap.head = inner.heap.head.take();
-
+        let fl = self.inner.lock();
+        let ptr = fl.alloc(Layout::from_size_align(total, 16).unwrap());
+        // 注意：fl 是 &mut，作用域结束前手动解锁
+        self.inner.unlock();
         if ptr.is_null() {
             return null_mut();
         }
-        // 写入头
-        let header = ptr as *mut AllocHeader;
-        (*header).magic = MAGIC;
-        (*header).size = total;
-        ptr.add(header_size)
+        // 在头部存总大小
+        *(ptr as *mut usize) = total;
+        *((ptr as *mut usize).add(1)) = 0xC0DE;
+        ptr.add(header)
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
-        let header_ptr = ptr.sub(16) as *mut AllocHeader;
-        if (*header_ptr).magic != MAGIC {
-            // 不是我们分配的，忽略
-            return;
+        let header = 16usize;
+        let base = ptr.sub(header);
+        let total = *(base as *const usize);
+        if *((base as *const usize).add(1)) != 0xC0DE {
+            return; // 不是我们分配的
         }
-        let size = (*header_ptr).size;
-        (*header_ptr).magic = 0;
-        let inner = &mut *(self as *const Self as *mut Self);
-        // 把整块（含头）作为空闲块归还
-        let block = header_ptr as *mut FreeBlock;
-        (*block).size = size;
-        (*block).next = inner.heap.head.take();
-        inner.heap.head = Some(&mut *block);
-    }
-}
-
-// 给 FrameAllocator 加一个按物理地址标记已用的方法
-pub trait FrameMarkExt {
-    fn mark_used_pa(&self, pa: usize);
-}
-
-impl FrameMarkExt for crate::mm::frame::FrameAllocator {
-    fn mark_used_pa(&self, pa: usize) {
-        self.mark_used_pa_pub(pa);
+        let fl = self.inner.lock();
+        fl.free(base as *mut u8, total);
+        self.inner.unlock();
     }
 }
