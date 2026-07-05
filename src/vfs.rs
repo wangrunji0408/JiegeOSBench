@@ -19,6 +19,9 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("/usr/local/nginx/conf/nginx.conf", b"daemon off;\nmaster_process off;\nworker_processes 1;\nevents { worker_connections 16; }\nhttp {\n    access_log off;\n    error_log /dev/null;\n    server { listen 8080; root /www; index index.html; }\n}\n"),
     ("/usr/local/nginx/html/index.html", b"<!DOCTYPE html>\n<html><body><h1>nginx @ ijiege-os</h1></body></html>\n"),
     ("/dev/null", b""),
+    ("/usr/local/nginx/logs/error.log", b""),
+    ("/usr/local/nginx/logs/access.log", b""),
+    ("/usr/local/nginx/logs/nginx.pid", b""),
 ];
 
 /// 文件描述符表项
