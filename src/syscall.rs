@@ -526,7 +526,7 @@ fn sys_socketpair(_d: usize, _t: usize, _p: usize, sv: usize) -> isize {
 fn sys_eventfd2() -> isize {
     let p = match current_process() { Some(p) => p, None => return -3 };
     p.sock_table.alloc(crate::process::SockFd {
-        handle: 0, local_port: 0, kind: crate::process::SockKind::Eventfd,
+        handle: usize::MAX, local_port: 0, kind: crate::process::SockKind::Eventfd,
     }) as isize
 }
 
@@ -534,10 +534,10 @@ fn sys_pipe2(fds: usize) -> isize {
     if fds == 0 { return -14; }
     let p = match current_process() { Some(p) => p, None => return -3 };
     let fd1 = p.sock_table.alloc(crate::process::SockFd {
-        handle: 0, local_port: 0, kind: crate::process::SockKind::Pipe,
+        handle: usize::MAX, local_port: 0, kind: crate::process::SockKind::Pipe,
     });
     let fd2 = p.sock_table.alloc(crate::process::SockFd {
-        handle: 0, local_port: 0, kind: crate::process::SockKind::Pipe,
+        handle: usize::MAX, local_port: 0, kind: crate::process::SockKind::Pipe,
     });
     unsafe {
         core::ptr::write_volatile(fds as *mut i32, fd1 as i32);
