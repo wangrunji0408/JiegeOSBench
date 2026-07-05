@@ -6,9 +6,9 @@ A Rust OS kernel autonomously implemented by Claude Code — just barely capable
 
 Three runs, multiple models, same goal:
 
-| Branch | Model | Duration | Tokens | Cost |
-|--------|-------|----------|--------|------|
-| [fable5](https://github.com/wangrunji0408/iJiegeOS/tree/fable5) | Claude Fable 5 | ~38min | 16.4M | ~$53 |
+| Branch | Model | Duration | Context | Cost |
+|--------|-------|----------|---------|------|
+| [fable5](https://github.com/wangrunji0408/iJiegeOS/tree/fable5) | Claude Fable 5 | ~38min | ~155K | ~$53 |
 | [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
 | [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
 | [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
