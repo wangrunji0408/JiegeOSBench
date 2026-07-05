@@ -158,20 +158,27 @@ pub fn init() {
     unsafe {
         for i in 0..32usize {
             let base = 0x1000_1000 + i * 0x1000;
-            if reg_r(base, REG_MAGIC) != MMIO_MAGIC {
+            let magic = reg_r(base, REG_MAGIC);
+            if magic != MMIO_MAGIC {
                 continue;
             }
             let ver = reg_r(base, REG_VERSION);
-            if reg_r(base, REG_DEVICE_ID) != 1 {
+            let devid = reg_r(base, REG_DEVICE_ID);
+            crate::println!("[net] slot {} magic={:#x} ver={} devid={}", i, magic, ver, devid);
+            if devid != 1 {
                 continue;
             }
             crate::println!("[net] found virtio-net @ {:#x} ver={}", base, ver);
-            if ver != 1 {
-                crate::println!("[net] need legacy v1, skip");
+            if ver == 2 {
+                if init_device_modern(base) {
+                    return;
+                }
                 continue;
             }
-            if init_device(base) {
-                return;
+            if ver == 1 {
+                if init_device(base) {
+                    return;
+                }
             }
         }
         crate::println!("[net] no virtio-net found (use -device virtio-net-device)");
