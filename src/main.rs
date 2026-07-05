@@ -63,6 +63,18 @@ pub extern "C" fn rust_main() -> ! {
     println!("[boot] UART initialized");
     println!("[boot] kernel image end = {:#x}", __kernel_end as *const () as usize);
 
+    // 初始化内存管理：帧分配器 + 内核堆 + Sv39 页表
+    mm::init();
+
+    // 堆分配自检
+    let p: Box<u64> = Box::new(0x1234_5678_9ABC_DEF0);
+    println!("[boot] heap test: Box<u64> = {:#x} @ {:p}", *p, p);
+    let mut v = alloc::vec![1u32, 2, 3, 4, 5];
+    v.push(6);
+    println!("[boot] heap test: vec = {:?} (len {})", v, v.len());
+    drop(p);
+    drop(v);
+
     set_stvec();
     println!("[boot] stvec set");
     timer::init();
