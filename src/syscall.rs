@@ -545,6 +545,10 @@ fn sys_pipe2(fds: usize) -> isize {
     0
 }
 
+fn sys_clone(flags: usize, stack: usize, ptid: usize, ctid: usize) -> isize {
+    crate::sched::clone_child(flags, stack, ptid, ctid)
+}
+
 fn sys_socket(_domain: usize, _typ: usize, _proto: usize) -> isize {
     // 创建 smoltcp tcp socket
     let id = match crate::net_stack::new_tcp_socket() {
