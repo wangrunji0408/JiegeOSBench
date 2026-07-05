@@ -477,16 +477,8 @@ fn sys_pread64(fd: usize, buf: usize, count: usize, offset: usize) -> isize {
 }
 
 fn sys_socketpair(_d: usize, _t: usize, _p: usize, sv: usize) -> isize {
-    // 写入两个假 fd（pipe 占位）
-    if sv != 0 {
-        unsafe {
-            core::ptr::write_volatile(sv as *mut i32, 100);
-            core::ptr::write_volatile((sv + 4) as *mut i32, 101);
-        }
-        0
-    } else {
-        -14
-    }
+    let _ = sv;
+    -38 // ENOSYS，nginx 单进程不需要 channel
 }
 
 fn sys_socket(_domain: usize, _typ: usize, _proto: usize) -> isize {
