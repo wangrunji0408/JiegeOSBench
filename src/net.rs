@@ -182,7 +182,6 @@ unsafe fn init_device(base: usize) -> bool {
     reg_w(base, REG_STATUS, 0);
     reg_w(base, REG_STATUS, S_ACK | S_DRIVER);
     let feat = reg_r(base, REG_DEVICE_FEATURES);
-    // 仅协商 MAC 特性（bit5），避免 MRG_RXBUF 等改变缓冲格式
     let want: u32 = (1 << 5); // VIRTIO_NET_F_MAC
     let negotiated = feat & want;
     reg_w(base, REG_DRIVER_FEATURES, negotiated);
@@ -193,23 +192,20 @@ unsafe fn init_device(base: usize) -> bool {
     setup_queue(base, 0, &rx);
     setup_queue(base, 1, &tx);
 
-    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_DRIVER_OK);
-    let st = reg_r(base, REG_STATUS);
-    crate::println!("[net] status={:#x} feat={:#x} neg={:#x}", st, feat, negotiated);
-
     // MAC
     let mut mac = [0u8; 6];
     for i in 0..6 {
         mac[i] = read_volatile((base + REG_CONFIG + i) as *const u8);
     }
 
-    crate::println!(
-        "[net] up, mac={:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
-        mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
-    );
     NET = Some(NetDriver { base, rx, tx, mac });
 
+    // 先投递 RX 缓冲，再 DRIVER_OK
     fill_rx_with_base(&mut NET.as_mut().unwrap().rx, base);
+
+    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_DRIVER_OK);
+    let st = reg_r(base, REG_STATUS);
+    crate::println!("[net] status={:#x} feat={:#x} neg={:#x}", st, feat, negotiated);
     true
 }
 
