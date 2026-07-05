@@ -124,6 +124,7 @@ pub fn poll() {
         if IFACE.is_none() {
             return;
         }
+        crate::net::kick_rx();
         let iface = IFACE.as_mut().unwrap();
         let dev = DEV.as_mut().unwrap();
         let sockets = SOCKETS.as_mut().unwrap();
