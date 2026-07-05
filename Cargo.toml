@@ -9,7 +9,14 @@ name = "kernel"
 path = "src/main.rs"
 
 [dependencies]
-# 无外部依赖，纯 core/alloc
+smoltcp = { version = "0.13", default-features = false, features = [
+    "proto-ipv4", "proto-tcp", "proto-udp", "proto-icmp",
+    "socket-tcp", "socket-udp",
+    "device",
+    "medium-ethernet",
+    "alloc",
+] }
+
 
 [profile.release]
 opt-level = 3
