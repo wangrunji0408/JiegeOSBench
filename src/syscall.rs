@@ -251,7 +251,7 @@ fn sys_mmap(addr: usize, length: usize, _prot: usize, _flags: usize, _fd: usize,
     }
     // 推进 bump
     let next = base + pages * PAGE_SIZE;
-    p.set_next_mmap(next);
+    p.next_mmap = next;
     base as isize
 }
 
