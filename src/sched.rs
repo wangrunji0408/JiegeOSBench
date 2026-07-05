@@ -208,10 +208,12 @@ fn schedule() {
 pub fn run_first_task() -> ! {
     // 关 SIE 防止时钟中断在首次切换前打断（避免竞态）
     unsafe { core::arch::asm!("csrci sstatus, 0x2"); }
+    crate::println!("[sched] run_first_task entered");
     let next = {
         let s = SCHED.lock();
         s.pick_next()
     };
+    crate::println!("[sched] pick_next = {:?}", next);
     match next {
         Some(next) => {
             let s = SCHED.lock();
