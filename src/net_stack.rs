@@ -336,9 +336,10 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize) -> isize {
                 if count >= maxevents {
                     break;
                 }
+                // 非 TCP fd（eventfd/pipe）不报告就绪，避免误触发 handler
                 let h = match get_handle(*sock_id) {
                     Some(h) => h,
-                    None => continue,
+                    None => continue, // eventfd/pipe 等 sock_id=0 的 fd 跳过
                 };
                 let s = sockets.get_mut::<TcpSocket>(h);
                 let st = s.state();
