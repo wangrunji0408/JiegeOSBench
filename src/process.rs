@@ -53,6 +53,7 @@ impl Process {
         let k_perm = PTE_R | PTE_W | PTE_X | PTE_G; // 无 U
         pt.identity_map_huge_range(PHYS_RAM_BASE, MEMORY_TOP - PHYS_RAM_BASE, k_perm);
         pt.identity_map_huge_range(0x1000_0000, HUGE_PAGE_SIZE, PTE_R | PTE_W | PTE_G);
+        pt.identity_map_huge_range(0x0c00_0000, HUGE_PAGE_SIZE, PTE_R | PTE_W | PTE_G);
 
         let loaded = crate::elf::load_elf(elf, &pt).ok()?;
 
