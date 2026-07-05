@@ -133,6 +133,19 @@ impl FdTable {
         Some(f.offset)
     }
 
+    pub fn pread(&self, fd: usize, buf: &mut [u8], offset: usize) -> Option<usize> {
+        let f = self.fds.get(fd)?.as_ref()?;
+        if f.path == "/dev/stdin" {
+            return Some(0);
+        }
+        if offset >= f.data.len() {
+            return Some(0);
+        }
+        let n = (f.data.len() - offset).min(buf.len());
+        buf[..n].copy_from_slice(&f.data[offset..offset + n]);
+        Some(n)
+    }
+
     pub fn stat(&self, fd: usize, statbuf: usize) -> bool {
         // 复用 fstat 布局
         if statbuf == 0 {
