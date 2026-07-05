@@ -105,7 +105,7 @@ pub fn init() {
         SOCKETS = Some(SocketSet::new(Vec::new()));
 
         // 创建多个监听 socket，支持并发连接
-        for i in 0..4 {
+        for i in 0..16 {
             let rx = Box::leak(vec![0u8; 16384].into_boxed_slice());
             let tx = Box::leak(vec![0u8; 16384].into_boxed_slice());
             let mut sock = TcpSocket::new(SocketBuffer::new(rx), SocketBuffer::new(tx));
