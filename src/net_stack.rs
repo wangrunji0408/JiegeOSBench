@@ -95,7 +95,7 @@ pub fn init() {
                 24,
             ));
         });
-        let _ = iface.routes_mut().add_default_v4_gateway(
+        let _ = iface.routes_mut().add_default_ipv4_route(
             Ipv4Address::new(GATEWAY[0], GATEWAY[1], GATEWAY[2], GATEWAY[3]),
             now,
         );
