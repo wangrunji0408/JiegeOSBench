@@ -107,21 +107,6 @@ extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
     sbi::shutdown();
 }
 
-fn clear_bss() {
-    extern "C" {
-        static mut __bss_start: u8;
-        static mut __bss_end: u8;
-    }
-    unsafe {
-        let start = core::ptr::addr_of_mut!(__bss_start);
-        let end = core::ptr::addr_of_mut!(__bss_end);
-        let len = end as usize - start as usize;
-        // The boot stack is at the start of .bss and in use — skip it.
-        let stack_size = 1024 * 64;
-        core::ptr::write_bytes(start.add(stack_size), 0, len - stack_size);
-    }
-}
-
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("\n[kernel PANIC] {}", info);
