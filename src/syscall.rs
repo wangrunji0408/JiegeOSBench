@@ -165,7 +165,7 @@ pub fn do_syscall(cx: &mut TrapContext) {
         SYS_mprotect => 0,
         SYS_getpid => crate::sched::current_pid() as isize,
         SYS_gettid => crate::sched::current_pid() as isize,
-        SYS_getuid | SYS_geteuid | SYS_getgid | SYS_getegid => 0,
+        SYS_getuid | SYS_geteuid | SYS_getgid | SYS_getegid => 1000,
         SYS_set_tid_address => {
             if let Some(p) = current_process() {
                 p.tid_address = a0;
