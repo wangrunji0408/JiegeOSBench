@@ -19,11 +19,7 @@ extern "C" {
 
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    if let Some(msg) = info.message() {
-        println!("[kernel panic] {} at {}", msg, info.location().unwrap());
-    } else {
-        println!("[kernel panic] at {}", info.location().unwrap());
-    }
+    println!("[kernel panic] {info}");
     sbi::shutdown();
 }
 
