@@ -327,11 +327,21 @@ fn sys_mmap(addr: usize, length: usize, _prot: usize, _flags: usize, _fd: usize,
     base as isize
 }
 
-fn sys_close(_fd: usize) -> isize {
-    0
-}
-
-// === socket 系统调用 ===
+fn sys_close(fd: usize) -> isize {
+    let p = match current_process() {
+        Some(p) => p,
+        None => return -3,
+    };
+    // 先查 socket 表
+    let sock_id = p.sock_table.get(fd).map(|s| s.handle);
+    if let Some(id) = sock_id {
+        crate::net_stack::remove_socket(id);
+        p.sock_table.close(fd);
+        return 0;
+    }
+    // 再查文件表
+    with_fd_table(|t| if t.close(fd) { 0isize } else { EBADF })
+}// === socket 系统调用 ===
 
 fn sys_socket(_domain: usize, _typ: usize, _proto: usize) -> isize {
     // 创建 smoltcp tcp socket
