@@ -254,3 +254,120 @@ pub fn remove_socket(id: usize) {
         }
     }
 }
+
+// === epoll 最小实现 ===
+// epoll fd 本身用一个 id 表示；监听的 fd 存在全局表。
+
+struct EpollInstance {
+    // 监听的 (fd, events, sock_id) 列表
+    watched: Vec<(usize, u32, usize)>,
+}
+
+static mut EPOLL_INSTANCES: Vec<Option<EpollInstance>> = Vec::new();
+
+pub fn epoll_create() -> isize {
+    unsafe {
+        let id = EPOLL_INSTANCES.len();
+        EPOLL_INSTANCES.push(Some(EpollInstance { watched: Vec::new() }));
+        // 返回一个 fd：用高位标记 epoll（0x8000 | id）
+        (0x8000 | id) as isize
+    }
+}
+
+pub fn epoll_ctl(epfd: usize, op: usize, fd: usize, event: usize) -> isize {
+    // op: 1=ADD, 2=MOD, 3=DEL
+    // event 结构: events(u32) + data(u64)
+    let epoll_id = epfd & 0x7fff;
+    let events = if event != 0 {
+        unsafe { core::ptr::read_volatile(event as *const u32) }
+    } else {
+        0xffffffff
+    };
+    // 查 fd 对应的 sock_id
+    let sock_id = {
+        let p = match crate::sched::current_process() {
+            Some(p) => p,
+            None => return -3,
+        };
+        p.sock_table.get(fd).map(|s| s.handle)
+    };
+    let sock_id = match sock_id {
+        Some(s) => s,
+        None => return -9,
+    };
+    unsafe {
+        let inst = match EPOLL_INSTANCES.get_mut(epoll_id).and_then(|x| x.as_mut()) {
+            Some(i) => i,
+            None => return -9,
+        };
+        match op {
+            1 => inst.watched.push((fd, events, sock_id)),
+            2 => {
+                if let Some(e) = inst.watched.iter_mut().find(|(f, _, _)| *f == fd) {
+                    e.1 = events;
+                    e.2 = sock_id;
+                }
+            }
+            3 => inst.watched.retain(|(f, _, _)| *f != fd),
+            _ => return -22,
+        }
+    }
+    0
+}
+
+const EPOLLIN: u32 = 1;
+const EPOLLOUT: u32 = 4;
+
+pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize) -> isize {
+    let epoll_id = epfd & 0x7fff;
+    loop {
+        poll();
+        unsafe {
+            let inst = match EPOLL_INSTANCES.get_mut(epoll_id).and_then(|x| x.as_mut()) {
+                Some(i) => i,
+                None => return -9,
+            };
+            let sockets = SOCKETS.as_mut().unwrap();
+            let mut count = 0usize;
+            for (fd, ev, sock_id) in inst.watched.iter() {
+                if count >= maxevents {
+                    break;
+                }
+                let h = match get_handle(*sock_id) {
+                    Some(h) => h,
+                    None => continue,
+                };
+                let s = sockets.get_mut::<TcpSocket>(h);
+                let st = s.state();
+                let mut revents = 0u32;
+                // EPOLLIN：listen socket 的 Established（accept 就绪）或 stream 的 can_recv
+                if *ev & EPOLLIN != 0 {
+                    // 如果是 listen socket（local_port 已 bind 且 state=Listen），检查是否 Established
+                    if st == TcpState::Established {
+                        revents |= EPOLLIN;
+                    } else if s.can_recv() {
+                        revents |= EPOLLIN;
+                    }
+                }
+                if *ev & EPOLLOUT != 0 {
+                    if s.can_send() {
+                        revents |= EPOLLOUT;
+                    }
+                }
+                if revents != 0 {
+                    // 写入 epoll_event: events(u32) + pad(u32) + data(u64)
+                    let off = events + count * 16;
+                    unsafe {
+                        core::ptr::write_volatile(off as *mut u32, revents);
+                        core::ptr::write_volatile((off + 8) as *mut u64, *fd as u64);
+                    }
+                    count += 1;
+                }
+            }
+            if count > 0 {
+                return count as isize;
+            }
+        }
+        // 无就绪，继续 poll（阻塞）
+    }
+}
