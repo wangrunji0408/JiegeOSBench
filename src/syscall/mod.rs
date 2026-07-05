@@ -131,6 +131,7 @@ fn do_syscall(nr: usize, a: [usize; 6]) -> SysResult {
         34 => fs::mkdirat(a[0], a[1], a[2]),
         35 => fs::unlinkat(a[0], a[1], a[2]),
         46 => fs::ftruncate(a[0], a[1]),
+        52..=55 => Ok(0), // fchmod/fchmodat/fchownat/fchown
         48 | 439 => fs::faccessat(a[0], a[1], a[2]),
         49 => fs::chdir(a[0]),
         56 => fs::openat(a[0] as isize, a[1], a[2], a[3]),
