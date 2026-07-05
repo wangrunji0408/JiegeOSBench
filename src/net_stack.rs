@@ -275,13 +275,18 @@ pub fn epoll_create() -> isize {
 }
 
 pub fn epoll_ctl(epfd: usize, op: usize, fd: usize, event: usize) -> isize {
-    // op: 1=ADD, 2=MOD, 3=DEL
-    // event 结构: events(u32) + data(u64)
+    crate::println!("[epoll_ctl epfd={:#x} op={} fd={} event={:#x}]", epfd, op, fd, event);
     let epoll_id = epfd & 0x7fff;
     let events = if event != 0 {
         unsafe { core::ptr::read_volatile(event as *const u32) }
     } else {
         0xffffffff
+    };
+    // 读 data (u64 at offset 8)
+    let data = if event != 0 {
+        unsafe { core::ptr::read_volatile((event + 8) as *const u64) }
+    } else {
+        0
     };
     // 查 fd 对应的 sock_id
     let sock_id = {
