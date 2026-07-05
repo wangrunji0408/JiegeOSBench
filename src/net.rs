@@ -258,6 +258,7 @@ unsafe fn init_device_modern(base: usize) -> bool {
 
 unsafe fn setup_queue_modern(base: usize, idx: usize, vq: &VirtQueue) {
     reg_w(base, REG_QUEUE_SEL, idx as u32);
+    reg_w(base, REG_QUEUE_READY, 0); // 先禁用
     let nmax = reg_r(base, REG_QUEUE_NUM_MAX) as usize;
     let n = nmax.min(vq.num);
     crate::println!("[net] mqueue {} nmax={} n={}", idx, nmax, n);
@@ -265,12 +266,14 @@ unsafe fn setup_queue_modern(base: usize, idx: usize, vq: &VirtQueue) {
     let avail_pa = vq.base_pa + 4096;
     let used_pa = vq.base_pa + 8192;
     reg_w(base, REG_QUEUE_NUM, n as u32);
+    reg_w(base, REG_QUEUE_ALIGN, 4096);
     reg_w(base, REG_QUEUE_DESC_LOW, (desc_pa & 0xffffffff) as u32);
     reg_w(base, REG_QUEUE_DESC_HIGH, (desc_pa >> 32) as u32);
     reg_w(base, REG_QUEUE_DRIVER_LOW, (avail_pa & 0xffffffff) as u32);
     reg_w(base, REG_QUEUE_DRIVER_HIGH, (avail_pa >> 32) as u32);
     reg_w(base, REG_QUEUE_DEVICE_LOW, (used_pa & 0xffffffff) as u32);
     reg_w(base, REG_QUEUE_DEVICE_HIGH, (used_pa >> 32) as u32);
+    core::arch::asm!("fence ow, ow");
     reg_w(base, REG_QUEUE_READY, 1);
     let rdy = reg_r(base, REG_QUEUE_READY);
     crate::println!("[net] mqueue {} ready={}", idx, rdy);
