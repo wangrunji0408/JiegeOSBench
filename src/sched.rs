@@ -212,6 +212,7 @@ pub fn run_first_task() -> ! {
     unsafe { (*nptr).state = TaskState::Running; }
     let next_root = unsafe { (*nptr).root_pa };
     s.current = next;
+    CURRENT_PROC.store(nptr as usize, Ordering::SeqCst);
     set_satp_for(Some(next_root));
     unsafe { SCHED.unlock(); }
     crate::println!("[sched] starting first process (pid at slot {})", next);
