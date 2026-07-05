@@ -28,6 +28,10 @@ pub fn do_syscall(cx: &mut TrapContext) {
             crate::println!("[syscall] process exited with code {}", cx.x[10]);
             crate::sched::exit_current(cx.x[10] as i32);
         }
+        // getpid
+        172 => {
+            cx.x[10] = crate::sched::current_pid();
+        }
         _ => {
             crate::println!("[syscall] unsupported num {} (a0={:#x})", num, cx.x[10]);
             cx.x[10] = (-38isize) as usize; // ENOSYS
