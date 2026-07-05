@@ -526,7 +526,8 @@ fn sys_recvfrom(fd: usize, buf: usize, len: usize) -> isize {
         }
     };
     let mut tmp = [0u8; 4096];
-    let n = crate::net_stack::socket_recv(id, &mut tmp[..len.min(tmp.len())]);
+    let cap = tmp.len().min(len);
+    let n = crate::net_stack::socket_recv(id, &mut tmp[..cap]);
     if n > 0 {
         unsafe { user_write(buf, tmp.as_ptr(), n); }
     }
