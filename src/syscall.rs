@@ -145,7 +145,7 @@ pub fn do_syscall(cx: &mut TrapContext) {
         SYS_fstat => sys_fstat(a0, a1),
         SYS_stat => sys_stat(a0, a1),
         SYS_newfstatat => sys_newfstatat(a0, a1, a2, a3),
-        SYS_lseek => sys_lseek(a0, a1, a2),
+        SYS_lseek => sys_lseek(a0, a1 as isize, a2),
         SYS_getcwd => {
             // 返回 "/"
             if a0 != 0 && a1 >= 2 {
