@@ -14,8 +14,3 @@ pub fn init() {
             .init(core::ptr::addr_of_mut!(HEAP_SPACE) as *mut u8, HEAP_SIZE);
     }
 }
-
-#[alloc_error_handler]
-fn alloc_error(layout: core::alloc::Layout) -> ! {
-    panic!("kernel heap OOM: {:?}", layout);
-}
