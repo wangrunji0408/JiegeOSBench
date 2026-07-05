@@ -370,6 +370,7 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) 
                     }
                 }
                 if revents != 0 {
+                    crate::println!("[epoll] fd={} revents={:#x} st={:?}", fd, revents, st);
                     let off = events + count * 16;
                     unsafe {
                         core::ptr::write_volatile(off as *mut u32, revents);
