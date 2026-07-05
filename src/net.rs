@@ -181,9 +181,11 @@ pub fn init() {
 unsafe fn init_device(base: usize) -> bool {
     reg_w(base, REG_STATUS, 0);
     reg_w(base, REG_STATUS, S_ACK | S_DRIVER);
-    let _feat = reg_r(base, REG_DEVICE_FEATURES);
-    reg_w(base, REG_DRIVER_FEATURES, 0);
-    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_FEATURES_OK);
+    let feat = reg_r(base, REG_DEVICE_FEATURES);
+    // 仅协商 MAC 特性（bit5），避免 MRG_RXBUF 等改变缓冲格式
+    let want: u32 = (1 << 5); // VIRTIO_NET_F_MAC
+    let negotiated = feat & want;
+    reg_w(base, REG_DRIVER_FEATURES, negotiated);
 
     let mut rx = match VirtQueue::new() { Some(q) => q, None => return false };
     let mut tx = match VirtQueue::new() { Some(q) => q, None => return false };
@@ -191,7 +193,9 @@ unsafe fn init_device(base: usize) -> bool {
     setup_queue(base, 0, &rx);
     setup_queue(base, 1, &tx);
 
-    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_DRIVER_OK | S_FEATURES_OK);
+    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_DRIVER_OK);
+    let st = reg_r(base, REG_STATUS);
+    crate::println!("[net] status={:#x} feat={:#x} neg={:#x}", st, feat, negotiated);
 
     // MAC
     let mut mac = [0u8; 6];
