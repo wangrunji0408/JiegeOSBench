@@ -460,8 +460,6 @@ fn sys_pread64(fd: usize, buf: usize, count: usize, offset: usize) -> isize {
     let cap = count.min(tmp.len());
     let n = {
         let p = match current_process() { Some(p) => p, None => return -3 };
-        let off = offset | (cx_unused_high() << 32);
-        let _ = off;
         p.fd_table.pread(fd, &mut tmp[..cap], offset).unwrap_or(0)
     };
     if n > 0 {
@@ -469,8 +467,6 @@ fn sys_pread64(fd: usize, buf: usize, count: usize, offset: usize) -> isize {
     }
     n as isize
 }
-
-fn cx_unused_high() -> usize { 0 }
 
 fn sys_socket(_domain: usize, _typ: usize, _proto: usize) -> isize {
     // 创建 smoltcp tcp socket
