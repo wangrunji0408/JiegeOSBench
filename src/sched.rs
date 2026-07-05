@@ -237,6 +237,8 @@ pub fn run_first_task() -> ! {
 }
 
 fn idle_loop() -> ! {
+    // 重新启用 S-mode 中断
+    unsafe { core::arch::asm!("csrsi sstatus, 0x2"); }
     loop {
         // 跑网络协议栈 + 内核 HTTP 服务器
         crate::net_stack::poll();
