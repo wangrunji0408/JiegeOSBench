@@ -42,8 +42,8 @@ impl FdTable {
     }
 
     pub fn open(&mut self, path: &str, _flags: usize) -> Option<usize> {
-        // /dev/stdin / stdout / stderr
-        if path == "/dev/stdin" || path == "/dev/stdout" || path == "/dev/stderr" {
+        // /dev/stdin / stdout / stderr / null
+        if path == "/dev/stdin" || path == "/dev/stdout" || path == "/dev/stderr" || path == "/dev/null" {
             return Some(self.alloc_fd(File {
                 path: String::from(path),
                 data: &[],
