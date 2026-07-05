@@ -74,6 +74,7 @@ impl Device for NetDev {
 static mut DEV: Option<NetDev> = None;
 static mut IFACE: Option<Interface> = None;
 static mut SOCKETS: Option<SocketSet<'static>> = None;
+static mut SOCK_MAP: Vec<Option<SocketHandle>> = Vec::new();
 
 fn now() -> Instant {
     Instant::from_millis(crate::timer::ticks() as i64 * 10)
