@@ -75,6 +75,7 @@ const SYS_mkdirat: usize = 34;
 const SYS_poll: usize = 7;
 const SYS_pread64: usize = 67;
 const SYS_pwrite64: usize = 68;
+const SYS_socketpair: usize = 199;
 const SYS_sched_getaffinity: usize = 123;
 const SYS_getppid: usize = 173;
 const SYS_sysinfo: usize = 179;
