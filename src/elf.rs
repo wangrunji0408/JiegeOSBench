@@ -67,6 +67,7 @@ pub fn load_elf(elf: &[u8], pt: &PageTable) -> Result<LoadedElf, &'static str> {
     let e_phnum = read_u16(elf, 56) as usize;
 
     let mut max_end: usize = 0;
+    let mut phdr_va: usize = 0; // 计算包含 e_phoff 的 PT_LOAD
 
     for i in 0..e_phnum {
         let ph = e_phoff + i * e_phentsize;
