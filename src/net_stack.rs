@@ -3,12 +3,12 @@
 
 use alloc::vec::Vec;
 use alloc::boxed::Box;
+use alloc::vec;
 use smoltcp::phy::{Device, DeviceCapabilities, RxToken, TxToken, Medium};
 use smoltcp::time::Instant;
 use smoltcp::wire::{HardwareAddress, EthernetAddress, IpAddress, IpCidr, Ipv4Address};
-use smoltcp::iface::{Interface, Config, SocketSet};
+use smoltcp::iface::{Interface, Config, SocketSet, SocketHandle};
 use smoltcp::socket::tcp::{Socket as TcpSocket, SocketBuffer, State as TcpState};
-use smoltcp::socket::SocketHandle;
 
 const IFACE_IP: [u8; 4] = [10, 0, 2, 15];
 const GATEWAY: [u8; 4] = [10, 0, 2, 2];
