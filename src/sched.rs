@@ -111,6 +111,19 @@ fn next_pid() -> usize {
     NEXT.fetch_add(1, Ordering::SeqCst)
 }
 
+/// 当前进程的 pid（idle 返回 0）
+pub fn current_pid() -> usize {
+    let s = SCHED.lock();
+    let cur = s.current;
+    let pid = if cur != MAX_PROCS {
+        s.procs[cur].as_ref().map(|p| p.as_ref().pid).unwrap_or(0)
+    } else {
+        0
+    };
+    unsafe { SCHED.unlock(); }
+    pid
+}
+
 pub fn on_tick() {
     let t = TICK_COUNT.fetch_add(1, Ordering::SeqCst);
     if t % TIME_SLICE != 0 {
