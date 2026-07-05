@@ -163,7 +163,12 @@ pub fn listen_socket(id: usize, port: u16) -> bool {
             None => return false,
         };
         let s = sockets.get_mut::<TcpSocket>(h);
-        s.listen(port).is_ok()
+        let r = s.listen(port).is_ok();
+        while LISTEN_PORTS.len() <= id {
+            LISTEN_PORTS.push(0);
+        }
+        LISTEN_PORTS[id] = port;
+        r
     }
 }
 
