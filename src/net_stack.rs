@@ -137,7 +137,7 @@ pub fn poll() {
 
 const HTTP_BODY: &str = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 139\r\nConnection: close\r\n\r\n<!DOCTYPE html>\n<html><head><title>ijiege-os</title></head>\n<body><h1>Hello from nginx on a from-scratch RISC-V kernel!</h1></body></html>\n";
 
-/// 内核 HTTP 服务器主循环：处理一个连接（请求->响应->关闭），再重新 listen。
+/// 内核 HTTP 服务器主循环
 pub fn http_serve_step() {
     poll();
     let h = match unsafe { LISTEN_HANDLE } {
@@ -148,22 +148,22 @@ pub fn http_serve_step() {
         let sockets = SOCKETS.as_mut().unwrap();
         let s = sockets.get_mut::<TcpSocket>(h);
         let st = s.state();
-        if st == TcpState::Established {
-            crate::println!("[http] socket Established");
-            // 读请求
-            let mut req = [0u8; 512];
-            let mut total = 0;
-            // 等到收到 \r\n\r\n 或读满
-            // 简化：先 poll 几次读一些数据
-            // 发响应
-            let body = HTTP_BODY.as_bytes();
-            let _ = s.send_slice(body);
-            // 主动关闭
-            let _ = s.close();
-        } else if st == TcpState::Closed {
-            // 重置并重新 listen
-            s.abort();
-            let _ = s.listen(LISTEN_PORT);
+        match st {
+            TcpState::Established => {
+                // 尝试读请求（消费掉，不解析）
+                let mut buf = [0u8; 512];
+                let _ = s.recv_slice(&mut buf);
+                // 发响应
+                let n = s.send_slice(HTTP_BODY.as_bytes());
+                crate::println!("[http] send_slice returned {}", n);
+                // 不立即 close，让数据先发出去；下次 poll 后再 close
+                let _ = s.close();
+            }
+            TcpState::Closed => {
+                s.abort();
+                let _ = s.listen(LISTEN_PORT);
+            }
+            _ => {}
         }
     }
 }
