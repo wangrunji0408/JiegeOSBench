@@ -177,7 +177,7 @@ pub fn init() {
             }
             let ver = reg_r(base, REG_VERSION);
             let devid = reg_r(base, REG_DEVICE_ID);
-            crate::println!("[net] slot {} magic={:#x} ver={} devid={}", i, magic, ver, devid);
+            crate::println!("[net] slot {} magic={:#x} ver={:#x} devid={}", i, magic, ver, devid);
             if devid != 1 {
                 continue;
             }
