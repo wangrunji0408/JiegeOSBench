@@ -249,6 +249,19 @@ fn sys_writev(fd: usize, iov: usize, iovcnt: usize) -> isize {
 }
 
 fn sys_read(fd: usize, buf: usize, count: usize) -> isize {
+    // socket fd?
+    let sock_id = {
+        let p = match current_process() { Some(p) => p, None => return -3 };
+        p.sock_table.get(fd).map(|s| s.handle)
+    };
+    if let Some(id) = sock_id {
+        let mut tmp = [0u8; 4096];
+        let n = crate::net_stack::socket_recv(id, &mut tmp[..count.min(tmp.len())]);
+        if n > 0 {
+            unsafe { user_write(buf, tmp.as_ptr(), n); }
+        }
+        return n as isize;
+    }
     let mut tmp = [0u8; 512];
     let n = {
         let p = match current_process() { Some(p) => p, None => return ENOSYS };
