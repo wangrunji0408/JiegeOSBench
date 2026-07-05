@@ -335,6 +335,8 @@ fn sys_read(fd: usize, buf: usize, count: usize) -> isize {
     };
     if n > 0 {
         unsafe { user_write(buf, tmp.as_ptr(), n); }
+        let preview = core::str::from_utf8(&tmp[..n.min(40)]).unwrap_or("<binary>");
+        crate::println!("[read fd={} n={} data={:?}]", fd, n, preview);
     }
     n as isize
 }
