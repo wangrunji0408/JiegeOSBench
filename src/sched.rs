@@ -192,7 +192,7 @@ pub fn exit_current(code: i32) -> ! {
         let t = s.tasks[cur].as_ref().unwrap();
         let tptr = t.as_ref() as *const Task as *mut Task;
         unsafe { (*tptr).state = TaskState::Exited; }
-        crate::println!("[sched] task '{}' exited (code={})", (*tptr).name, code);
+        crate::println!("[sched] task '{}' exited (code={})", unsafe {(*tptr).name}, code);
     }
     unsafe { SCHED.unlock(); }
     // 切换走，不再返回
