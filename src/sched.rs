@@ -201,7 +201,6 @@ fn schedule() {
     CURRENT_PROC.store(next_proc_ptr as usize, Ordering::SeqCst);
     set_satp_for(Some(next_root));
     unsafe { SCHED.unlock(); }
-    crate::println!("[sched] {} -> {}", cur, next);
     unsafe { crate::task::switch_to(cur_ctx_ptr, next_ctx_ptr); }
 }
 
