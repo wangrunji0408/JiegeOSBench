@@ -48,8 +48,10 @@ fn set_stvec() {
 /// 启用 S-mode 中断（SIE）与时钟中断
 fn enable_interrupts() {
     unsafe {
-        // sstatus.SIE = 1
+        // sstatus.SIE = 1, FS = Initial (启用 FPU)
         asm!("csrsi sstatus, 0x2");
+        asm!("csrci sstatus, {}", in(reg) 0x6000usize);
+        asm!("csrsi sstatus, 0x2000");
         // sie.STIE (timer) + sie.SSIE (soft) + sie.SEIE (external)
         asm!("csrs sie, {}", in(reg) 0x226_usize);
     }
