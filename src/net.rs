@@ -4,12 +4,10 @@
 use core::ptr::{read_volatile, write_volatile};
 use crate::mm::frame::FRAME_ALLOCATOR;
 
-// virtio-mmio 寄存器偏移
-const MMIO_MAGIC: u32 = 0x74726976; // "virt"
+const MMIO_MAGIC: u32 = 0x74726976;
 const REG_MAGIC: usize = 0x000;
 const REG_VERSION: usize = 0x004;
 const REG_DEVICE_ID: usize = 0x008;
-const REG_VENDOR_ID: usize = 0x00c;
 const REG_DEVICE_FEATURES: usize = 0x010;
 const REG_DRIVER_FEATURES: usize = 0x020;
 const REG_QUEUE_SEL: usize = 0x030;
@@ -23,25 +21,13 @@ const REG_INT_ACK: usize = 0x064;
 const REG_STATUS: usize = 0x070;
 const REG_CONFIG: usize = 0x100;
 
-// status bits
 const S_ACK: u32 = 1;
 const S_DRIVER: u32 = 2;
 const S_DRIVER_OK: u32 = 4;
 const S_FEATURES_OK: u32 = 8;
 
-const VQ_SIZE: usize = 8;
-
-// virtio-net 头（legacy）
-#[repr(C)]
-#[derive(Clone, Copy, Default)]
-struct NetHdr {
-    flags: u8,
-    gso_type: u8,
-    hdr_len: u16,
-    gso_size: u16,
-    csum_start: u16,
-    csum_offset: u16,
-}
+pub const VQ_SIZE: usize = 8;
+pub const PKT_BUF: usize = 1514;
 const NET_HDR_LEN: usize = 10;
 
 #[repr(C)]
@@ -54,54 +40,97 @@ pub struct VqDesc {
 }
 
 #[repr(C, align(2))]
-struct AvailRing {
-    flags: u16,
-    idx: u16,
-    ring: [u16; VQ_SIZE],
-    used_event: u16,
+#[derive(Clone, Copy, Default)]
+pub struct AvailRing {
+    pub flags: u16,
+    pub idx: u16,
+    pub ring: [u16; VQ_SIZE],
+    pub used_event: u16,
 }
 
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
-struct UsedElem {
-    idx: u32,
-    len: u32,
+pub struct UsedElem {
+    pub idx: u32,
+    pub len: u32,
 }
 
 #[repr(C, align(4))]
-struct UsedRing {
-    flags: u16,
-    idx: u16,
-    ring: [UsedElem; VQ_SIZE],
-    avail_event: u16,
+#[derive(Clone, Copy, Default)]
+pub struct UsedRing {
+    pub flags: u16,
+    pub idx: u16,
+    pub ring: [UsedElem; VQ_SIZE],
+    pub avail_event: u16,
 }
 
+/// 一个连续队列区域：desc | avail | (页对齐) used
 pub struct VirtQueue {
+    pub base_pa: usize,      // 整个队列区域物理地址（2 页）
     pub desc: *mut VqDesc,
     pub avail: *mut AvailRing,
     pub used: *mut UsedRing,
+    pub num: usize,
     pub last_used: u16,
     pub last_avail: u16,
-    pub num: usize,
-    // RX 队列的缓冲区地址（物理）
+    pub free_head: u16,
+    pub free_count: u16,
+    // RX 专用：每个 desc 关联的缓冲区
     pub rx_bufs: [usize; VQ_SIZE],
+    pub tx_bufs: [usize; VQ_SIZE],
 }
 
 impl VirtQueue {
-    /// 在一页内分配 desc/avail/used（足够 VQ_SIZE=8）
     pub fn new() -> Option<Self> {
-        let desc_pa = FRAME_ALLOCATOR.alloc_zeroed()?;
-        let avail_pa = FRAME_ALLOCATOR.alloc_zeroed()?;
-        let used_pa = FRAME_ALLOCATOR.alloc_zeroed()?;
-        Some(Self {
-            desc: desc_pa as *mut VqDesc,
-            avail: avail_pa as *mut AvailRing,
-            used: used_pa as *mut UsedRing,
+        // 分配 2 连续页：desc+avail 在第 0 页，used 在第 1 页（4096 对齐）
+        let base_pa = FRAME_ALLOCATOR.alloc_contig(2)?;
+        let desc = base_pa as *mut VqDesc;
+        let avail = (base_pa + 16 * VQ_SIZE) as *mut AvailRing;
+        let used = (base_pa + 4096) as *mut UsedRing;
+        // 清零
+        unsafe {
+            let p = base_pa as *mut u8;
+            for i in 0..(2 * 4096) {
+                core::ptr::write_volatile(p.add(i), 0);
+            }
+        }
+        let mut q = Self {
+            base_pa,
+            desc,
+            avail,
+            used,
+            num: VQ_SIZE,
             last_used: 0,
             last_avail: 0,
-            num: VQ_SIZE,
+            free_head: 0,
+            free_count: VQ_SIZE as u16,
             rx_bufs: [0; VQ_SIZE],
-        })
+            tx_bufs: [0; VQ_SIZE],
+        };
+        // 链式空闲表
+        unsafe {
+            for i in 0..VQ_SIZE {
+                (*q.desc.add(i)).next = (i as u16 + 1) % VQ_SIZE as u16;
+            }
+        }
+        Some(q)
+    }
+
+    /// 取一个空闲 desc 索引
+    pub fn alloc_desc(&mut self) -> Option<u16> {
+        if self.free_count == 0 {
+            return None;
+        }
+        let h = self.free_head;
+        self.free_head = unsafe { (*self.desc.add(h as usize)).next };
+        self.free_count -= 1;
+        Some(h)
+    }
+
+    pub fn free_desc(&mut self, idx: u16) {
+        unsafe { (*self.desc.add(idx as usize)).next = self.free_head; }
+        self.free_head = idx;
+        self.free_count += 1;
     }
 }
 
@@ -114,6 +143,10 @@ pub struct NetDriver {
 
 static mut NET: Option<NetDriver> = None;
 
+pub fn driver() -> &'static mut NetDriver {
+    unsafe { NET.as_mut().expect("net not initialized") }
+}
+
 unsafe fn reg_w(base: usize, off: usize, val: u32) {
     write_volatile((base + off) as *mut u32, val);
 }
@@ -121,94 +154,187 @@ unsafe fn reg_r(base: usize, off: usize) -> u32 {
     read_volatile((base + off) as *const u32)
 }
 
-/// 扫描 virtio-mmio 总线，找网络设备
 pub fn init() {
     unsafe {
         for i in 0..32usize {
             let base = 0x1000_1000 + i * 0x1000;
-            let magic = reg_r(base, REG_MAGIC);
-            if magic != MMIO_MAGIC {
+            if reg_r(base, REG_MAGIC) != MMIO_MAGIC {
                 continue;
             }
             let ver = reg_r(base, REG_VERSION);
-            let devid = reg_r(base, REG_DEVICE_ID);
-            if devid != 1 {
-                continue; // 1 = network
+            if reg_r(base, REG_DEVICE_ID) != 1 {
+                continue;
             }
             crate::println!("[net] found virtio-net @ {:#x} ver={}", base, ver);
             if ver != 1 {
-                crate::println!("[net] only legacy (v1) supported, got {}", ver);
+                crate::println!("[net] need legacy v1, skip");
                 continue;
             }
             if init_device(base) {
                 return;
             }
         }
-        crate::println!("[net] no virtio-net device found");
+        crate::println!("[net] no virtio-net found (use -device virtio-net-device)");
     }
 }
 
 unsafe fn init_device(base: usize) -> bool {
-    // 复位
     reg_w(base, REG_STATUS, 0);
-    // ack + driver
     reg_w(base, REG_STATUS, S_ACK | S_DRIVER);
-    // 读 features，全接受（legacy net 基本特性）
     let _feat = reg_r(base, REG_DEVICE_FEATURES);
     reg_w(base, REG_DRIVER_FEATURES, 0);
-    // features_ok
     reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_FEATURES_OK);
 
-    let rx = match VirtQueue::new() {
-        Some(q) => q,
-        None => return false,
-    };
-    let tx = match VirtQueue::new() {
-        Some(q) => q,
-        None => return false,
-    };
+    let mut rx = match VirtQueue::new() { Some(q) => q, None => return false };
+    let mut tx = match VirtQueue::new() { Some(q) => q, None => return false };
 
-    // 配置 RX 队列（queue index 0）
-    setup_queue(base, 0, &rx, true);
-    // 配置 TX 队列（queue index 1）
-    setup_queue(base, 1, &tx, false);
+    setup_queue(base, 0, &rx);
+    setup_queue(base, 1, &tx);
 
-    // driver_ok
     reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_DRIVER_OK | S_FEATURES_OK);
 
-    // 读 MAC
+    // MAC
     let mut mac = [0u8; 6];
     for i in 0..6 {
         mac[i] = read_volatile((base + REG_CONFIG + i) as *const u8);
     }
+
+    // 给 RX 队列填充接收缓冲
+    fill_rx(&mut rx);
+
     crate::println!(
         "[net] up, mac={:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
         mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
     );
-
     NET = Some(NetDriver { base, rx, tx, mac });
     true
 }
 
-unsafe fn setup_queue(base: usize, idx: usize, vq: &VirtQueue, is_rx: bool) {
+unsafe fn setup_queue(base: usize, idx: usize, vq: &VirtQueue) {
     reg_w(base, REG_QUEUE_SEL, idx as u32);
     let nmax = reg_r(base, REG_QUEUE_NUM_MAX) as usize;
     let n = nmax.min(vq.num);
     reg_w(base, REG_QUEUE_NUM, n as u32);
     reg_w(base, REG_QUEUE_ALIGN, 4096);
-    // desc 表、avail、used 在各自的页里；legacy 只需把 desc 表的 PFN 写入
-    // （QEMU legacy 用 QueuePFN = desc 表物理地址 >> 12，并假定 avail/used 紧跟）
-    // 实际上 legacy 要求三者在同一连续 4096 对齐区域。我们分开分配会有问题。
-    // 改为分配一个 16KB 区域，按 desc|avail|used 布局。
-    // —— 为简化，这里重新分配连续区域：
-    let layout = build_queue_layout(idx, base, is_rx);
-    let _ = vq; // vq 内部指针会在 build_queue_layout 里重新设置
-    let _ = layout;
+    reg_w(base, REG_QUEUE_PFN, (vq.base_pa >> 12) as u32);
 }
 
-/// 在一个连续的页（或多个）内布局 desc/avail/used，并登记给设备。
-/// 重新实现以避免上面 VirtQueue 字段不一致。
-unsafe fn build_queue_layout(_idx: usize, _base: usize, _is_rx: bool) -> bool {
-    // 占位：真正的布局在 init_device 内联完成
+/// 向 RX 队列投递空缓冲
+pub fn fill_rx(vq: &mut VirtQueue) {
+    for i in 0..vq.num {
+        if vq.rx_bufs[i] != 0 {
+            continue;
+        }
+        let buf = match FRAME_ALLOCATOR.alloc_zeroed() {
+            Some(b) => b,
+            None => return,
+        };
+        vq.rx_bufs[i] = buf;
+        unsafe {
+            // desc i 指向 [hdr(10) | data]，但简单起见整块当 data+hdr
+            (*vq.desc.add(i)).addr = buf as u64;
+            (*vq.desc.add(i)).len = (NET_HDR_LEN + PKT_BUF) as u32;
+            (*vq.desc.add(i)).flags = 2; // VIRTQ_DESC_F_WRITE（设备可写）
+            // 加入 avail ring
+            let a = &mut *vq.avail;
+            a.ring[a.idx as usize % vq.num] = i as u16;
+            a.idx = a.idx.wrapping_add(1);
+        }
+    }
+    // notify
+    notify_rx(vq);
+}
+
+fn notify_rx(vq: &VirtQueue) {
+    unsafe {
+        let d = driver();
+        reg_w(d.base, REG_QUEUE_NOTIFY, 0);
+    }
+    let _ = vq;
+}
+
+/// 发送一个以太网帧（含 net_hdr）。返回是否成功投递。
+pub fn send_packet(data: &[u8]) -> bool {
+    let d = unsafe { driver() };
+    let i = match d.tx.alloc_desc() {
+        Some(i) => i,
+        None => return false,
+    };
+    // 分配缓冲：net_hdr + data
+    let buf = match FRAME_ALLOCATOR.alloc_zeroed() {
+        Some(b) => b,
+        None => {
+            d.tx.free_desc(i);
+            return false;
+        }
+    };
+    d.tx.tx_bufs[i as usize] = buf;
+    unsafe {
+        // 写 net_hdr（全 0）
+        for k in 0..NET_HDR_LEN {
+            core::ptr::write_volatile((buf + k) as *mut u8, 0);
+        }
+        let copy = data.len().min(PKT_BUF);
+        core::ptr::copy_nonoverlapping(data.as_ptr(), (buf + NET_HDR_LEN) as *mut u8, copy);
+        (*d.tx.desc.add(i as usize)).addr = buf as u64;
+        (*d.tx.desc.add(i as usize)).len = (NET_HDR_LEN + copy) as u32;
+        (*d.tx.desc.add(i as usize)).flags = 0;
+        let a = &mut *d.tx.avail;
+        a.ring[a.idx as usize % d.tx.num] = i;
+        a.idx = a.idx.wrapping_add(1);
+    }
+    unsafe { reg_w(d.base, REG_QUEUE_NOTIFY, 1); }
     true
+}
+
+/// 轮询收取已完成的 RX 包。对每个包调用 cb(data)。
+pub fn recv_packets<F: FnMut(&[u8])>(mut cb: F) {
+    let d = unsafe { driver() };
+    loop {
+        let used_idx = unsafe { (*d.rx.used).idx };
+        if d.rx.last_used == used_idx {
+            break;
+        }
+        let ue = unsafe {
+            &(*d.rx.used).ring[d.rx.last_used as usize % d.rx.num]
+        };
+        let desc_idx = ue.idx as usize;
+        let len = ue.len as usize;
+        d.rx.last_used = d.rx.last_used.wrapping_add(1);
+        if len < NET_HDR_LEN {
+            // 回收
+            reclaim_rx(d, desc_idx);
+            continue;
+        }
+        let buf_pa = d.rx.rx_bufs[desc_idx];
+        let data_len = len - NET_HDR_LEN;
+        let data = unsafe {
+            core::slice::from_raw_parts((buf_pa + NET_HDR_LEN) as *const u8, data_len)
+        };
+        cb(data);
+        // 回收并重新投递
+        reclaim_rx(d, desc_idx);
+        // 重新投递该缓冲
+        unsafe {
+            let a = &mut *d.rx.avail;
+            a.ring[a.idx as usize % d.rx.num] = desc_idx as u16;
+            a.idx = a.idx.wrapping_add(1);
+        }
+    }
+    unsafe { reg_w(d.base, REG_QUEUE_NOTIFY, 0); }
+}
+
+fn reclaim_rx(_d: &mut NetDriver, _i: usize) {
+    // desc 已被设备使用，这里不释放缓冲（缓冲复用）
+}
+
+/// 处理外部中断（virtio-net）
+pub fn irq_handler() {
+    let d = unsafe { driver() };
+    unsafe {
+        let st = reg_r(d.base, REG_INT_STATUS);
+        if st != 0 {
+            reg_w(d.base, REG_INT_ACK, st);
+        }
+    }
 }
