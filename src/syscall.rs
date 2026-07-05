@@ -236,9 +236,7 @@ fn sys_mmap(addr: usize, length: usize, _prot: usize, _flags: usize, _fd: usize,
     let base = if addr != 0 && addr >= MMAP_BASE {
         addr
     } else {
-        // 用进程内 bump
-        let b = p.next_mmap();
-        b
+        p.next_mmap
     };
     let pages = (length + PAGE_SIZE - 1) / PAGE_SIZE;
     let root = p.root_pa;
