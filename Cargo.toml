@@ -12,7 +12,6 @@ path = "src/main.rs"
 smoltcp = { version = "0.13", default-features = false, features = [
     "proto-ipv4", "proto-tcp", "proto-udp", "proto-icmp",
     "socket-tcp", "socket-udp",
-    "device",
     "medium-ethernet",
     "alloc",
 ] }
