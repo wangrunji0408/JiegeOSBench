@@ -211,7 +211,9 @@ pub fn run_first_task() -> ! {
     crate::println!("[sched] run_first_task entered");
     let next = {
         let s = SCHED.lock();
-        s.pick_next()
+        let n = s.pick_next();
+        unsafe { SCHED.unlock(); }
+        n
     };
     crate::println!("[sched] pick_next = {:?}", next);
     match next {
