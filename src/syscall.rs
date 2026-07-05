@@ -170,30 +170,25 @@ pub fn do_syscall(cx: &mut TrapContext) {
 }
 
 fn sys_write(fd: usize, buf: usize, count: usize) -> isize {
-    if fd == 1 || fd == 2 {
-        // 直接经 UART 输出
-        let mut out = [0u8; 256];
-        let mut remaining = count;
-        let mut p = buf;
-        while remaining > 0 {
-            let n = remaining.min(out.len());
-            unsafe { user_read(out.as_mut_ptr(), p, n); }
-            for &b in &out[..n] {
-                crate::uart::putc(b);
-            }
-            p += n;
-            remaining -= n;
+    let mut tmp = [0u8; 512];
+    let mut remaining = count;
+    let mut p = buf;
+    let mut total = 0usize;
+    while remaining > 0 {
+        let n = remaining.min(tmp.len());
+        unsafe { user_read(tmp.as_mut_ptr(), p, n); }
+        let wrote = with_fd_table(|t| t.write(fd, &tmp[..n]).unwrap_or(0));
+        if wrote == 0 {
+            break;
         }
-        count as isize
-    } else {
-        EBADF
+        p += wrote;
+        remaining -= wrote;
+        total += wrote;
     }
+    total as isize
 }
 
 fn sys_writev(fd: usize, iov: usize, iovcnt: usize) -> isize {
-    if fd != 1 && fd != 2 {
-        return EBADF;
-    }
     let mut total = 0usize;
     for i in 0..iovcnt {
         let base = unsafe { core::ptr::read_volatile((iov + i * 16) as *const usize) };
@@ -201,43 +196,49 @@ fn sys_writev(fd: usize, iov: usize, iovcnt: usize) -> isize {
         if base == 0 || len == 0 {
             continue;
         }
-        let mut remaining = len;
-        let mut p = base;
-        let mut out = [0u8; 256];
-        while remaining > 0 {
-            let n = remaining.min(out.len());
-            unsafe { user_read(out.as_mut_ptr(), p, n); }
-            for &b in &out[..n] {
-                crate::uart::putc(b);
-            }
-            p += n;
-            remaining -= n;
+        let r = sys_write(fd, base, len);
+        if r < 0 {
+            return r;
         }
-        total += len;
+        total += r as usize;
     }
     total as isize
 }
 
 fn sys_read(fd: usize, buf: usize, count: usize) -> isize {
-    if fd == 0 {
-        // stdin：读 UART（非阻塞，有则返回）
-        let mut read = 0usize;
-        while read < count {
-            match crate::uart::getc() {
-                Some(c) => {
-                    unsafe { core::ptr::write_volatile((buf + read) as *mut u8, c); }
-                    read += 1;
-                    if c == b'\n' || c == b'\r' {
-                        break;
-                    }
-                }
-                None => break,
-            }
-        }
-        read as isize
-    } else {
-        EBADF
+    let mut tmp = [0u8; 512];
+    let n = with_fd_table(|t| t.read(fd, &mut tmp[..count.min(tmp.len())]).unwrap_or(0));
+    if n > 0 {
+        unsafe { user_write(buf, tmp.as_ptr(), n); }
     }
+    n as isize
+}
+
+fn sys_openat(_dirfd: usize, path: usize, flags: usize, _mode: usize) -> isize {
+    let path_str = unsafe { read_user_string(path, 255) }.unwrap_or_default();
+    let fd = with_fd_table(|t| t.open(&path_str, flags));
+    match fd {
+        Some(f) => f as isize,
+        None => ENOENT,
+    }
+}
+
+fn sys_lseek(fd: usize, offset: isize, whence: usize) -> isize {
+    with_fd_table(|t| t.lseek(fd, offset, whence).map(|v| v as isize).unwrap_or(EBADF))
+}
+
+fn sys_fstat(fd: usize, statbuf: usize) -> isize {
+    if with_fd_table(|t| t.stat(fd, statbuf)) { 0 } else { EBADF }
+}
+
+fn sys_stat(path: usize, statbuf: usize) -> isize {
+    let p = unsafe { read_user_string(path, 255) }.unwrap_or_default();
+    if crate::vfs::stat_path(&p, statbuf) { 0 } else { ENOENT }
+}
+
+fn sys_newfstatat(_dirfd: usize, path: usize, statbuf: usize, _flags: usize) -> isize {
+    let p = unsafe { read_user_string(path, 255) }.unwrap_or_default();
+    if crate::vfs::stat_path(&p, statbuf) { 0 } else { ENOENT }
 }
 
 fn sys_brk(new: usize) -> isize {
