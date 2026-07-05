@@ -20,6 +20,8 @@ pub struct TrapContext {
 pub const SSTATUS_SPP: usize = 1 << 8; // 1=trap 来自 S-mode, 0=来自 U-mode
 pub const SSTATUS_SPIE: usize = 1 << 5; // sret 后开中断
 pub const SSTATUS_SUM: usize = 1 << 18; // S-mode 可访问用户页
+pub const SSTATUS_FS_INITIAL: usize = 0b01 << 13; // 启用 FPU
+pub const SSTATUS_FS_DIRTY: usize = 0b11 << 13;
 
 impl TrapContext {
     /// 构造用户态初始上下文
