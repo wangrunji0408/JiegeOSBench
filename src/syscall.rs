@@ -492,6 +492,10 @@ fn sys_dup3(oldfd: usize, newfd: usize) -> isize {
 
 /// 把 oldfd 复制到指定 newfd（或最小可用 fd 若 newfd=-1）
 fn sys_dup_to(oldfd: usize, newfd: usize) -> isize {
+    // 不重定向 stdin/stdout/stderr，让 nginx 错误输出到 UART
+    if newfd <= 2 {
+        return newfd as isize;
+    }
     let p = match current_process() {
         Some(p) => p,
         None => return -3,
