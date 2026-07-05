@@ -335,7 +335,6 @@ const EPOLLOUT: u32 = 4;
 pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) -> isize {
     let epoll_id = epfd & 0x7fff;
     let start_ticks = crate::timer::ticks();
-    // timeout 单位 ms；tick=10ms
     let max_ticks = if timeout == usize::MAX { usize::MAX } else { (timeout / 10).max(1) };
     loop {
         poll();
@@ -346,6 +345,7 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) 
             };
             let sockets = SOCKETS.as_mut().unwrap();
             let mut count = 0usize;
+            // 先检查 watched 列表
             for (fd, ev, sock_id, data) in inst.watched.iter() {
                 if count >= maxevents {
                     break;
@@ -370,7 +370,6 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) 
                     }
                 }
                 if revents != 0 {
-                    crate::println!("[epoll] fd={} revents={:#x} st={:?}", fd, revents, st);
                     let off = events + count * 16;
                     unsafe {
                         core::ptr::write_volatile(off as *mut u32, revents);
@@ -379,11 +378,43 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) 
                     count += 1;
                 }
             }
+            // 额外检查：当前进程的 listen socket 是否就绪（nginx 可能没加 epoll）
+            if count < maxevents {
+                let p = match crate::sched::current_process() {
+                    Some(p) => p,
+                    None => return -3,
+                };
+                for fd in 3..p.sock_table.entries.len() {
+                    if count >= maxevents {
+                        break;
+                    }
+                    let (sock_id, is_listener) = match p.sock_table.entries.get(fd).and_then(|x| x.as_ref()) {
+                        Some(e) => (e.handle, e.kind == crate::process::SockKind::TcpListener),
+                        None => continue,
+                    };
+                    if !is_listener {
+                        continue;
+                    }
+                    let h = match get_handle(sock_id) {
+                        Some(h) => h,
+                        None => continue,
+                    };
+                    let s = sockets.get_mut::<TcpSocket>(h);
+                    let st = s.state();
+                    if st == TcpState::Established {
+                        let off = events + count * 16;
+                        unsafe {
+                            core::ptr::write_volatile(off as *mut u32, EPOLLIN);
+                            core::ptr::write_volatile((off + 8) as *mut u64, fd as u64);
+                        }
+                        count += 1;
+                    }
+                }
+            }
             if count > 0 {
                 return count as isize;
             }
         }
-        // 超时检查
         if crate::timer::ticks().wrapping_sub(start_ticks) >= max_ticks as u64 {
             return 0;
         }
