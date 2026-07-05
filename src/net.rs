@@ -177,16 +177,13 @@ pub fn init() {
                 continue;
             }
             crate::println!("[net] found virtio-net @ {:#x} ver={}", base, ver);
-            if ver == 2 {
-                if init_device_modern(base) {
-                    return;
-                }
-                continue;
+            // 先试 modern (v2)，再试 legacy (v1)
+            if init_device_modern(base) {
+                return;
             }
-            if ver == 1 {
-                if init_device(base) {
-                    return;
-                }
+            crate::println!("[net] modern failed, trying legacy");
+            if init_device(base) {
+                return;
             }
         }
         crate::println!("[net] no virtio-net found (use -device virtio-net-device)");
