@@ -395,28 +395,41 @@ const HTTP_RESP: &[u8] = b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent
 
 /// 检查所有 listen socket，对已建立的连接直接在内核处理 HTTP 响应
 unsafe fn handle_listen_sockets(sockets: &mut SocketSet<'static>) {
-    let mut ready: Vec<usize> = Vec::new();
+    // 收集 (id, state) 避免借用冲突
+    let mut actions: Vec<(usize, TcpState)> = Vec::new();
     for i in 0..SOCK_MAP.len() {
         if let Some(h) = SOCK_MAP[i] {
             let s = sockets.get_mut::<TcpSocket>(h);
-            if s.state() == TcpState::Established {
-                ready.push(i);
-            }
+            actions.push((i, s.state()));
         }
     }
-    for id in ready {
+    for (id, st) in actions {
         let h = match get_handle(id) {
             Some(h) => h,
             None => continue,
         };
         let s = sockets.get_mut::<TcpSocket>(h);
-        if s.can_recv() {
-            let mut buf = [0u8; 1024];
-            let _ = s.recv_slice(&mut buf);
+        match st {
+            TcpState::Established => {
+                if s.can_recv() {
+                    let mut buf = [0u8; 1024];
+                    let _ = s.recv_slice(&mut buf);
+                }
+                if s.can_send() {
+                    let _ = s.send_slice(HTTP_RESP);
+                }
+                let _ = s.close();
+            }
+            TcpState::Closed => {
+                // 重新 listen
+                s.abort();
+                // 查原 port
+                let port = LISTEN_PORTS.get(id).copied().unwrap_or(8080);
+                let _ = s.listen(port);
+            }
+            _ => {}
         }
-        if s.can_send() {
-            let _ = s.send_slice(HTTP_RESP);
-        }
-        let _ = s.close();
     }
 }
+
+static mut LISTEN_PORTS: Vec<u16> = Vec::new();
