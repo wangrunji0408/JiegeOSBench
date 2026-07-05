@@ -85,9 +85,21 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
                 println!("[trap] ecall from S-mode (unexpected)");
                 cx.sepc += 4;
             }
-            12 => println!("[trap] instr page fault @ {:#x} stval={:#x}", cx.sepc, cx.stval),
-            13 => println!("[trap] load page fault @ {:#x} stval={:#x}", cx.sepc, cx.stval),
-            15 => println!("[trap] store page fault @ {:#x} stval={:#x}", cx.sepc, cx.stval),
+            12 => {
+                println!("[trap] instr page fault @ {:#x} stval={:#x}", cx.sepc, cx.stval);
+                dump_ctx(cx);
+                crate::sbi::shutdown();
+            }
+            13 => {
+                println!("[trap] load page fault @ {:#x} stval={:#x}", cx.sepc, cx.stval);
+                dump_ctx(cx);
+                crate::sbi::shutdown();
+            }
+            15 => {
+                println!("[trap] store page fault @ {:#x} stval={:#x}", cx.sepc, cx.stval);
+                dump_ctx(cx);
+                crate::sbi::shutdown();
+            }
             2 => println!("[trap] illegal instr @ {:#x}", cx.sepc),
             3 => {
                 println!("[trap] breakpoint @ {:#x}", cx.sepc);
