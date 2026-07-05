@@ -403,6 +403,7 @@ pub fn send_packet(data: &[u8]) -> bool {
         core::ptr::write_volatile(&mut (*d.tx.desc.add(i as usize)).addr as *mut u64, buf as u64);
         core::ptr::write_volatile(&mut (*d.tx.desc.add(i as usize)).len as *mut u32, (NET_HDR_LEN + copy) as u32);
         core::ptr::write_volatile(&mut (*d.tx.desc.add(i as usize)).flags as *mut u16, 0);
+        core::ptr::write_volatile(&mut (*d.tx.desc.add(i as usize)).next as *mut u16, 0);
         let a = d.tx.avail;
         let idx = core::ptr::read_volatile(&(*a).idx);
         core::ptr::write_volatile((*a).ring.as_mut_ptr().add(idx as usize % d.tx.num), i);
