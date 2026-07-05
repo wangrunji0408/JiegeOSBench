@@ -206,7 +206,11 @@ fn sys_writev(fd: usize, iov: usize, iovcnt: usize) -> isize {
 
 fn sys_read(fd: usize, buf: usize, count: usize) -> isize {
     let mut tmp = [0u8; 512];
-    let n = with_fd_table(|t| t.read(fd, &mut tmp[..count.min(tmp.len())]).unwrap_or(0));
+    let n = {
+        let p = match current_process() { Some(p) => p, None => return ENOSYS };
+        let sl = count.min(tmp.len());
+        p.fd_table.read(fd, &mut tmp[..sl]).unwrap_or(0)
+    };
     if n > 0 {
         unsafe { user_write(buf, tmp.as_ptr(), n); }
     }
