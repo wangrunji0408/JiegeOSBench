@@ -1,9 +1,12 @@
 //! 任务上下文与切换原语。
 
 use core::arch::global_asm;
-use crate::trap::TrapContext;
+use crate::mm::PAGE_SIZE;
 
 global_asm!(include_str!("switch.S"));
+
+/// 进程内核栈大小
+pub const KSTACK_SIZE: usize = PAGE_SIZE * 4; // 16KB
 
 /// 任务上下文，与 switch.S 布局对应：ra, sp, s0..s11
 #[repr(C)]
