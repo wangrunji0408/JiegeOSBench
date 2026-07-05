@@ -5,8 +5,8 @@ use crate::println;
 
 global_asm!(include_str!("trap.S"));
 
-/// Trap 上下文，与 trap.S 的栈布局严格对应。
-/// 偏移：x1..x31 在 0..31*8，sepc=31*8, sstatus=32*8, stval=33*8, scause=34*8, sscratch=35*8
+/// Trap 上下文，与 trap.S 的栈布局严格对应（36 字段 = 288 字节，栈分配 304）。
+/// 偏移：x[0..32] -> 0..31*8，sepc=32*8, sstatus=33*8, stval=34*8, scause=35*8
 #[repr(C)]
 pub struct TrapContext {
     pub x: [usize; 32],
@@ -14,23 +14,42 @@ pub struct TrapContext {
     pub sstatus: usize,
     pub stval: usize,
     pub scause: usize,
-    pub sscratch: usize,
 }
 
+/// sstatus 位
+pub const SSTATUS_SPP: usize = 1 << 8; // 1=trap 来自 S-mode, 0=来自 U-mode
+pub const SSTATUS_SPIE: usize = 1 << 5; // sret 后开中断
+pub const SSTATUS_SUM: usize = 1 << 18; // S-mode 可访问用户页
+
 impl TrapContext {
-    pub fn new_kernel_entry(entry: usize, sp: usize) -> Self {
-        let mut ctx = Self {
-            x: [0; 32],
+    /// 构造用户态初始上下文
+    pub fn new_user_entry(entry: usize, user_sp: usize, kstack_top: usize) -> Self {
+        Self {
+            x: {
+                let mut r = [0usize; 32];
+                r[2] = user_sp; // sp
+                r
+            },
             sepc: entry,
-            sstatus: 0,
+            sstatus: SSTATUS_SPIE, // SPP=0(U-mode), SPIE=1(开中断)
             stval: 0,
             scause: 0,
-            sscratch: 0,
-        };
-        // SPP=1 表示返回到 S-mode
-        ctx.sstatus = 1 << 8; // SPP
-        ctx.x[2] = sp; // sp
-        ctx
+        }
+    }
+
+    /// 构造内核态初始上下文（idle 等）
+    pub fn new_kernel_entry(entry: usize, sp: usize) -> Self {
+        Self {
+            x: {
+                let mut r = [0usize; 32];
+                r[2] = sp - 304; // __restore 末尾 ld sp,2*8(sp)；这里存的是恢复后的 sp
+                r
+            },
+            sepc: entry,
+            sstatus: SSTATUS_SPP | SSTATUS_SPIE, // S-mode
+            stval: 0,
+            scause: 0,
+        }
     }
 }
 
@@ -44,63 +63,30 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
 
     if is_interrupt {
         match code {
-            // Supervisor timer interrupt
-            5 => {
-                crate::timer::tick();
-            }
-            // Supervisor software interrupt
-            1 => {
-                // 清 pending
-                unsafe {
-                    core::arch::asm!("csrc sip, {}", in(reg) 0x2_usize);
-                }
-            }
-            // Supervisor external interrupt
-            9 => {
-                crate::irq::external();
-            }
+            5 => crate::timer::tick(),      // S-mode timer
+            1 => unsafe {                   // S-mode software
+                core::arch::asm!("csrc sip, {}", in(reg) 0x2_usize);
+            },
+            9 => crate::irq::external(),    // S-mode external
             _ => {
                 println!("[trap] unknown interrupt code {}", code);
             }
         }
     } else {
         match code {
-            // Environment call from U-mode
             8 => {
+                // ecall from U-mode
                 cx.sepc += 4;
                 crate::syscall::do_syscall(cx);
             }
-            // Environment call from S-mode
             9 => {
                 println!("[trap] ecall from S-mode (unexpected)");
                 cx.sepc += 4;
             }
-            // Instruction page fault
-            12 => {
-                println!(
-                    "[trap] instruction page fault @ {:#x}, stval={:#x}",
-                    cx.sepc, cx.stval
-                );
-            }
-            // Load page fault
-            13 => {
-                println!(
-                    "[trap] load page fault @ {:#x}, stval={:#x}",
-                    cx.sepc, cx.stval
-                );
-            }
-            // Store/AMO page fault
-            15 => {
-                println!(
-                    "[trap] store page fault @ {:#x}, stval={:#x}",
-                    cx.sepc, cx.stval
-                );
-            }
-            // Illegal instruction
-            2 => {
-                println!("[trap] illegal instruction @ {:#x}", cx.sepc);
-            }
-            // Breakpoint
+            12 => println!("[trap] instr page fault @ {:#x} stval={:#x}", cx.sepc, cx.stval),
+            13 => println!("[trap] load page fault @ {:#x} stval={:#x}", cx.sepc, cx.stval),
+            15 => println!("[trap] store page fault @ {:#x} stval={:#x}", cx.sepc, cx.stval),
+            2 => println!("[trap] illegal instr @ {:#x}", cx.sepc),
             3 => {
                 println!("[trap] breakpoint @ {:#x}", cx.sepc);
                 cx.sepc += 2;
