@@ -23,8 +23,6 @@ __alltraps:
     .rept 31
         SAVE %i
         .set i, i+1
-    .endm
-    .rept 0
     .endr
 
     // 保存 CSR
