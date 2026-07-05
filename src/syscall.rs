@@ -149,7 +149,6 @@ fn with_fd_table<R>(f: impl FnOnce(&mut crate::vfs::FdTable) -> R) -> R {
 #[no_mangle]
 pub fn do_syscall(cx: &mut TrapContext) {
     let num = cx.x[17];
-    crate::println!("[sys{}]", num);
     let a0 = cx.x[10];
     let a1 = cx.x[11];
     let a2 = cx.x[12];
