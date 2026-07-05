@@ -90,14 +90,14 @@ pub struct VirtQueue {
 
 impl VirtQueue {
     pub fn new() -> Option<Self> {
-        // 分配 3 连续页：desc@0, avail@4096, used@8192（全部页对齐，兼容 modern）
-        let base_pa = FRAME_ALLOCATOR.alloc_contig(3)?;
+        // 2 连续页：desc+avail 在第 0 页，used 在第 1 页（legacy 布局）
+        let base_pa = FRAME_ALLOCATOR.alloc_contig(2)?;
         let desc = base_pa as *mut VqDesc;
-        let avail = (base_pa + 4096) as *mut AvailRing;
-        let used = (base_pa + 8192) as *mut UsedRing;
+        let avail = (base_pa + 16 * VQ_SIZE) as *mut AvailRing;
+        let used = (base_pa + 4096) as *mut UsedRing;
         unsafe {
             let p = base_pa as *mut u8;
-            for i in 0..(3 * 4096) {
+            for i in 0..(2 * 4096) {
                 core::ptr::write_volatile(p.add(i), 0);
             }
         }
@@ -116,7 +116,7 @@ impl VirtQueue {
         };
         unsafe {
             for i in 0..VQ_SIZE {
-                (*q.desc.add(i)).next = (i as u16 + 1) % VQ_SIZE as u16;
+                core::ptr::write_volatile(&mut (*q.desc.add(i)).next as *mut u16, (i as u16 + 1) % VQ_SIZE as u16);
             }
         }
         Some(q)
