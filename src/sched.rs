@@ -206,6 +206,8 @@ fn schedule() {
 
 /// 首次进入调度：切到第一个就绪进程；无进程则直接进 idle
 pub fn run_first_task() -> ! {
+    // 关 SIE 防止时钟中断在首次切换前打断（避免竞态）
+    unsafe { core::arch::asm!("csrci sstatus, 0x2"); }
     let next = {
         let s = SCHED.lock();
         s.pick_next()
