@@ -174,7 +174,7 @@ pub fn clone_child(flags: usize, stack: usize, ptid: usize, _ctid: usize) -> isi
     let child = Process {
         pid: child_pid,
         task_ctx: crate::task::TaskContext {
-            ra: crate::task::__restore as *const () as usize,
+            ra: __restore_addr(),
             sp: ctx_ptr as usize,
             s: [0; 12],
         },
