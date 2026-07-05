@@ -300,17 +300,9 @@ fn sys_mmap(addr: usize, length: usize, _prot: usize, _flags: usize, _fd: usize,
     base as isize
 }
 
-fn sys_close(fd: usize) -> isize {
-    let p = match current_process() {
-        Some(p) => p,
-        None => return ENOSYS,
-    };
-    if fd < p.fd_table.len() {
-        p.fd_table[fd] = None;
-    }
+fn sys_close(_fd: usize) -> isize {
     0
 }
-
 
 fn sys_uname(buf: usize) -> isize {
     if buf == 0 {
