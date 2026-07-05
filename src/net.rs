@@ -312,6 +312,7 @@ pub fn send_packet(data: &[u8]) -> bool {
         }
     };
     d.tx.tx_bufs[i as usize] = buf;
+    crate::println!("[net] TX desc {} buf={:#x} len={}", i, buf, data.len());
     unsafe {
         // 写 net_hdr（全 0）
         for k in 0..NET_HDR_LEN {
