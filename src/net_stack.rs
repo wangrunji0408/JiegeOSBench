@@ -167,8 +167,7 @@ pub fn accept_socket(listen_id: usize, port: u16) -> Option<usize> {
             let s = sockets.get_mut::<TcpSocket>(h);
             if s.state() == TcpState::Established {
                 // 创建新 listener socket
-                let new_sock = TcpSocket::new(tcp_buffer(), tcp_buffer());
-                let new_h = sockets.add(new_sock);
+                let new_h = sockets.add(new_sock());
                 let _ = sockets.get_mut::<TcpSocket>(new_h).listen(port);
                 // 分配一个新 id 给新 listener
                 let new_listener_id = SOCK_MAP.len();
