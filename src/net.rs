@@ -199,14 +199,17 @@ unsafe fn init_device(base: usize) -> bool {
         mac[i] = read_volatile((base + REG_CONFIG + i) as *const u8);
     }
 
-    // 给 RX 队列填充接收缓冲
-    fill_rx(&mut rx);
-
     crate::println!(
         "[net] up, mac={:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}",
         mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
     );
     NET = Some(NetDriver { base, rx, tx, mac });
+
+    // 给 RX 队列填充接收缓冲（需在 NET 设置后，因 notify 要写设备寄存器）
+    {
+        let d = NET.as_mut().unwrap();
+        fill_rx(&mut d.rx);
+    }
     true
 }
 
