@@ -18,6 +18,8 @@ run: build
 		-nographic \
 		-bios default \
 		-serial mon:stdio \
+		-netdev user,id=net0,hostfwd=tcp::8080-:80 \
+		-device virtio-net-device,netdev=net0 \
 		-kernel $(BIN)
 
 clean:
