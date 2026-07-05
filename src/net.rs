@@ -488,7 +488,7 @@ pub fn irq_handler() {
 pub fn poll_tx() {
     let d = unsafe { driver() };
     unsafe { core::arch::asm!("fence r, rw"); }
-    let tx_used = unsafe { (*d.tx.used).idx };
+    let tx_used = unsafe { core::ptr::read_volatile(&(*d.tx.used).idx as *const u16) };
     if tx_used != d.tx.last_used {
         crate::println!("[net] TX used.idx={} last={}", tx_used, d.tx.last_used);
     }
