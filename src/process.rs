@@ -141,8 +141,9 @@ impl Process {
 }
 
 /// 在用户栈顶构造 argc/argv/envp/auxv，返回最终的 sp（16 字节对齐）。
+/// 通过栈顶页的物理地址写入（内核身份映射，无需切 satp）。
 fn build_init_stack(
-    pt: &PageTable,
+    top_pa: usize,
     args: &[String],
     envp: &[String],
     phdr: usize,
@@ -150,53 +151,58 @@ fn build_init_stack(
     base: usize,
     entry: usize,
 ) -> usize {
-    // 栈顶向下写。先准备所有字符串，再准备指针/数值区。
-    let top = USER_STACK_TOP;
+    // VA -> PA 转换（仅栈顶页）
+    let top_page_va = USER_STACK_TOP - PAGE_SIZE;
+    let va2pa = |va: usize| -> usize { top_pa + (va - top_page_va) };
+
     // 随机字节（16 字节）
     let random_bytes: [u8; 16] = [
         0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
         0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x01,
     ];
 
-    // 1) 字符串区
-    let mut p = top;
+    // 1) 字符串区（从栈顶向下）
+    let mut p = USER_STACK_TOP;
     let mut arg_str_addrs = Vec::new();
     for a in args {
         let bytes = a.as_bytes();
         p -= bytes.len() + 1;
-        write_user_bytes(pt, p, bytes);
-        write_user_byte(pt, p + bytes.len(), 0);
+        unsafe {
+            core::ptr::copy_nonoverlapping(bytes.as_ptr(), va2pa(p) as *mut u8, bytes.len());
+            core::ptr::write_volatile(va2pa(p + bytes.len()) as *mut u8, 0);
+        }
         arg_str_addrs.push(p);
     }
     let mut env_str_addrs = Vec::new();
     for e in envp {
         let bytes = e.as_bytes();
         p -= bytes.len() + 1;
-        write_user_bytes(pt, p, bytes);
-        write_user_byte(pt, p + bytes.len(), 0);
+        unsafe {
+            core::ptr::copy_nonoverlapping(bytes.as_ptr(), va2pa(p) as *mut u8, bytes.len());
+            core::ptr::write_volatile(va2pa(p + bytes.len()) as *mut u8, 0);
+        }
         env_str_addrs.push(p);
     }
     // 随机字节区
     p -= 16;
-    write_user_bytes(pt, p, &random_bytes);
+    unsafe {
+        core::ptr::copy_nonoverlapping(random_bytes.as_ptr(), va2pa(p) as *mut u8, 16);
+    }
     let random_addr = p;
 
-    // 2) 对齐到 16（sp 最终需 16 对齐）。先计算后续需要的字数
-    // auxv: AT_PAGESZ, AT_PHDR, AT_PHNUM, AT_BASE, AT_ENTRY, AT_RANDOM, AT_NULL = 7 对 = 14 字
-    // null term: envp NULL (1) + argv NULL (1) = 2 字
-    let aux_pairs = 7;
-    let word_count = 1 /*argc*/ + args.len() + 1 + envp.len() + 1 + aux_pairs * 2;
+    // 2) 计算 need_bytes 并对齐
+    let aux_pairs = 7usize;
+    let word_count = 1 + args.len() + 1 + envp.len() + 1 + aux_pairs * 2;
     let need_bytes = word_count * 8;
-    // 对齐 p 到 16，并预留 need_bytes
     let mut sp = p - need_bytes;
     sp &= !0xFusize;
 
     let mut push = |v: usize| {
         sp -= 8;
-        write_user_word(pt, sp, v);
+        unsafe { core::ptr::write_volatile(va2pa(sp) as *mut usize, v); }
     };
 
-    // auxv（逆序压入，这样正序读出）
+    // auxv（逆序压入）
     push(0); push(AT_NULL);
     push(random_addr); push(AT_RANDOM);
     push(entry); push(AT_ENTRY);
@@ -204,7 +210,6 @@ fn build_init_stack(
     push(phnum); push(AT_PHNUM);
     push(phdr); push(AT_PHDR);
     push(PAGE_SIZE); push(AT_PAGESZ);
-
     // envp 指针 + NULL
     push(0);
     for &a in env_str_addrs.iter().rev() {
@@ -219,17 +224,4 @@ fn build_init_stack(
     push(args.len());
 
     sp
-}
-
-fn write_user_bytes(pt: &PageTable, va: usize, data: &[u8]) {
-    // SUM 已设，内核可写用户页
-    unsafe {
-        core::ptr::copy_nonoverlapping(data.as_ptr(), va as *mut u8, data.len());
-    }
-}
-fn write_user_byte(pt: &PageTable, va: usize, b: u8) {
-    unsafe { core::ptr::write_volatile(va as *mut u8, b); }
-}
-fn write_user_word(pt: &PageTable, va: usize, w: usize) {
-    unsafe { core::ptr::write_volatile(va as *mut usize, w); }
 }
