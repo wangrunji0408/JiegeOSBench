@@ -17,6 +17,10 @@ struct FreeList {
     head: *mut FreeBlock,
 }
 
+// FreeList 持有裸指针，跨线程访问由 Spinlock 保护
+unsafe impl Send for FreeList {}
+unsafe impl Sync for FreeList {}
+
 impl FreeList {
     const fn new() -> Self {
         Self { head: null_mut() }
