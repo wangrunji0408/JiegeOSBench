@@ -336,7 +336,7 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) 
     let epoll_id = epfd & 0x7fff;
     let start_ticks = crate::timer::ticks();
     // timeout 单位 ms；tick=10ms
-    let max_ticks = if timeout == -1isize as usize { usize::MAX } else { (timeout / 10).max(1) };
+    let max_ticks = if timeout == usize::MAX { usize::MAX } else { (timeout / 10).max(1) };
     loop {
         poll();
         unsafe {
