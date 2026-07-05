@@ -226,6 +226,7 @@ pub fn fill_rx(vq: &mut VirtQueue) {
 }
 
 pub fn fill_rx_with_base(vq: &mut VirtQueue, base: usize) {
+    let mut posted = 0;
     for i in 0..vq.num {
         if vq.rx_bufs[i] != 0 {
             continue;
@@ -243,7 +244,9 @@ pub fn fill_rx_with_base(vq: &mut VirtQueue, base: usize) {
             a.ring[a.idx as usize % vq.num] = i as u16;
             a.idx = a.idx.wrapping_add(1);
         }
+        posted += 1;
     }
+    crate::println!("[net] posted {} rx buffers, avail idx={}", posted, unsafe{(*vq.avail).idx});
     unsafe { reg_w(base, REG_QUEUE_NOTIFY, 0); }
 }
 
