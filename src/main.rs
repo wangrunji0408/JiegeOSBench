@@ -15,6 +15,8 @@ mod syscall;
 mod sched;
 mod task;
 mod mm;
+mod elf;
+mod process;
 
 use core::arch::{global_asm, asm};
 use alloc::boxed::Box;
