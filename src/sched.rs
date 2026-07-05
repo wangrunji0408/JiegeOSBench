@@ -144,13 +144,16 @@ fn schedule() {
                 unsafe { SCHED.unlock(); }
                 return;
             }
+            // 当前是进程，切到 idle
+            let cur_ctx_ptr = {
+                let p = s.procs[cur].as_ref().unwrap();
+                &(p.as_ref().task_ctx) as *const TaskContext as *mut TaskContext
+            };
             s.current = MAX_PROCS;
-            // 切回 idle：用内核页表
             set_satp_for(None);
             let idle_ptr = unsafe { &mut IDLE_CTX as *mut TaskContext };
             unsafe { SCHED.unlock(); }
-            unsafe { crate::task::switch_to(idle_ptr, idle_ptr); }
-            // 不会到这（idle_ptr 同时作 cur/next 仅作占位，实际见 run_idle 路径）
+            unsafe { crate::task::switch_to(cur_ctx_ptr, idle_ptr); }
             return;
         }
     };
