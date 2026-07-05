@@ -224,6 +224,11 @@ unsafe fn setup_queue(base: usize, idx: usize, vq: &VirtQueue) {
 
 /// 向 RX 队列投递空缓冲
 pub fn fill_rx(vq: &mut VirtQueue) {
+    let base = unsafe { driver().base };
+    fill_rx_with_base(vq, base);
+}
+
+pub fn fill_rx_with_base(vq: &mut VirtQueue, base: usize) {
     for i in 0..vq.num {
         if vq.rx_bufs[i] != 0 {
             continue;
@@ -234,26 +239,15 @@ pub fn fill_rx(vq: &mut VirtQueue) {
         };
         vq.rx_bufs[i] = buf;
         unsafe {
-            // desc i 指向 [hdr(10) | data]，但简单起见整块当 data+hdr
             (*vq.desc.add(i)).addr = buf as u64;
             (*vq.desc.add(i)).len = (NET_HDR_LEN + PKT_BUF) as u32;
-            (*vq.desc.add(i)).flags = 2; // VIRTQ_DESC_F_WRITE（设备可写）
-            // 加入 avail ring
+            (*vq.desc.add(i)).flags = 2; // VIRTQ_DESC_F_WRITE
             let a = &mut *vq.avail;
             a.ring[a.idx as usize % vq.num] = i as u16;
             a.idx = a.idx.wrapping_add(1);
         }
     }
-    // notify
-    notify_rx(vq);
-}
-
-fn notify_rx(vq: &VirtQueue) {
-    unsafe {
-        let d = driver();
-        reg_w(d.base, REG_QUEUE_NOTIFY, 0);
-    }
-    let _ = vq;
+    unsafe { reg_w(base, REG_QUEUE_NOTIFY, 0); }
 }
 
 /// 发送一个以太网帧（含 net_hdr）。返回是否成功投递。
