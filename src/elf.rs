@@ -137,5 +137,7 @@ pub fn load_elf(elf: &[u8], pt: &PageTable) -> Result<LoadedElf, &'static str> {
     Ok(LoadedElf {
         entry: e_entry,
         brk_start: max_end,
+        phdr: phdr_va,
+        phnum: e_phnum,
     })
 }
