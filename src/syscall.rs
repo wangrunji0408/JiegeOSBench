@@ -331,6 +331,149 @@ fn sys_close(_fd: usize) -> isize {
     0
 }
 
+// === socket 系统调用 ===
+
+fn sys_socket(_domain: usize, _typ: usize, _proto: usize) -> isize {
+    // 创建 smoltcp tcp socket
+    let id = match crate::net_stack::new_tcp_socket() {
+        Some(id) => id,
+        None => return -12, // ENOMEM
+    };
+    let p = match current_process() {
+        Some(p) => p,
+        None => return -3,
+    };
+    let fd = p.sock_table.alloc(crate::process::SockFd {
+        handle: id,
+        local_port: 0,
+        kind: crate::process::SockKind::TcpStream,
+    });
+    fd as isize
+}
+
+/// 读 sockaddr_in: 2 字节 family + 2 字节 port(网络序) + 4 字节 addr
+fn read_sockaddr_in(ptr: usize) -> Option<(u16, [u8; 4])> {
+    if ptr == 0 {
+        return None;
+    }
+    unsafe {
+        let family = u16::from_le_bytes([
+            core::ptr::read_volatile(ptr as *const u8),
+            core::ptr::read_volatile((ptr + 1) as *const u8),
+        ]);
+        let port_be = [
+            core::ptr::read_volatile((ptr + 2) as *const u8),
+            core::ptr::read_volatile((ptr + 3) as *const u8),
+        ];
+        let port = u16::from_be_bytes(port_be);
+        let mut addr = [0u8; 4];
+        for i in 0..4 {
+            addr[i] = core::ptr::read_volatile((ptr + 4 + i) as *const u8);
+        }
+        let _ = family;
+        Some((port, addr))
+    }
+}
+
+fn sys_bind(fd: usize, addr: usize, _len: usize) -> isize {
+    let (port, _addr) = match read_sockaddr_in(addr) {
+        Some(v) => v,
+        None => return -14,
+    };
+    let p = match current_process() {
+        Some(p) => p,
+        None => return -3,
+    };
+    let s = match p.sock_table.get(fd) {
+        Some(s) => s,
+        None => return -9,
+    };
+    s.local_port = port;
+    0
+}
+
+fn sys_listen(fd: usize, _backlog: usize) -> isize {
+    let p = match current_process() {
+        Some(p) => p,
+        None => return -3,
+    };
+    let (id, port) = {
+        let s = match p.sock_table.get(fd) {
+            Some(s) => s,
+            None => return -9,
+        };
+        (s.handle, s.local_port)
+    };
+    if !crate::net_stack::listen_socket(id, port) {
+        return -22;
+    }
+    if let Some(s) = p.sock_table.get(fd) {
+        s.kind = crate::process::SockKind::TcpListener;
+    }
+    0
+}
+
+fn sys_accept(fd: usize) -> isize {
+    let p = match current_process() {
+        Some(p) => p,
+        None => return -3,
+    };
+    let (id, port) = {
+        let s = match p.sock_table.get(fd) {
+            Some(s) => s,
+            None => return -9,
+        };
+        if s.kind != crate::process::SockKind::TcpListener {
+            return -22;
+        }
+        (s.handle, s.local_port)
+    };
+    // 释放 current_process 借用
+    drop(p);
+    let new_id = match crate::net_stack::accept_socket(id, port) {
+        Some(n) => n,
+        None => return -11, // EAGAIN
+    };
+    let p = match current_process() {
+        Some(p) => p,
+        None => return -3,
+    };
+    let new_fd = p.sock_table.alloc(crate::process::SockFd {
+        handle: new_id,
+        local_port: port,
+        kind: crate::process::SockKind::TcpStream,
+    });
+    new_fd as isize
+}
+
+fn sys_sendto(fd: usize, buf: usize, len: usize) -> isize {
+    let mut tmp = [0u8; 4096];
+    let mut total = 0usize;
+    let mut p = buf;
+    let mut remaining = len;
+    while remaining > 0 {
+        let n = remaining.min(tmp.len());
+        unsafe { user_read(tmp.as_mut_ptr(), p, n); }
+        let sent = crate::net_stack::socket_send_from_fd(fd, &tmp[..n]);
+        if sent == 0 {
+            break;
+        }
+        p += sent;
+        remaining -= sent;
+        total += sent;
+    }
+    total as isize
+}
+
+fn sys_recvfrom(fd: usize, buf: usize, len: usize) -> isize {
+    let mut tmp = [0u8; 4096];
+    let n = crate::net_stack::socket_recv_from_fd(fd, &mut tmp[..len.min(tmp.len())]);
+    if n > 0 {
+        unsafe { user_write(buf, tmp.as_ptr(), n); }
+    }
+    n as isize
+}
+
 fn sys_uname(buf: usize) -> isize {
     if buf == 0 {
         return EFAULT;
