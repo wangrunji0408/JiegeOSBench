@@ -90,11 +90,11 @@ pub struct VirtQueue {
 
 impl VirtQueue {
     pub fn new() -> Option<Self> {
-        // 3 连续页，全部 4096 对齐：desc@0, avail@4096, used@8192（modern 兼容）
-        let base_pa = FRAME_ALLOCATOR.alloc_contig(3)?;
+        // 2 连续页（legacy 布局）：desc@0, avail@128, used@4096
+        let base_pa = FRAME_ALLOCATOR.alloc_contig(2)?;
         let desc = base_pa as *mut VqDesc;
-        let avail = (base_pa + 4096) as *mut AvailRing;
-        let used = (base_pa + 8192) as *mut UsedRing;
+        let avail = (base_pa + 16 * VQ_SIZE) as *mut AvailRing;
+        let used = (base_pa + 4096) as *mut UsedRing;
         unsafe {
             let p = base_pa as *mut u8;
             for i in 0..(3 * 4096) {
