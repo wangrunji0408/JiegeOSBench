@@ -83,13 +83,42 @@ pub extern "C" fn rust_main() -> ! {
     enable_interrupts();
     println!("[boot] interrupts enabled");
 
-    println!("[boot] idle loop");
-    let mut n: u64 = 0;
+    // 生成若干内核测试任务
+    sched::spawn(task_a as usize, "taskA");
+    sched::spawn(task_b as usize, "taskB");
+    sched::spawn(task_c as usize, "taskC");
+
+    println!("[boot] entering scheduler...");
+    sched::run_first_task();
+}
+
+#[no_mangle]
+extern "C" fn task_a() -> ! {
+    let mut n = 0u64;
     loop {
-        unsafe { asm!("wfi"); }
         n += 1;
-        if n % 50 == 0 {
-            println!("[idle] wfi woke {} times, ticks={}", n, timer::ticks());
+        if n % 5_000_000 == 0 {
+            println!("[A] alive #{} tick={}", n / 5_000_000, timer::ticks());
+        }
+    }
+}
+#[no_mangle]
+extern "C" fn task_b() -> ! {
+    let mut n = 0u64;
+    loop {
+        n += 1;
+        if n % 5_000_000 == 0 {
+            println!("[B] alive #{} tick={}", n / 5_000_000, timer::ticks());
+        }
+    }
+}
+#[no_mangle]
+extern "C" fn task_c() -> ! {
+    let mut n = 0u64;
+    loop {
+        n += 1;
+        if n % 5_000_000 == 0 {
+            println!("[C] alive #{} tick={}", n / 5_000_000, timer::ticks());
         }
     }
 }
