@@ -12,6 +12,7 @@
 // 通过 sstatus.SPP 区分来源。restore 末尾 sscratch 统一设为内核栈顶。
 
 #define CTX_SIZE 304
+.set CTX_SIZE, 304
 
     .altmacro
     .macro SAVE n
