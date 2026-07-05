@@ -19,6 +19,7 @@ mod elf;
 mod process;
 mod vfs;
 mod net;
+mod net;
 mod vfs;
 
 use core::arch::{global_asm, asm};
