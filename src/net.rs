@@ -227,7 +227,7 @@ unsafe fn init_device(base: usize) -> bool {
     // 先投递 RX 缓冲，再 DRIVER_OK
     fill_rx_with_base(&mut NET.as_mut().unwrap().rx, base);
 
-    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_DRIVER_OK);
+    reg_w(base, REG_STATUS, S_ACK | S_DRIVER | S_DRIVER_OK | S_FEATURES_OK);
     let st = reg_r(base, REG_STATUS);
     crate::println!("[net] status={:#x} feat={:#x} neg={:#x}", st, feat, negotiated);
     true
