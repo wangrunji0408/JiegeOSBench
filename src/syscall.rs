@@ -267,6 +267,13 @@ pub fn do_syscall(cx: &mut TrapContext) {
 }
 
 fn sys_write(fd: usize, buf: usize, count: usize) -> isize {
+    if fd <= 2 {
+        let mut tmp = [0u8; 256];
+        let n = count.min(tmp.len());
+        unsafe { user_read(tmp.as_mut_ptr(), buf, n); }
+        let preview = core::str::from_utf8(&tmp[..n]).unwrap_or("");
+        crate::println!("[write fd={} n={} {:?}]", fd, count, preview);
+    }
     // socket fd?
     let sock_id = {
         let p = match current_process() { Some(p) => p, None => return -3 };
