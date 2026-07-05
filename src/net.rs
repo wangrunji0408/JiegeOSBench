@@ -325,6 +325,7 @@ pub fn fill_rx_with_base(vq: &mut VirtQueue, base: usize) {
             core::ptr::write_volatile(&mut (*vq.desc.add(i)).addr as *mut u64, buf as u64);
             core::ptr::write_volatile(&mut (*vq.desc.add(i)).len as *mut u32, (NET_HDR_LEN + PKT_BUF) as u32);
             core::ptr::write_volatile(&mut (*vq.desc.add(i)).flags as *mut u16, 2);
+            core::ptr::write_volatile(&mut (*vq.desc.add(i)).next as *mut u16, 0);
             let a = vq.avail;
             let idx = core::ptr::read_volatile(&(*a).idx);
             core::ptr::write_volatile((*a).ring.as_mut_ptr().add(idx as usize % vq.num), i as u16);
