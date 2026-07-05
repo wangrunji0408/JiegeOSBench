@@ -6,11 +6,12 @@
 
 三次实验，多个模型，同一个目标：
 
-| 分支 | 模型 | 耗时 | 成本 |
-|------|------|------|------|
-| [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — |
-| [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — |
-| [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 小时 | ~$60 |
+| 分支 | 模型 | 耗时 | Tokens | 成本 |
+|------|------|------|--------|------|
+| [fable5](https://github.com/wangrunji0408/iJiegeOS/tree/fable5) | Claude Fable 5 | ~38分钟 | 16.4M | ~$53 |
+| [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
+| [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
+| [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
 
 ## 提示词
 
@@ -23,6 +24,22 @@ Linux nginx server，从外面能访问网站。必须运行nginx官方binary，
 ⏵⏵ bypass permissions on
 
 ## 时间线
+
+### Fable 5 — 38分钟
+
+![Fable 5 Timeline](figures/fable5-timeline.png)
+
+Claude Code 运行时长约 **38分钟**。总成本约 **$53**（1640 万 tokens，含 prompt caching）。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:03 | Rootfs + nginx 配置文件写入 |
+| 00:09 | 第一个 Rust 源文件（main.rs, sbi.rs, ...） |
+| 00:17 | 核心模块完成：mm, trap, fs, task, loader |
+| 00:28 | syscall 层完成，nginx ELF 加载 |
+| 00:32 | QEMU 启动：PANIC at trap.rs — 页错误 |
+| 00:34 | QEMU 启动：nginx listening on port 80 🎉 |
+| 00:37 | 收尾修复（sendfile 等 syscall, README） |
 
 ### Opus 4.7 — 65分钟
 

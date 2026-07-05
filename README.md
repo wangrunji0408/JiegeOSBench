@@ -6,11 +6,12 @@ A Rust OS kernel autonomously implemented by Claude Code — just barely capable
 
 Three runs, multiple models, same goal:
 
-| Branch | Model | Duration | Cost |
-|--------|-------|----------|------|
-| [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — |
-| [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — |
-| [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 hours | ~$60 |
+| Branch | Model | Duration | Tokens | Cost |
+|--------|-------|----------|--------|------|
+| [fable5](https://github.com/wangrunji0408/iJiegeOS/tree/fable5) | Claude Fable 5 | ~38min | 16.4M | ~$53 |
+| [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
+| [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
+| [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
 
 ## Prompt
 
@@ -26,6 +27,22 @@ work in the current directory. Keep working until the goal is achieved.
 ⏵⏵ bypass permissions on
 
 ## Timeline
+
+### Fable 5 — 38min
+
+![Fable 5 Timeline](figures/fable5-timeline.png)
+
+Claude Code ran for **~38 minutes**. Total cost: **~$53** (16.4M tokens incl. prompt caching).
+
+| Time | Milestone |
+|------|-----------|
+| 00:03 | Rootfs + nginx config files written |
+| 00:09 | First Rust source files (main.rs, sbi.rs, ...) |
+| 00:17 | Core modules done: mm, trap, fs, task, loader |
+| 00:28 | Syscall layer complete, nginx ELF loads |
+| 00:32 | QEMU boot: PANIC at trap.rs — page fault |
+| 00:34 | QEMU boot: nginx listening on port 80 🎉 |
+| 00:37 | Post-fix cleanup (sendfile, README) |
 
 ### Opus 4.7 — 65min active (3h 32min total)
 
