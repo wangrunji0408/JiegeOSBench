@@ -487,9 +487,47 @@ fn sys_close(fd: usize) -> isize {
 // === socket 系统调用 ===
 
 fn sys_dup3(oldfd: usize, newfd: usize) -> isize {
-    // 简化：不真正复制 fd，返回 newfd
-    let _ = oldfd;
-    newfd as isize
+    // 把 oldfd 的内容复制到 newfd
+    let p = match current_process() {
+        Some(p) => p,
+        None => return -3,
+    };
+    // 先尝试 socket 表
+    if let Some(s) = p.sock_table.get(oldfd) {
+        let entry = s.clone();
+        // 关闭 newfd 原内容
+        p.sock_table.close(newfd);
+        if newfd < p.sock_table.entries.len() {
+            p.sock_table.entries[newfd] = Some(entry);
+        } else {
+            while p.sock_table.entries.len() <= newfd {
+                p.sock_table.entries.push(None);
+            }
+            p.sock_table.entries[newfd] = Some(entry);
+        }
+        return newfd as isize;
+    }
+    // 文件表
+    let entry = with_fd_table(|t| {
+        if let Some(f) = t.fds.get(oldfd).and_then(|x| x.as_ref()) {
+            let f = f.clone();
+            if newfd < t.fds.len() {
+                t.fds[newfd] = Some(f.clone());
+            }
+            Some(f)
+        } else {
+            None
+        }
+    });
+    if entry.is_some() {
+        // 再次设置 newfd
+        let p = current_process().unwrap();
+        if newfd < p.fd_table.fds.len() {
+            // 已设置
+        }
+        return newfd as isize;
+    }
+    -9
 }
 
 fn sys_poll_stub() -> isize {
