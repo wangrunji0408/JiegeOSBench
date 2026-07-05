@@ -217,6 +217,13 @@ extern "C" {
     fn __restore();
 }
 
+fn __restore_addr() -> usize {
+    extern "C" {
+        fn __restore();
+    }
+    __restore as *const () as usize
+}
+
 fn next_pid() -> usize {
     static NEXT: AtomicUsize = AtomicUsize::new(1);
     NEXT.fetch_add(1, Ordering::SeqCst)
