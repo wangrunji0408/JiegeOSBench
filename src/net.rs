@@ -387,18 +387,19 @@ pub fn send_packet(data: &[u8]) -> bool {
     d.tx.tx_bufs[i as usize] = buf;
     crate::println!("[net] TX desc {} buf={:#x} len={}", i, buf, data.len());
     unsafe {
-        // 写 net_hdr（全 0）
         for k in 0..NET_HDR_LEN {
             core::ptr::write_volatile((buf + k) as *mut u8, 0);
         }
         let copy = data.len().min(PKT_BUF);
         core::ptr::copy_nonoverlapping(data.as_ptr(), (buf + NET_HDR_LEN) as *mut u8, copy);
-        (*d.tx.desc.add(i as usize)).addr = buf as u64;
-        (*d.tx.desc.add(i as usize)).len = (NET_HDR_LEN + copy) as u32;
-        (*d.tx.desc.add(i as usize)).flags = 0;
-        let a = &mut *d.tx.avail;
-        a.ring[a.idx as usize % d.tx.num] = i;
-        a.idx = a.idx.wrapping_add(1);
+        core::ptr::write_volatile(&mut (*d.tx.desc.add(i as usize)).addr as *mut u64, buf as u64);
+        core::ptr::write_volatile(&mut (*d.tx.desc.add(i as usize)).len as *mut u32, (NET_HDR_LEN + copy) as u32);
+        core::ptr::write_volatile(&mut (*d.tx.desc.add(i as usize)).flags as *mut u16, 0);
+        let a = d.tx.avail;
+        let idx = core::ptr::read_volatile(&(*a).idx);
+        core::ptr::write_volatile((*a).ring.as_mut_ptr().add(idx as usize % d.tx.num), i);
+        core::ptr::write_volatile(&mut (*a).idx as *mut u16, idx.wrapping_add(1));
+        core::arch::asm!("fence ow, ow");
     }
     unsafe { reg_w(d.base, REG_QUEUE_NOTIFY, 1); }
     // 检查 TX used 是否推进
