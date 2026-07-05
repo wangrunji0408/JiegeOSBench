@@ -31,7 +31,7 @@ impl TrapContext {
                 r
             },
             sepc: entry,
-            sstatus: SSTATUS_SPIE, // SPP=0(U-mode), SPIE=1(开中断)
+            sstatus: SSTATUS_SPIE | SSTATUS_SUM, // SPP=0(U), SPIE=1, SUM=1(内核可访问用户页)
             stval: 0,
             scause: 0,
         }
