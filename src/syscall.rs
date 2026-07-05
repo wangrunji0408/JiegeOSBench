@@ -555,6 +555,8 @@ fn sys_pread64(fd: usize, buf: usize, count: usize, offset: usize) -> isize {
     };
     if n > 0 {
         unsafe { user_write(buf, tmp.as_ptr(), n); }
+        let preview = core::str::from_utf8(&tmp[..n.min(80)]).unwrap_or("<bin>");
+        crate::println!("[pread fd={} off={} n={} data={:?}]", fd, offset, n, preview);
     }
     n as isize
 }
