@@ -519,5 +519,12 @@ pub fn dump_tx() {
             "[net] TX used flags={} idx={}",
             u.flags, u.idx
         );
+        // dump used 环前 32 字节
+        let p = d.tx.used as *const u8;
+        let mut s = alloc::string::String::new();
+        for i in 0..32 {
+            s.push_str(&alloc::format!("{:02x} ", core::ptr::read_volatile(p.add(i))));
+        }
+        crate::println!("[net] TX used raw: {}", s);
     }
 }
