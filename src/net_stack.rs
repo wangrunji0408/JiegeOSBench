@@ -380,8 +380,8 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) 
             }
             // 额外检查：当前进程的 listen socket 是否就绪
             if count < maxevents {
-                let proc_ptr = match crate::sched::current_process() {
-                    Some(p) => p as *mut _,
+                let proc_ptr: *mut crate::process::Process = match crate::sched::current_process() {
+                    Some(p) => p as *mut crate::process::Process,
                     None => return -3,
                 };
                 let p = unsafe { &mut *proc_ptr };
