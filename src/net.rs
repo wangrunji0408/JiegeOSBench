@@ -205,11 +205,7 @@ unsafe fn init_device(base: usize) -> bool {
     );
     NET = Some(NetDriver { base, rx, tx, mac });
 
-    // 给 RX 队列填充接收缓冲（需在 NET 设置后，因 notify 要写设备寄存器）
-    {
-        let d = NET.as_mut().unwrap();
-        fill_rx(&mut d.rx);
-    }
+    fill_rx_with_base(&mut NET.as_mut().unwrap().rx, base);
     true
 }
 
