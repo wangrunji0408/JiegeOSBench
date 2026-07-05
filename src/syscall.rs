@@ -189,7 +189,7 @@ pub fn do_syscall(cx: &mut TrapContext) {
         }
         SYS_dup => EBADF,
         SYS_dup2 => EBADF,
-        SYS_fcntl => 0,
+        SYS_fcntl => sys_fcntl(a0, a1, a2),
         SYS_openat => sys_openat(a0, a1, a2, a3),
         SYS_fstat => sys_fstat(a0, a1),
         SYS_stat => sys_stat(a0, a1),
