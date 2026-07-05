@@ -132,6 +132,51 @@ impl FrameAllocator {
             self.mark_free(off);
         }
     }
+
+    /// 分配 n 个连续物理页，返回首帧物理地址
+    pub fn alloc_contig(&self, n: usize) -> Option<usize> {
+        if n == 0 {
+            return None;
+        }
+        if n == 1 {
+            return self.alloc();
+        }
+        let total = self.num_frames.load(Ordering::SeqCst);
+        let base = self.base_pfn.load(Ordering::SeqCst);
+        let mut run = 0;
+        let mut start = 0;
+        let mut i = 0;
+        while i < total {
+            if !self.bit(i) {
+                if run == 0 {
+                    start = i;
+                }
+                run += 1;
+                if run == n {
+                    for k in start..start + n {
+                        self.mark_used(k);
+                    }
+                    return Some(pfn_to_pa(start + base));
+                }
+            } else {
+                run = 0;
+            }
+            i += 1;
+        }
+        None
+    }
+
+    /// 分配 n 个连续页并清零
+    pub fn alloc_contig_zeroed(&self, n: usize) -> Option<usize> {
+        let pa = self.alloc_contig(n)?;
+        unsafe {
+            let p = pa as *mut u8;
+            for i in 0..(n * PAGE_SIZE) {
+                core::ptr::write_volatile(p.add(i), 0);
+            }
+        }
+        Some(pa)
+    }
 }
 
 pub fn init(kernel_end_pa: usize) {
