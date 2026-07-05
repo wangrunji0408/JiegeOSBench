@@ -96,13 +96,7 @@ impl Task {
     }
 }
 
-/// 切换：a0 = 当前 TaskContext 指针, a1 = 下一个 TaskContext 指针
-#[naked_function]
-pub unsafe extern "C" fn switch_to(_cur: *mut TaskContext, _next: *const TaskContext) {
-    unsafe {
-        core::arch::asm!(
-            "j __switch",
-            options(noreturn),
-        );
-    }
+/// 切换到 next 任务。保存当前上下文到 cur。
+pub unsafe fn switch_to(cur: *mut TaskContext, next: *const TaskContext) {
+    __switch(cur, next);
 }
