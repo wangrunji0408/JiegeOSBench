@@ -331,6 +331,23 @@ fn sys_read(fd: usize, buf: usize, count: usize) -> isize {
         }
         return n as isize;
     }
+    // eventfd / pipe fd
+    let kind = {
+        let p = match current_process() { Some(p) => p, None => return -3 };
+        p.sock_table.get(fd).map(|s| s.kind.clone())
+    };
+    if let Some(k) = kind {
+        if k == crate::process::SockKind::Eventfd {
+            // read eventfd: 返回 8 字节 0
+            let zeros = [0u8; 8];
+            let n = 8.min(count);
+            unsafe { user_write(buf, zeros.as_ptr(), n); }
+            return n as isize;
+        }
+        if k == crate::process::SockKind::Pipe {
+            return -11; // EAGAIN
+        }
+    }
     let mut tmp = [0u8; 512];
     let n = {
         let p = match current_process() { Some(p) => p, None => return ENOSYS };
