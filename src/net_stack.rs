@@ -378,12 +378,13 @@ pub fn epoll_wait(epfd: usize, events: usize, maxevents: usize, timeout: usize) 
                     count += 1;
                 }
             }
-            // 额外检查：当前进程的 listen socket 是否就绪（nginx 可能没加 epoll）
+            // 额外检查：当前进程的 listen socket 是否就绪
             if count < maxevents {
-                let p = match crate::sched::current_process() {
-                    Some(p) => p,
+                let proc_ptr = match crate::sched::current_process() {
+                    Some(p) => p as *mut _,
                     None => return -3,
                 };
+                let p = unsafe { &mut *proc_ptr };
                 for fd in 3..p.sock_table.entries.len() {
                     if count >= maxevents {
                         break;
