@@ -119,6 +119,7 @@ pub fn dispatch(nr: usize, a: [usize; 6]) -> usize {
 
 fn do_syscall(nr: usize, a: [usize; 6]) -> SysResult {
     match nr {
+        0 | 1 | 2 | 3 | 4 => Err(ENOSYS), // io_setup family (nginx probes file AIO)
         17 => fs::getcwd(a[0], a[1]),
         19 => fs::eventfd2(a[0], a[1]),
         20 => net::epoll_create1(a[0]),
