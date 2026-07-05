@@ -13,6 +13,7 @@ mod timer;
 mod irq;
 mod syscall;
 mod sched;
+mod task;
 mod mm;
 
 use core::arch::{global_asm, asm};
