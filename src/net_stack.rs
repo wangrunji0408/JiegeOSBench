@@ -162,8 +162,7 @@ pub fn http_serve_step() {
                         let _ = s.close();
                     }
                 }
-                TcpState::Closed => {
-                    // 重新 listen
+                TcpState::Closed | TcpState::TimeWait => {
                     s.abort();
                     let _ = s.listen(LISTEN_PORT);
                 }
