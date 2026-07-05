@@ -231,7 +231,11 @@ pub fn do_syscall(cx: &mut TrapContext) {
         SYS_getrusage => 0,
         SYS_sched_yield => 0,
         SYS_sigaltstack => 0,
-        SYS_rt_sigsuspend => 0, // 不阻塞，立即返回（让 worker 继续）
+        SYS_rt_sigsuspend => {
+            // worker 进程不阻塞（让它进入事件循环）；master 阻塞
+            let pid = crate::sched::current_pid();
+            if pid > 1 { 0 } else { -4 } // EINTR for worker, 阻塞 for master
+        }
         SYS_rt_sigreturn => 0,
         SYS_setsid => 0,
         SYS_setgid | SYS_setuid | SYS_setpgid => 0,
