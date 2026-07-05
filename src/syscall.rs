@@ -464,17 +464,6 @@ fn sys_poll_stub() -> isize {
 }
 
 fn sys_pread64(fd: usize, buf: usize, count: usize, offset: usize) -> isize {
-    let mut tmp = [0u8; 4096];
-    let cap = count.min(tmp.len());
-    let n = {
-        let p = match current_process() { Some(p) => p, None => return -3 };
-        p.fd_table.pread(fd, &mut tmp[..cap], offset).unwrap_or(0)
-    };
-    if n > 0 {
-        unsafe { user_write(buf, tmp.as_ptr(), n); }
-    }
-    n as isize
-}
 
 fn sys_socket(_domain: usize, _typ: usize, _proto: usize) -> isize {
     // 创建 smoltcp tcp socket
