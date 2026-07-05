@@ -238,6 +238,7 @@ pub fn do_syscall(cx: &mut TrapContext) {
         SYS_mkdirat => 0,
         SYS_pread64 => sys_pread64(a0, a1, a2, a3),
         SYS_pwrite64 => a2 as isize, // 假装写成功（丢弃）
+        SYS_socketpair => -97, // EAFNOSUPPORT，nginx 单进程不需要
         SYS_sched_getaffinity => {
             // 写入空的 affinity mask（8 字节，CPU 0）
             if a2 != 0 {
