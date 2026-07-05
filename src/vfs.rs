@@ -152,22 +152,24 @@ impl FdTable {
     }
 
     pub fn stat(&self, fd: usize, statbuf: usize) -> bool {
-        // 复用 fstat 布局
         if statbuf == 0 {
             return false;
         }
-        for i in 0..144usize {
+        for i in 0..128usize {
             unsafe { core::ptr::write_volatile((statbuf + i) as *mut u8, 0); }
         }
         let f = match self.fds.get(fd).and_then(|x| x.as_ref()) {
             Some(f) => f,
             None => return false,
         };
+        let len = f.data.len();
         unsafe {
-            core::ptr::write_volatile((statbuf + 16) as *mut u64, 1); // nlink
-            core::ptr::write_volatile((statbuf + 24) as *mut u32, 0x81a4); // mode
-            core::ptr::write_volatile((statbuf + 48) as *mut i64, f.data.len() as i64);
-            core::ptr::write_volatile((statbuf + 56) as *mut u64, 4096);
+            core::ptr::write_volatile((statbuf + 8) as *mut u64, 1);
+            core::ptr::write_volatile((statbuf + 16) as *mut u32, 0x81a4);
+            core::ptr::write_volatile((statbuf + 20) as *mut u32, 1);
+            core::ptr::write_volatile((statbuf + 48) as *mut i64, len as i64);
+            core::ptr::write_volatile((statbuf + 56) as *mut u32, 4096);
+            core::ptr::write_volatile((statbuf + 64) as *mut u64, ((len + 511) / 512) as u64);
         }
         true
     }
