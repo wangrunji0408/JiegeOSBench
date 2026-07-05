@@ -363,6 +363,7 @@ fn sys_stat(path: usize, statbuf: usize) -> isize {
 
 fn sys_newfstatat(_dirfd: usize, path: usize, statbuf: usize, _flags: usize) -> isize {
     let p = unsafe { read_user_string(path, 255) }.unwrap_or_default();
+    crate::println!("[stat {}]", p);
     if crate::vfs::stat_path(&p, statbuf) { 0 } else { ENOENT }
 }
 
