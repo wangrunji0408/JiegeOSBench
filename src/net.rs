@@ -291,9 +291,11 @@ pub fn send_packet(data: &[u8]) -> bool {
 /// 轮询收取已完成的 RX 包。对每个包调用 cb(data)。
 pub fn recv_packets<F: FnMut(&[u8])>(mut cb: F) {
     let d = unsafe { driver() };
+    unsafe { core::arch::asm!("fence r, rw"); }
     let used_idx = unsafe { (*d.rx.used).idx };
-    if used_idx != d.rx.last_used {
-        crate::println!("[net] used.idx={} last_used={}", used_idx, d.rx.last_used);
+    let ist = unsafe { reg_r(d.base, REG_INT_STATUS) };
+    if used_idx != d.rx.last_used || ist != 0 {
+        crate::println!("[net] used.idx={} last_used={} intst={:#x}", used_idx, d.rx.last_used, ist);
     }
     loop {
         let used_idx = unsafe { (*d.rx.used).idx };
