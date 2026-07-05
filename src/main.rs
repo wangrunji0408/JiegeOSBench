@@ -27,17 +27,22 @@ global_asm!(
     .section .text.entry
     .globl _start
 _start:
-    la sp, __boot_stack_top
+    la sp, {stack}
+    li t0, {stack_size}
+    add sp, sp, t0
     j rust_main
-
-    .section .bss.stack,"aw",@nobits
-    .globl __boot_stack
-__boot_stack:
-    .space 65536
-    .globl __boot_stack_top
-__boot_stack_top:
-"#
+"#,
+    stack = sym BOOT_STACK,
+    stack_size = const BOOT_STACK_SIZE,
 );
+
+const BOOT_STACK_SIZE: usize = 64 * 1024;
+
+#[repr(C, align(16))]
+struct Stack([u8; BOOT_STACK_SIZE]);
+
+#[no_mangle]
+static mut BOOT_STACK: Stack = Stack([0; BOOT_STACK_SIZE]);
 
 #[no_mangle]
 extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
