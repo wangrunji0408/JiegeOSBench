@@ -269,8 +269,8 @@ unsafe fn setup_queue_modern(base: usize, idx: usize, vq: &VirtQueue) {
     let n = nmax.min(vq.num);
     crate::println!("[net] mqueue {} nmax={} n={}", idx, nmax, n);
     let desc_pa = vq.base_pa;
-    let avail_pa = vq.base_pa + 4096;
-    let used_pa = vq.base_pa + 8192;
+    let avail_pa = vq.base_pa + 16 * VQ_SIZE;
+    let used_pa = vq.base_pa + 4096;
     reg_w(base, REG_QUEUE_NUM, n as u32);
     reg_w(base, REG_QUEUE_ALIGN, 4096);
     reg_w(base, REG_QUEUE_DESC_LOW, (desc_pa & 0xffffffff) as u32);
