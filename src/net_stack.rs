@@ -123,23 +123,27 @@ fn tcp_buffer() -> SocketBuffer<'static> {
     SocketBuffer::new(rx, tx)
 }
 
-/// 创建一个 TCP socket，返回 smoltcp SocketHandle（内核内）。
-/// 调用方负责映射到用户 fd。
-pub fn new_tcp_socket() -> Option<SocketHandle> {
+/// 创建一个 TCP socket，返回 usize 编码的 handle
+pub fn new_tcp_socket() -> Option<usize> {
     unsafe {
         let sockets = SOCKETS.as_mut()?;
         let sock = TcpSocket::new(tcp_buffer(), tcp_buffer());
-        Some(sockets.add(sock))
+        let h = sockets.add(sock);
+        Some(usize::from(h))
     }
 }
 
-pub fn listen_socket(h: SocketHandle, port: u16) -> bool {
+fn handle(u: usize) -> SocketHandle {
+    SocketHandle::from(u)
+}
+
+pub fn listen_socket(h: usize, port: u16) -> bool {
     unsafe {
         let sockets = match SOCKETS.as_mut() {
             Some(s) => s,
             None => return false,
         };
-        let s = sockets.get_mut::<TcpSocket>(h);
+        let s = sockets.get_mut::<TcpSocket>(handle(h));
         s.listen(port).is_ok()
     }
 }
