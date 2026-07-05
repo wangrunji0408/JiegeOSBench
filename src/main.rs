@@ -30,7 +30,7 @@ _start:
     la sp, __boot_stack_top
     j rust_main
 
-    .section .bss.stack
+    .section .bss.stack,"aw",@nobits
     .globl __boot_stack
 __boot_stack:
     .space 1024 * 64
