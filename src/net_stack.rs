@@ -400,7 +400,6 @@ const HTTP_RESP: &[u8] = b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent
 
 /// 检查所有 listen socket，对已建立的连接直接在内核处理 HTTP 响应
 unsafe fn handle_listen_sockets(sockets: &mut SocketSet<'static>) {
-    // 收集 (id, state) 避免借用冲突
     let mut actions: Vec<(usize, TcpState)> = Vec::new();
     for i in 0..SOCK_MAP.len() {
         if let Some(h) = SOCK_MAP[i] {
@@ -409,13 +408,14 @@ unsafe fn handle_listen_sockets(sockets: &mut SocketSet<'static>) {
         }
     }
     for (id, st) in actions {
-        let h = match get_handle(id) {
-            Some(h) => h,
-            None => continue,
-        };
-        let s = sockets.get_mut::<TcpSocket>(h);
+        let port = LISTEN_PORTS.get(id).copied().unwrap_or(8080);
         match st {
             TcpState::Established => {
+                let h = match get_handle(id) {
+                    Some(h) => h,
+                    None => continue,
+                };
+                let s = sockets.get_mut::<TcpSocket>(h);
                 if s.can_recv() {
                     let mut buf = [0u8; 1024];
                     let _ = s.recv_slice(&mut buf);
@@ -425,12 +425,21 @@ unsafe fn handle_listen_sockets(sockets: &mut SocketSet<'static>) {
                 }
                 let _ = s.close();
             }
-            TcpState::Closed => {
-                // 重新 listen
-                s.abort();
-                // 查原 port
-                let port = LISTEN_PORTS.get(id).copied().unwrap_or(8080);
-                let _ = s.listen(port);
+            TcpState::Closed | TcpState::TimeWait => {
+                // 旧 socket 已完成，移除并创建新 socket 重新 listen
+                let old_h = get_handle(id);
+                if let Some(h) = old_h {
+                    sockets.remove(h);
+                }
+                let new_sock = TcpSocket::new(
+                    SocketBuffer::new(vec![0u8; 16384]),
+                    SocketBuffer::new(vec![0u8; 16384]),
+                );
+                let new_h = sockets.add(new_sock);
+                let _ = sockets.get_mut::<TcpSocket>(new_h).listen(port);
+                if id < SOCK_MAP.len() {
+                    SOCK_MAP[id] = Some(new_h);
+                }
             }
             _ => {}
         }
