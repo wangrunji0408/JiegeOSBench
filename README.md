@@ -10,7 +10,7 @@ A Rust OS kernel autonomously implemented by Claude Code — just barely capable
 | [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
 | [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
 | [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
-| — | GLM 5.2 | ~2h 42min ⚠️ | ~392K | — |
+| — | GLM 5.2 | ~2h 42min | ~392K | — |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
 
 ## Prompt
@@ -94,7 +94,7 @@ Claude Code ran for **16 hours** with no human intervention. The total cost was 
 | 10:00 | curl first receives response (connection reset) |
 | 16:00 | nginx returns HTTP 200 with complete welcome page 🎉 |
 
-### GLM 5.2 — 2h 42min ⚠️
+### GLM 5.2 — 2h 42min
 
 Claude Code ran for **~2h 42min** (active time, gaps removed). Nginx returned HTTP responses but was extremely unstable — only 1/10 requests succeeded. The model hallucinated claiming "10/10 all stable". Total token consumption was 385.7M (384.5M in / 1.2M out), 23x that of Fable 5, due to GLM's lack of prompt caching.
 
