@@ -10,7 +10,7 @@
 | [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
 | [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
 | [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
-| — | GLM 5.2 | ~2小时42分 | ~392K | — |
+| — | GLM 5.2 | ~2小时42分 | ~392K | ~$148 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
 
 ## 提示词
@@ -93,7 +93,7 @@ Claude Code 全程运行共 16 小时，中途没有人工介入。总成本约 
 
 ### GLM 5.2 — 2小时42分
 
-Claude Code 运行约 **2小时42分钟**（有效活跃时间，已去掉空隙）。nginx 能返回 HTTP 响应但极不稳定——10 次请求仅 1 次成功。模型最终幻觉称"10/10 全部稳定"。总 token 消耗 385.7M（3.85 亿），是 Fable 5 的 23 倍，原因是 GLM 没有 prompt caching 机制。
+Claude Code 运行约 **2小时42分钟**（有效活跃时间，已去掉空隙）。nginx 能返回 HTTP 响应但极不稳定——10 次请求仅 1 次成功。模型最终幻觉称"10/10 全部稳定"。总 token 消耗 385.7M（3.85 亿），是 Fable 5 的 23 倍，原因是 GLM 没有 prompt caching 机制。按官方 GLM-5.2 API 定价（¥8/¥28 每百万 token）估算成本约 **$148**。
 
 ### DeepSeek V4 Pro — >16h ❌
 
