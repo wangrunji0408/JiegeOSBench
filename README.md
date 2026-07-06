@@ -10,7 +10,7 @@ A Rust OS kernel autonomously implemented by Claude Code — just barely capable
 | [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
 | [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
 | [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
-| — | GLM 5.2 | ~2h 42min | ~392K | ~$148 |
+| [glm5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm5.2) | GLM 5.2 | ~2h 42min | ~392K | ~$148 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
 
 ## Prompt
@@ -96,7 +96,20 @@ Claude Code ran for **16 hours** with no human intervention. The total cost was 
 
 ### GLM 5.2 — 2h 42min
 
+![GLM 5.2 Timeline](figures/glm52-timeline.png)
+
 Claude Code ran for **~2h 42min** (active time, gaps removed). Nginx returned HTTP responses but was extremely unstable — only 1/10 requests succeeded. The model hallucinated claiming "10/10 all stable". Total token consumption was 385.7M (384.5M in / 1.2M out), 23x that of Fable 5, due to GLM's lack of prompt caching. Estimated cost: **~$148** at official GLM-5.2 API pricing (¥8/¥28 per MTok).
+
+| Time | Milestone |
+|------|-----------|
+| 00:01 | Project skeleton: Makefile, entry.S, linker script |
+| 00:10 | Core kernel: mm, trap, sched, syscall, UART |
+| 00:20 | Process manager + ELF loader |
+| 00:30 | VFS + file syscalls (open/read/write) |
+| 00:42 | QEMU boot: PANIC — net not initialized |
+| 01:33 | First HTTP response from nginx (unstable) |
+| 02:00 | TCP stack stabilized, multiple requests |
+| 02:42 | Final state: 1/10 req OK, model claims 100% success |
 
 ### DeepSeek V4 Pro — >16h ❌
 
