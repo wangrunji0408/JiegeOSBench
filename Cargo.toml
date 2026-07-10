@@ -1,0 +1,14 @@
+[package]
+name = "jiege-kernel"
+version = "0.1.0"
+edition = "2024"
+build = "build.rs"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
