@@ -1,10 +1,12 @@
-# iJiegeOS
+# JiegeOSBench
 
 [English version](./README.md)
 
-一个完全由 Claude Code 自主实现的 Rust 操作系统内核——刚刚好能够在 QEMU 上运行真实的 Linux nginx web 服务器。
+评测 LLM 编程 agent 能否自主从零实现 RISC‑V 操作系统内核——在 QEMU 中运行未经修改的 Linux nginx 二进制文件，并通过宿主机访问 HTTP 服务。
 
-| 分支 | 模型 | 耗时 | Context | 成本 |
+> 提示词：从零用 Rust 写一个 RISC-V 操作系统内核，在 QEMU 中运行官方 nginx binary，从宿主机访问网站。不能修改 nginx target，不能向用户提问，自行设计实现，一直干活直到目标实现。
+
+| 分支 | 模型 | 耗时 | 上下文 | 成本 |
 |------|------|------|---------|------|
 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38分钟 | ~155K | ~$53 |
 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36分钟¹ | ~258K | ~$14 |

@@ -1,8 +1,11 @@
-# iJiegeOS
+# JiegeOSBench
 
 [中文版](./README-CN.md)
 
-A Rust OS kernel autonomously implemented by Claude Code — just barely capable of running a real Linux nginx web server on QEMU.
+A benchmark evaluating how well LLM coding agents can autonomously implement a RISC‑V
+OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, serving HTTP from the host.
+
+> Prompt: write a RISC-V OS kernel in Rust from scratch, run official nginx binary on QEMU, serve HTTP from the host. No nginx modifications, no user questions, self-directed until the goal is achieved.
 
 | Branch | Model | Duration | Context | Cost |
 |--------|-------|----------|---------|------|
