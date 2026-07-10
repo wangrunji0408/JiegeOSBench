@@ -7,7 +7,7 @@
 | 分支 | 模型 | 耗时 | Context | 成本 |
 |------|------|------|---------|------|
 | [fable5](https://github.com/wangrunji0408/iJiegeOS/tree/fable5) | Claude Fable 5 | ~38分钟 | ~155K | ~$53 |
-| [gpt56](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt56) | GPT 5.6 Sol | ~36分钟¹ | ~258K | ~$103 |
+| [gpt56](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt56) | GPT 5.6 Sol | ~36分钟¹ | ~258K | ~$14 |
 | [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
 | [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
 | [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
@@ -48,7 +48,7 @@ Claude Code 运行时长约 **38分钟**。总成本约 **$53**（1640 万 token
 
 ![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
 
-OpenAI Codex 运行 **~36 分钟** 达成首次成功，后在用户提醒下用 **13 分钟** 修复了第二次连接失败的问题。总成本约 **$103**（OpenAI API 定价 $5/$30 每百万 token）。
+OpenAI Codex 运行 **~36 分钟** 达成首次成功，后在用户提醒下用 **13 分钟** 修复了第二次连接失败的问题。总成本约 **$14**（OpenAI API 定价 $5/$0.50 缓存输入、$30 输出每百万 token）。
 
 > ⚠️ 注意：模型在 36 分钟时声称完成，但连续第二次 HTTP 请求失败。经用户提示后，于 49 分钟修复了 virtio TX descriptor 复用竞态。
 

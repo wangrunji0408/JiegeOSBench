@@ -7,7 +7,7 @@ A Rust OS kernel autonomously implemented by Claude Code — just barely capable
 | Branch | Model | Duration | Context | Cost |
 |--------|-------|----------|---------|------|
 | [fable5](https://github.com/wangrunji0408/iJiegeOS/tree/fable5) | Claude Fable 5 | ~38min | ~155K | ~$53 |
-| [gpt56](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt56) | GPT 5.6 Sol | ~36min¹ | ~258K | ~$103 |
+| [gpt56](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt56) | GPT 5.6 Sol | ~36min¹ | ~258K | ~$14 |
 | [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
 | [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
 | [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
@@ -51,7 +51,7 @@ Claude Code ran for **~38 minutes**. Total cost: **~$53** (16.4M tokens incl. pr
 
 ![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
 
-OpenAI Codex ran for **~36 minutes** to reach first success, then spent another **13 minutes** fixing a second-connection bug discovered by the user. Total cost: **~$103** at OpenAI API pricing ($5/$30 per MTok).
+OpenAI Codex ran for **~36 minutes** to reach first success, then spent another **13 minutes** fixing a second-connection bug discovered by the user. Total cost: **~$14** at OpenAI API pricing ($5/$0.50 cached input, $30 output per MTok).
 
 > ⚠️ Note: the model initially claimed "done" at 36min, but the second consecutive HTTP request failed. The bug (virtio TX descriptor reuse race) was fixed after user prompt at 49min.
 
