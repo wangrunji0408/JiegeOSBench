@@ -7,11 +7,14 @@
 | 分支 | 模型 | 耗时 | Context | 成本 |
 |------|------|------|---------|------|
 | [fable5](https://github.com/wangrunji0408/iJiegeOS/tree/fable5) | Claude Fable 5 | ~38分钟 | ~155K | ~$53 |
+| [gpt56](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt56) | GPT 5.6 Sol | ~36分钟¹ | ~258K | ~$103 |
 | [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
 | [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
 | [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
 | [glm5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm5.2) | GLM 5.2 | ~2小时42分 | ~392K | ~$148 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
+
+¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
 
 ## 提示词
 
@@ -40,6 +43,26 @@ Claude Code 运行时长约 **38分钟**。总成本约 **$53**（1640 万 token
 | 00:32 | QEMU 启动：PANIC at trap.rs — 页错误 |
 | 00:34 | QEMU 启动：nginx listening on port 80 🎉 |
 | 00:37 | 收尾修复（sendfile 等 syscall, README） |
+
+### GPT 5.6 Sol — 36分钟（+13分钟修复）
+
+![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
+
+OpenAI Codex 运行 **~36 分钟** 达成首次成功，后在用户提醒下用 **13 分钟** 修复了第二次连接失败的问题。总成本约 **$103**（OpenAI API 定价 $5/$30 每百万 token）。
+
+> ⚠️ 注意：模型在 36 分钟时声称完成，但连续第二次 HTTP 请求失败。经用户提示后，于 49 分钟修复了 virtio TX descriptor 复用竞态。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:01 | Cargo 项目、Makefile、链接脚本 |
+| 00:05 | Linux ABI 打通：U-mode、ELF 加载、write/exit syscall |
+| 00:08 | initramfs 嵌入 Alpine nginx 1.28.3 + musl loader |
+| 00:11 | musl loader 成功加载 nginx；发现 VFS st_dev/st_ino bug |
+| 00:18 | nginx 完成动态链接，进入 epoll 事件循环 |
+| 00:33 | 首次 HTTP 200 OK，来自官方 nginx |
+| 00:36 | 初次宣称 PASS；第二次请求静默失败 |
+| 00:43 – 00:49 | 用户提示 → 修复 TCP FIN 生命周期 + virtio TX descriptor 池 |
+| 00:49 | 最终 PASS：连续两次 HTTP 200 ✅ |
 
 ### Opus 4.7 — 65分钟
 

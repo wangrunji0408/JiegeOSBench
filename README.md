@@ -7,11 +7,14 @@ A Rust OS kernel autonomously implemented by Claude Code — just barely capable
 | Branch | Model | Duration | Context | Cost |
 |--------|-------|----------|---------|------|
 | [fable5](https://github.com/wangrunji0408/iJiegeOS/tree/fable5) | Claude Fable 5 | ~38min | ~155K | ~$53 |
+| [gpt56](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt56) | GPT 5.6 Sol | ~36min¹ | ~258K | ~$103 |
 | [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
 | [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
 | [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
 | [glm5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm5.2) | GLM 5.2 | ~2h 42min | ~392K | ~$148 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
+
+¹ First success at 36min; second connection fix completed at 49min.
 
 ## Prompt
 
@@ -43,6 +46,26 @@ Claude Code ran for **~38 minutes**. Total cost: **~$53** (16.4M tokens incl. pr
 | 00:32 | QEMU boot: PANIC at trap.rs — page fault |
 | 00:34 | QEMU boot: nginx listening on port 80 🎉 |
 | 00:37 | Post-fix cleanup (sendfile, README) |
+
+### GPT 5.6 Sol — 36min (+13min post-fix)
+
+![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
+
+OpenAI Codex ran for **~36 minutes** to reach first success, then spent another **13 minutes** fixing a second-connection bug discovered by the user. Total cost: **~$103** at OpenAI API pricing ($5/$30 per MTok).
+
+> ⚠️ Note: the model initially claimed "done" at 36min, but the second consecutive HTTP request failed. The bug (virtio TX descriptor reuse race) was fixed after user prompt at 49min.
+
+| Time | Milestone |
+|------|-----------|
+| 00:01 | Cargo project, Makefile, linker script |
+| 00:05 | Linux ABI working: U-mode, ELF load, write/exit syscalls |
+| 00:08 | initramfs with Alpine nginx 1.28.3 + musl loader embedded |
+| 00:11 | musl loader loads nginx; VFS st_dev/st_ino bug found |
+| 00:18 | nginx completes dynamic linking, enters epoll event loop |
+| 00:33 | First HTTP 200 OK from official nginx |
+| 00:36 | Initial PASS claimed; second request silently fails |
+| 00:43 – 00:49 | User prompt → fix TCP FIN lifecycle + virtio TX descriptor pool |
+| 00:49 | Final PASS: 2 sequential HTTP 200 ✅ |
 
 ### Opus 4.7 — 65min active (3h 32min total)
 
