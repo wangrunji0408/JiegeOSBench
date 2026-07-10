@@ -1,0 +1,38 @@
+[package]
+name = "jiege-os"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "jiege-os"
+path = "src/main.rs"
+
+[dependencies]
+riscv = { version = "0.12", features = ["critical-section-single-hart"] }
+buddy_system_allocator = "0.10"
+spin = "0.9"
+bitflags = "2"
+log = "0.4"
+smoltcp = { version = "0.12", default-features = false, features = [
+    "alloc",
+    "medium-ethernet",
+    "proto-ipv4",
+    "socket-tcp",
+    "socket-udp",
+    "socket-icmp",
+    "socket-dhcpv4",
+    "log",
+] }
+xmas-elf = "0.9"
+byteorder = { version = "1", default-features = false }
+lazy_static = { version = "1", features = ["spin_no_std"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+panic = "abort"
