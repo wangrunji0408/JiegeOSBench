@@ -6,12 +6,12 @@ A Rust OS kernel autonomously implemented by Claude Code — just barely capable
 
 | Branch | Model | Duration | Context | Cost |
 |--------|-------|----------|---------|------|
-| [fable5](https://github.com/wangrunji0408/iJiegeOS/tree/fable5) | Claude Fable 5 | ~38min | ~155K | ~$53 |
-| [gpt56](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt56) | GPT 5.6 Sol | ~36min¹ | ~258K | ~$14 |
-| [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
-| [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
-| [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
-| [glm5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm5.2) | GLM 5.2 | ~2h 42min | ~392K | ~$148 |
+| [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38min | ~155K | ~$53 |
+| [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36min¹ | ~258K | ~$14 |
+| [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
+| [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
+| [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
+| [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2h 42min | ~392K | ~$148 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
 
 ¹ First success at 36min; second connection fix completed at 49min.

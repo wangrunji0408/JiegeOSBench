@@ -6,12 +6,12 @@
 
 | 分支 | 模型 | 耗时 | Context | 成本 |
 |------|------|------|---------|------|
-| [fable5](https://github.com/wangrunji0408/iJiegeOS/tree/fable5) | Claude Fable 5 | ~38分钟 | ~155K | ~$53 |
-| [gpt56](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt56) | GPT 5.6 Sol | ~36分钟¹ | ~258K | ~$14 |
-| [opus-4.7](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
-| [opus-4.6](https://github.com/wangrunji0408/iJiegeOS/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
-| [sonnet](https://github.com/wangrunji0408/iJiegeOS/tree/sonnet) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
-| [glm5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm5.2) | GLM 5.2 | ~2小时42分 | ~392K | ~$148 |
+| [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38分钟 | ~155K | ~$53 |
+| [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36分钟¹ | ~258K | ~$14 |
+| [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
+| [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
+| [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
+| [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2小时42分 | ~392K | ~$148 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
