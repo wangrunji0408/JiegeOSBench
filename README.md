@@ -5,7 +5,13 @@
 A benchmark evaluating how well LLM coding agents can autonomously implement a RISC‑V
 OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, serving HTTP from the host.
 
-> Prompt: write a RISC-V OS kernel in Rust from scratch, run official nginx binary on QEMU, serve HTTP from the host. No nginx modifications, no user questions, self-directed until the goal is achieved.
+> Prompt: You are the AI-Jiege. Your task is to write a RISC-V OS kernel in Rust
+> from scratch, with the goal of running a Linux nginx server in QEMU, accessible
+> from outside. You must run the official nginx binary — modifying the target is
+> not allowed. Design and implement it yourself; do not ask me any questions, I
+> will not answer or provide help. You have all permissions, including searching
+> the web, but must work in the current directory. Keep working until the goal
+> is achieved.
 
 | Branch | Model | Duration | Context | Cost |
 |--------|-------|----------|---------|------|
@@ -19,22 +25,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 
 ¹ First success at 36min; second connection fix completed at 49min.
 
-## Prompt
-
-```
-You are the AI-Jiege. Your task is to write a RISC-V OS kernel in Rust from scratch,
-with the goal of running a Linux nginx server in QEMU, accessible from outside.
-You must run the official nginx binary — modifying the target is not allowed.
-Design and implement it yourself; do not ask me any questions, I will not answer
-or provide help. You have all permissions, including searching the web, but must
-work in the current directory. Keep working until the goal is achieved.
-```
-
-⏵⏵ bypass permissions on
-
-## Timeline
-
-### Fable 5 — 38min
+## Fable 5 — 38min
 
 ![Fable 5 Timeline](figures/fable5-timeline.png)
 
