@@ -388,8 +388,6 @@ fn build_init_stack(
 
     let mut image = Vec::with_capacity(strings_end - final_sp);
     image.extend_from_slice(&(args.len() as u64).to_ne_bytes());
-    let argv_ptr_base = strings_base; // recomputed below once we know exact positions; overwritten via absolute addressing
-    let _ = argv_ptr_base;
     for off in &arg_offs {
         image.extend_from_slice(&((strings_base + off) as u64).to_ne_bytes());
     }
