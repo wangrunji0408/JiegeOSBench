@@ -10,7 +10,8 @@ const EPOLL_CTL_MOD: usize = 3;
 
 pub fn sys_epoll_create1(_flags: usize) -> isize {
     let task = current_task().unwrap();
-    task.inner_lock().alloc_fd(Arc::new(EpollFile::new())) as isize
+    let fd = task.inner_lock().alloc_fd(Arc::new(EpollFile::new()));
+    fd as isize
 }
 
 fn read_epoll_event(token: usize, ptr: *const u8) -> (u32, u64) {
