@@ -104,8 +104,14 @@ fn trap_handler() -> ! {
             let result = crate::syscall::syscall(syscall_id, args);
             // The syscall may have replaced the address space (execve) or
             // otherwise changed which task is "current" (exit); re-fetch.
-            let cx = crate::task::current_trap_cx();
-            cx.x[10] = result as usize;
+            // `rt_sigreturn` (139) is special: it has already restored the
+            // *entire* pre-signal context (including a0), so overwriting
+            // a0 with its return value here would clobber that restore.
+            const SYSCALL_RT_SIGRETURN: usize = 139;
+            if syscall_id != SYSCALL_RT_SIGRETURN {
+                let cx = crate::task::current_trap_cx();
+                cx.x[10] = result as usize;
+            }
         }
         Trap::Exception(Exception::StoreFault)
         | Trap::Exception(Exception::StorePageFault)
