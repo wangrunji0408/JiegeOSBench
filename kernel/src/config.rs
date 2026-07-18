@@ -6,7 +6,7 @@ pub const PAGE_SIZE_BITS: usize = 12;
 /// Physical RAM starts here on QEMU virt (fixed by hardware/OpenSBI convention).
 pub const PHYS_MEM_BASE: usize = 0x8000_0000;
 /// Total RAM size; must match the `-m` flag passed to QEMU.
-pub const MEMORY_SIZE: usize = 256 * 1024 * 1024;
+pub const MEMORY_SIZE: usize = 512 * 1024 * 1024;
 pub const MEMORY_END: usize = PHYS_MEM_BASE + MEMORY_SIZE;
 
 /// Trampoline page: mapped at the same virtual address in every address space
@@ -16,7 +16,10 @@ pub const TRAMPOLINE: usize = usize::MAX - PAGE_SIZE + 1;
 /// Per-task trap context, mapped one page below the trampoline in user space.
 pub const TRAP_CONTEXT: usize = TRAMPOLINE - PAGE_SIZE;
 
-pub const KERNEL_HEAP_SIZE: usize = 16 * 1024 * 1024;
+/// The embedded rootfs tarball alone is ~7MB, held in kernel heap
+/// permanently as tmpfs file contents; ELF loading also needs sizeable
+/// transient buffers (aligned copies, whole-file reads) on top of that.
+pub const KERNEL_HEAP_SIZE: usize = 64 * 1024 * 1024;
 
 /// Kernel stack size for each task; kernel stacks are laid out with a guard
 /// page between them below `TRAMPOLINE`.
