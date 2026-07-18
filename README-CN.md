@@ -11,7 +11,7 @@
 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38分钟 | ~155K | ~$53 |
 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36分钟¹ | ~258K | ~$14 |
 | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
-| [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2小时19分 | ~270K | — |
+| [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2小时19分 | ~270K | ~$35 |
 | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2小时42分 | ~392K | ~$148 |
@@ -78,7 +78,7 @@ Claude Code 运行时长约 **65分钟**。
 
 ![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
 
-Claude Code 运行约 **2小时19分钟**，中途没有人工介入。总 token 消耗约 7580 万（含 prompt caching）。Context 峰值 270K。
+Claude Code 运行约 **2小时19分钟**，中途没有人工介入。总 token 消耗约 7580 万，其中 98.7% 为缓存命中。成本约 **$35**（API 定价：$3/$0.30/$15 每百万 token 输入/缓存/输出）。Context 峰值 270K。
 
 | 时间 | 里程碑 |
 |------|--------|

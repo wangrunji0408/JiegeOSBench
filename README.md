@@ -18,7 +18,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38min | ~155K | ~$53 |
 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36min¹ | ~258K | ~$14 |
 | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
-| [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2h 19min | ~270K | — |
+| [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2h 19min | ~270K | ~$35 |
 | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2h 42min | ~392K | ~$148 |
@@ -85,7 +85,7 @@ Claude Code ran for **~65 minutes**.
 
 ![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
 
-Claude Code ran for **~2h 19min** with no human intervention. Total token consumption ~75.8M (with prompt caching). Peak context 270K.
+Claude Code ran for **~2h 19min** with no human intervention. Total token consumption ~75.8M (98.7% cache hit rate). Cost approximately **$35** (API pricing: $3/$0.30/$15 per MTok input/cache/output). Peak context 270K.
 
 | Time | Milestone |
 |------|-----------|
