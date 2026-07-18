@@ -90,6 +90,7 @@ pub fn sys_epoll_ctl(epfd: usize, op: usize, fd: usize, event_ptr: *const u8) ->
 
 const EPOLLIN: u32 = 0x1;
 const EPOLLOUT: u32 = 0x4;
+const EPOLLET: u32 = 0x8000_0000;
 
 pub fn sys_epoll_pwait(epfd: usize, events_ptr: *mut u8, maxevents: usize, timeout_ms: isize) -> isize {
     let task = current_task().unwrap();
@@ -112,18 +113,26 @@ pub fn sys_epoll_pwait(epfd: usize, events_ptr: *mut u8, maxevents: usize, timeo
         let mut out_ptr = events_ptr;
         let mut count = 0usize;
         {
-            let entries = epoll.entries.lock();
-            for e in entries.iter() {
+            let mut entries = epoll.entries.lock();
+            for e in entries.iter_mut() {
                 if count >= maxevents {
                     break;
                 }
+                let edge_triggered = e.events & EPOLLET != 0;
                 let mut revents = 0u32;
-                if e.events & EPOLLIN != 0 && e.file.poll_readable() {
+
+                let readable = e.events & EPOLLIN != 0 && e.file.poll_readable();
+                if readable && (!edge_triggered || !e.reported_readable) {
                     revents |= EPOLLIN;
                 }
-                if e.events & EPOLLOUT != 0 && e.file.poll_writable() {
+                e.reported_readable = readable;
+
+                let writable = e.events & EPOLLOUT != 0 && e.file.poll_writable();
+                if writable && (!edge_triggered || !e.reported_writable) {
                     revents |= EPOLLOUT;
                 }
+                e.reported_writable = writable;
+
                 if revents != 0 {
                     write_epoll_event(token, out_ptr, revents, e.data);
                     unsafe {
