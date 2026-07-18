@@ -15,6 +15,7 @@ mod fs;
 mod mm;
 mod net;
 mod sbi;
+mod signal;
 mod syscall;
 mod task;
 mod trap;
