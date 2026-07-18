@@ -8,6 +8,12 @@ pub struct EpollEntry {
     pub events: u32,
     pub data: u64,
     pub file: Arc<dyn File>,
+    /// Readiness already reported for an edge-triggered (`EPOLLET`) entry,
+    /// so it isn't reported again until the condition drops and comes back
+    /// -- otherwise a still-true condition (e.g. a peer that closed and
+    /// stays closed) would be re-reported every single poll forever.
+    pub reported_readable: bool,
+    pub reported_writable: bool,
 }
 
 pub struct EpollFile {
