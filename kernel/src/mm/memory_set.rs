@@ -432,8 +432,7 @@ fn build_init_stack(
 
 /// Copy `data` into user memory starting at virtual address `va`, crossing
 /// page boundaries as needed.
-fn write_user_bytes(page_table: &PageTable, va: usize, data: &[u8]) {
-    let mut remaining = data;
+fn write_user_bytes(page_table: &PageTable, va: usize, data: &[u8]) {    let mut remaining = data;
     let mut cur_va = va;
     while !remaining.is_empty() {
         let pa = page_table
