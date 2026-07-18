@@ -40,28 +40,8 @@ pub extern "C" fn rust_main() -> ! {
     net::init();
     println!("[kernel] paging enabled, kernel heap + frame allocator + rootfs + net online");
 
-    println!("[kernel] loading initproc (/usr/sbin/nginx)...");
-    let nginx_data = {
-        let file = fs::open_file("/usr/sbin/nginx", 0).expect("nginx binary missing from rootfs");
-        let size = file.size();
-        let mut buf = alloc::vec![0u8; size];
-        let mut off = 0;
-        while off < size {
-            let n = file.read_at(off, &mut buf[off..]);
-            if n == 0 {
-                break;
-            }
-            off += n;
-        }
-        buf
-    };
-    let args = alloc::vec![
-        alloc::string::String::from("/usr/sbin/nginx"),
-        alloc::string::String::from("-g"),
-        alloc::string::String::from("daemon off;"),
-    ];
-    let envs = alloc::vec![alloc::string::String::from("PATH=/usr/sbin:/usr/bin:/sbin:/bin")];
-    task::add_initproc(&nginx_data, &args, &envs);
+    println!("[kernel] loading initproc (atomic_test.elf)...");
+    task::add_initproc(include_bytes!("user_progs/atomic_test.elf"), &[], &[]);
     task::run_tasks();
 }
 
