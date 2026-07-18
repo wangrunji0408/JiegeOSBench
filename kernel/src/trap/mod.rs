@@ -126,7 +126,7 @@ fn trap_handler() -> ! {
                 cx.x[12],
                 cx.x[2],
             );
-            if sepc == 0 {
+            if cx.sepc == 0 {
                 let token = crate::task::current_user_token();
                 for base in [cx.x[10], cx.x[11]] {
                     if base == 0 {
