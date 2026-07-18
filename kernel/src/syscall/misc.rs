@@ -101,12 +101,22 @@ pub fn sys_uname(buf: *mut u8) -> isize {
 }
 
 const TIMER_FREQ_HZ: u64 = 10_000_000;
+/// Unix timestamp at kernel boot (2026-07-18ish). Real wall-clock time
+/// isn't available without an RTC driver, but reporting seconds-since-boot
+/// verbatim starts at 0 -- and nginx's `ngx_time_update()` explicitly
+/// resets its cached slot's `sec` to 0 before its very first call
+/// specifically to defeat its own "unchanged, skip" fast path. Since our
+/// whole boot-to-first-log-line sequence reliably finishes in well under a
+/// second, the two zeros collide and the time cache (and therefore every
+/// `ngx_log_error_core` call, which unconditionally memcpys from it) never
+/// gets initialized. Any base far from 0 sidesteps this.
+const BOOT_EPOCH_SEC: i64 = 1_784_350_000;
 
 fn now_sec_nsec() -> (i64, i64) {
     let ticks = riscv::register::time::read64();
-    let sec = ticks / TIMER_FREQ_HZ;
-    let nsec = (ticks % TIMER_FREQ_HZ) * (1_000_000_000 / TIMER_FREQ_HZ);
-    (sec as i64, nsec as i64)
+    let sec = BOOT_EPOCH_SEC + (ticks / TIMER_FREQ_HZ) as i64;
+    let nsec = ((ticks % TIMER_FREQ_HZ) * (1_000_000_000 / TIMER_FREQ_HZ)) as i64;
+    (sec, nsec)
 }
 
 pub fn sys_clock_gettime(_clock_id: usize, buf: *mut u8) -> isize {
