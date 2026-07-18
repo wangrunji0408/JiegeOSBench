@@ -120,7 +120,7 @@ pub fn sys_epoll_pwait(epfd: usize, events_ptr: *mut u8, maxevents: usize, timeo
                     revents |= EPOLLOUT;
                 }
                 if revents != 0 {
-                    write_epoll_event(token, out_ptr, revents, e.fd as u64 | ((e.fd as u64) << 32));
+                    write_epoll_event(token, out_ptr, revents, e.data);
                     unsafe {
                         out_ptr = out_ptr.add(16);
                     }
