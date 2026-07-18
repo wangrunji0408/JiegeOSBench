@@ -114,8 +114,3 @@ pub fn sys_wait4(pid: isize, status_ptr: *mut i32, options: u32) -> isize {
         suspend_current_and_run_next();
     }
 }
-
-#[allow(dead_code)]
-fn unused_string_import(_: &String) {}
-#[allow(dead_code)]
-fn unused_arc_import(_: &Arc<()>) {}
