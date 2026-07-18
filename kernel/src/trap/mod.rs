@@ -168,6 +168,12 @@ fn trap_handler() -> ! {
 }
 
 pub fn trap_return() -> ! {
+    match crate::signal::check_and_deliver() {
+        crate::signal::SignalAction::Terminate(code) => {
+            crate::task::exit_current_and_run_next(code);
+        }
+        crate::signal::SignalAction::None | crate::signal::SignalAction::Deliver => {}
+    }
     set_user_trap_entry();
     let trap_cx_ptr = TRAP_CONTEXT;
     let user_satp = crate::task::current_user_token();
