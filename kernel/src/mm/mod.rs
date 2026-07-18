@@ -8,7 +8,7 @@ use spin::Once;
 
 pub use address::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum};
 pub use memory_set::{MapPermission, MemorySet};
-pub use page_table::{translated_byte_buffer, translated_str, PTEFlags, PageTable};
+pub use page_table::{translated_byte_buffer, translated_str, translated_str_array, PTEFlags, PageTable};
 
 static KERNEL_SPACE: Once<spin::Mutex<MemorySet>> = Once::new();
 
