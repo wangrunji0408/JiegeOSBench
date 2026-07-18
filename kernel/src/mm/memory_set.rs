@@ -106,22 +106,25 @@ impl MapArea {
         }
     }
 
-    /// Copy raw bytes into this area starting at its first page, as used
-    /// when loading ELF segment contents. `data` may be shorter than the
-    /// area (the remainder is left zeroed by the fresh frame allocation).
+    /// Copy raw bytes into this area starting at its true start address
+    /// (see `data_offset`), as used when loading ELF segment contents.
+    /// `data` may be shorter than the area (the remainder is left zeroed
+    /// by the fresh frame allocation).
     pub fn copy_data(&mut self, page_table: &PageTable, data: &[u8]) {
         let mut start = 0;
         let mut vpn = self.vpn_start;
+        let mut page_off = self.data_offset;
         loop {
-            let src = &data[start..data.len().min(start + PAGE_SIZE)];
+            let src = &data[start..data.len().min(start + PAGE_SIZE - page_off)];
             let ppn = page_table.translate(vpn).unwrap().ppn();
-            let dst = &mut ppn.as_bytes()[..src.len()];
+            let dst = &mut ppn.as_bytes()[page_off..page_off + src.len()];
             dst.copy_from_slice(src);
-            start += PAGE_SIZE;
+            start += src.len();
             if start >= data.len() {
                 break;
             }
             vpn.0 += 1;
+            page_off = 0;
         }
     }
 }
