@@ -29,6 +29,12 @@ pub const USER_STACK_SIZE: usize = 8 * 1024 * 1024;
 /// from ELF load addresses and the user stack/heap.
 pub const MMAP_BASE: usize = 0x0000_0020_0000_0000;
 
+/// Fixed load bias for a PIE main executable (`ET_DYN`, no ASLR).
+pub const ELF_BASE: usize = 0x0001_0000;
+/// Fixed load bias for the dynamic linker/interpreter image, well clear of
+/// `ELF_BASE` and `MMAP_BASE`.
+pub const INTERP_BASE: usize = 0x0000_0010_0000_0000;
+
 /// virtio-mmio transport slots and the PLIC, as discovered from the QEMU
 /// virt machine's device tree (8 virtio-mmio slots at 0x1000 stride, PLIC
 /// spanning 0xc000000..0xc600000).
