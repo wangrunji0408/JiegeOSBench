@@ -130,6 +130,11 @@ pub fn sys_epoll_pwait(epfd: usize, events_ptr: *mut u8, maxevents: usize, timeo
             }
         }
         if count > 0 {
+            crate::println!(
+                "[dbg] epoll_pwait(pid={}) -> {} events ready",
+                crate::task::current_pid(),
+                count
+            );
             return count as isize;
         }
         if riscv::register::time::read64().saturating_sub(start) >= timeout_ticks {
