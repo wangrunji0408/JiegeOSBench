@@ -38,6 +38,13 @@ pub struct MapArea {
     pub data_frames: BTreeMap<VirtPageNum, FrameTracker>,
     pub map_type: MapType,
     pub perm: MapPermission,
+    /// Page offset of the area's true start address, for ELF segments
+    /// whose `p_vaddr` isn't itself page-aligned (extremely common: only
+    /// the *first* segment of an object starts on a page boundary).
+    /// `copy_data` needs this so segment content lands at the exact
+    /// virtual address the ELF (and its relocations/GOT) expect, not at
+    /// the containing page's start.
+    data_offset: usize,
 }
 
 impl MapArea {
@@ -48,6 +55,7 @@ impl MapArea {
             data_frames: BTreeMap::new(),
             map_type,
             perm,
+            data_offset: start_va.page_offset(),
         }
     }
 
@@ -58,6 +66,7 @@ impl MapArea {
             data_frames: BTreeMap::new(),
             map_type: MapType::Framed,
             perm,
+            data_offset: 0,
         }
     }
 
