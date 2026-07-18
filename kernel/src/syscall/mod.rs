@@ -125,7 +125,10 @@ pub fn syscall(id: usize, args: [usize; 6]) -> isize {
         SYSCALL_MADVISE => 0,
 
         SYSCALL_EXIT | SYSCALL_EXIT_GROUP => process::sys_exit(args[0] as i32),
-        SYSCALL_CLONE => process::sys_clone(args[0], args[1], args[2], args[3], args[4]),
+        SYSCALL_CLONE => {
+            crate::println!("[dbg] clone() called by pid {}", crate::task::current_pid());
+            process::sys_clone(args[0], args[1], args[2], args[3], args[4])
+        }
         SYSCALL_EXECVE => process::sys_execve(args[0] as *const u8, args[1] as *const usize, args[2] as *const usize),
         SYSCALL_WAIT4 => process::sys_wait4(args[0] as isize, args[1] as *mut i32, args[2] as u32),
         SYSCALL_SET_TID_ADDRESS => process::sys_getpid_like(),
