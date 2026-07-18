@@ -52,13 +52,7 @@ pub fn exit_current_and_run_next(exit_code: i32) -> ! {
     unreachable!("exited task should never be scheduled again");
 }
 
-pub fn current_trap_cx_user_va() -> usize {
-    crate::config::TRAP_CONTEXT
-}
-
 /// Read-only convenience used by syscalls that need the running task's PID.
 pub fn current_pid() -> usize {
     current_task().unwrap().pid()
 }
-
-pub type TrapContextRef = &'static mut TrapContext;
