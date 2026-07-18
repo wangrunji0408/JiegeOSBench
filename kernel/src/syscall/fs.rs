@@ -234,7 +234,7 @@ pub fn sys_fstat(fd: usize, buf: *mut u8) -> isize {
         Some(f) => f,
         None => return -9,
     };
-    write_stat(token, buf, make_stat(file.size(), file.is_dir()));
+    write_stat(token, buf, make_stat(file.size(), file.is_dir(), file.ino()));
     0
 }
 
