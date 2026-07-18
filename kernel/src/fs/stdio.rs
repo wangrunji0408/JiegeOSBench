@@ -20,6 +20,9 @@ impl File for Stdin {
         }
         buf.len()
     }
+    fn as_any(&self) -> &dyn core::any::Any {
+        self
+    }
 }
 
 impl File for Stdout {
@@ -31,5 +34,8 @@ impl File for Stdout {
             crate::sbi::console_putchar(b);
         }
         buf.len()
+    }
+    fn as_any(&self) -> &dyn core::any::Any {
+        self
     }
 }
