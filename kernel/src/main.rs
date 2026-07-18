@@ -34,8 +34,8 @@ fn clear_bss() {
         fn ebss();
     }
     unsafe {
-        let start = sbss as usize;
-        let end = ebss as usize;
+        let start = sbss as *const () as usize;
+        let end = ebss as *const () as usize;
         core::slice::from_raw_parts_mut(start as *mut u8, end - start).fill(0);
     }
 }
