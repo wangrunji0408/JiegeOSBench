@@ -2,7 +2,7 @@
 
 use core::arch::global_asm;
 use riscv::register::scause::{self, Exception, Interrupt, Trap};
-use riscv::register::{sepc, sie, sstatus, stval, stvec};
+use riscv::register::{sie, sstatus, stval, stvec};
 
 global_asm!(include_str!("trap.S"));
 
