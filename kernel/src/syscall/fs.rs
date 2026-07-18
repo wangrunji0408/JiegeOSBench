@@ -15,6 +15,9 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
     if !file.writable() {
         return -13; // EACCES
     }
+    if let Err(e) = fs::wait_writable(&file) {
+        return e;
+    }
     let buffers = translated_byte_buffer(token, buf, len);
     let mut written = 0;
     for b in buffers {
@@ -32,6 +35,9 @@ pub fn sys_read(fd: usize, buf: *mut u8, len: usize) -> isize {
     };
     if !file.readable() {
         return -13;
+    }
+    if let Err(e) = fs::wait_readable(&file) {
+        return e;
     }
     let buffers = translated_byte_buffer(token, buf, len);
     let mut read = 0;
