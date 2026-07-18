@@ -158,14 +158,33 @@ pub fn syscall(id: usize, args: [usize; 6]) -> isize {
         }
         SYSCALL_IO_SETUP | SYSCALL_IO_DESTROY => -38, // ENOSYS: nginx disables AIO gracefully on this
 
-        SYSCALL_SOCKET | SYSCALL_SOCKETPAIR | SYSCALL_BIND | SYSCALL_LISTEN | SYSCALL_ACCEPT
-        | SYSCALL_ACCEPT4 | SYSCALL_CONNECT | SYSCALL_GETSOCKNAME | SYSCALL_GETPEERNAME
-        | SYSCALL_SENDTO | SYSCALL_RECVFROM | SYSCALL_SETSOCKOPT | SYSCALL_GETSOCKOPT
-        | SYSCALL_SHUTDOWN | SYSCALL_SENDMSG | SYSCALL_RECVMSG | SYSCALL_EVENTFD2
-        | SYSCALL_EPOLL_CREATE1 | SYSCALL_EPOLL_CTL | SYSCALL_EPOLL_PWAIT => {
-            crate::println!("[kernel] net/epoll syscall id={} not yet implemented", id);
-            -38
-        }
+        SYSCALL_SOCKET => net::sys_socket(args[0], args[1], args[2]),
+        SYSCALL_SOCKETPAIR => net::sys_socketpair(args[0], args[1], args[2], args[3] as *mut u8),
+        SYSCALL_BIND => net::sys_bind(args[0], args[1] as *const u8, args[2]),
+        SYSCALL_LISTEN => net::sys_listen(args[0], args[1]),
+        SYSCALL_ACCEPT => net::sys_accept4(args[0], args[1] as *mut u8, args[2] as *mut u8, 0),
+        SYSCALL_ACCEPT4 => net::sys_accept4(args[0], args[1] as *mut u8, args[2] as *mut u8, args[3]),
+        SYSCALL_CONNECT => net::sys_connect(args[0], args[1] as *const u8, args[2]),
+        SYSCALL_GETSOCKNAME => net::sys_getsockname(args[0], args[1] as *mut u8, args[2] as *mut u8),
+        SYSCALL_GETPEERNAME => net::sys_getpeername(args[0], args[1] as *mut u8, args[2] as *mut u8),
+        SYSCALL_SENDTO => net::sys_sendto(args[0], args[1] as *const u8, args[2], args[3]),
+        SYSCALL_RECVFROM => net::sys_recvfrom(
+            args[0],
+            args[1] as *mut u8,
+            args[2],
+            args[3],
+            args[4] as *mut u8,
+            args[5] as *mut u8,
+        ),
+        SYSCALL_SETSOCKOPT => net::sys_setsockopt(),
+        SYSCALL_GETSOCKOPT => net::sys_getsockopt(args[0], args[1], args[2], args[3] as *mut u8, args[4] as *mut u8),
+        SYSCALL_SHUTDOWN => net::sys_shutdown(args[0], args[1]),
+        SYSCALL_SENDMSG => net::sys_sendmsg(args[0], args[1] as *const u8, args[2]),
+        SYSCALL_RECVMSG => net::sys_recvmsg(args[0], args[1] as *const u8, args[2]),
+        SYSCALL_EVENTFD2 => poll::sys_eventfd2(args[0], args[1]),
+        SYSCALL_EPOLL_CREATE1 => poll::sys_epoll_create1(args[0]),
+        SYSCALL_EPOLL_CTL => poll::sys_epoll_ctl(args[0], args[1], args[2], args[3] as *const u8),
+        SYSCALL_EPOLL_PWAIT => poll::sys_epoll_pwait(args[0], args[1] as *mut u8, args[2], args[3] as isize),
 
         _ => {
             crate::println!("[kernel] unsupported syscall id={}, args={:?}", id, args);
