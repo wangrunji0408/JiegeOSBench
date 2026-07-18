@@ -182,6 +182,13 @@ impl TaskControlBlock {
                 program_brk: parent_inner.program_brk,
                 fd_table: parent_inner.fd_table.clone(),
                 cwd: parent_inner.cwd.clone(),
+                signals: SignalState {
+                    actions: parent_inner.signals.actions,
+                    pending: 0,
+                    blocked: parent_inner.signals.blocked,
+                    saved_cx: None,
+                    saved_blocked: 0,
+                },
             }),
         });
         {
