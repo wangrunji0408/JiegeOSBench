@@ -11,8 +11,7 @@ static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0u8; KERNEL_HEAP_SIZE];
 
 pub fn init() {
     unsafe {
-        HEAP_ALLOCATOR
-            .lock()
-            .init(HEAP_SPACE.as_mut_ptr() as usize, KERNEL_HEAP_SIZE);
+        let base = core::ptr::addr_of_mut!(HEAP_SPACE) as usize;
+        HEAP_ALLOCATOR.lock().init(base, KERNEL_HEAP_SIZE);
     }
 }
