@@ -68,7 +68,6 @@ pub struct TaskControlBlockInner {
 
 impl TaskControlBlockInner {
     pub fn trap_cx(&self) -> &'static mut TrapContext {
-        self.trap_cx_ppn.as_bytes();
         unsafe { &mut *(self.trap_cx_ppn.as_mut_ptr() as *mut TrapContext) }
     }
 
