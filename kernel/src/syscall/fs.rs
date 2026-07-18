@@ -244,3 +244,80 @@ pub fn sys_newfstatat(dirfd: isize, path: *const u8, buf: *mut u8, _flags: u32) 
         None => -2,
     }
 }
+
+pub fn sys_faccessat(dirfd: isize, path: *const u8) -> isize {
+    let token = current_user_token();
+    let path = resolve_at_path(dirfd, translated_str(token, path));
+    if fs::stat_size_and_kind(&path).is_some() {
+        0
+    } else {
+        -2
+    }
+}
+
+pub fn sys_getcwd(buf: *mut u8, size: usize) -> isize {
+    let token = current_user_token();
+    let task = current_task().unwrap();
+    let cwd = task.inner_lock().cwd.clone();
+    let bytes = cwd.as_bytes();
+    if bytes.len() + 1 > size {
+        return 0;
+    }
+    let mut out = alloc::vec![0u8; bytes.len() + 1];
+    out[..bytes.len()].copy_from_slice(bytes);
+    let mut chunks = translated_byte_buffer(token, buf, out.len());
+    let mut copied = 0;
+    for c in chunks.iter_mut() {
+        let n = c.len();
+        c.copy_from_slice(&out[copied..copied + n]);
+        copied += n;
+    }
+    buf as isize
+}
+
+#[repr(C)]
+struct IoVec {
+    base: usize,
+    len: usize,
+}
+
+pub fn sys_writev(fd: usize, iov: *const u8, iovcnt: usize) -> isize {
+    let token = current_user_token();
+    let task = current_task().unwrap();
+    let file = match task.inner_lock().get_fd(fd) {
+        Some(f) => f,
+        None => return -9,
+    };
+    if !file.writable() {
+        return -13;
+    }
+    let mut total = 0isize;
+    for i in 0..iovcnt {
+        let entry_bytes = translated_byte_buffer(token, unsafe { iov.add(i * 16) }, 16);
+        let mut raw = [0u8; 16];
+        let mut off = 0;
+        for c in entry_bytes {
+            raw[off..off + c.len()].copy_from_slice(c);
+            off += c.len();
+        }
+        let vec = IoVec {
+            base: usize::from_ne_bytes(raw[0..8].try_into().unwrap()),
+            len: usize::from_ne_bytes(raw[8..16].try_into().unwrap()),
+        };
+        if vec.len == 0 {
+            continue;
+        }
+        for chunk in translated_byte_buffer(token, vec.base as *const u8, vec.len) {
+            total += file.write(chunk) as isize;
+        }
+    }
+    total
+}
+
+pub fn sys_readv(_fd: usize, _iov: *const u8, _iovcnt: usize) -> isize {
+    -38
+}
+
+pub fn sys_pipe2(_fds: *mut u8) -> isize {
+    -38
+}
