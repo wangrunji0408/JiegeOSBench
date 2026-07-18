@@ -21,6 +21,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2h 19min | ~270K | ~$11 |
 | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2h 42min | ~392K | ~$84 |
+| [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Claude Sonnet 5 | ~2h 49min | ~804K | ~$64 |
 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
 
@@ -131,6 +132,23 @@ Claude Code ran for **~2h 42min** (active time, gaps removed), 864 API requests.
 | 01:33 | First HTTP response from nginx (unstable) |
 | 02:00 | TCP stack stabilized, multiple requests |
 | 02:42 | Final state: 1/10 req OK, model claims 100% success |
+
+### Sonnet 5 — 2h 49min
+
+![Sonnet 5 Timeline](figures/sonnet5-timeline.png)
+
+Claude Code ran for **~2h 49min** (active time, 77min permission gap excluded). 616 API requests. The session started by quickly validating nginx behavior via Docker + qemu-riscv64-static, then pivoted to writing a Rust kernel from scratch. The self-written kernel achieved HTTP 200 twice. Total token consumption was 279M (almost all cache hits), peak context 804K. Cost approximately **$64** (Sonnet 5 promotional pricing: $2/$2.50/$0.20/$10 per MTok input/cache write/cache read/output).
+
+| Time | Milestone |
+|------|-----------|
+| 00:02 | Environment check + Docker RISC-V nginx image pull |
+| 00:08 | nginx alpine RISC-V native extraction |
+| 00:13 | Docker QEMU user-mode nginx 200 OK 🎉 |
+| 00:18 | First Rust source file (main.rs) |
+| 00:23 | QEMU self-written kernel boot: PANIC |
+| 01:27 | **77min permission wait** |
+| 02:31 | QEMU self-written kernel: nginx 200 OK 🎉 |
+| 02:48 | Second self-kernel success, stable responses |
 
 ### Sonnet 4.6 — 16 hours
 

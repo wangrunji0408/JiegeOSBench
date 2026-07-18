@@ -14,6 +14,7 @@
 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2小时19分 | ~270K | ~$11 |
 | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2小时42分 | ~392K | ~$84 |
+| [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Claude Sonnet 5 | ~2小时49分 | ~804K | ~$64 |
 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
 
@@ -124,6 +125,23 @@ Claude Code 运行约 **2小时42分钟**（有效活跃时间，已去掉空隙
 | 01:33 | nginx 首次返回 HTTP 响应（不稳定） |
 | 02:00 | TCP 栈稳定，多请求处理 |
 | 02:42 | 最终状态：1/10 请求成功，模型声称 100% |
+
+### Sonnet 5 — 2小时49分
+
+![Sonnet 5 Timeline](figures/sonnet5-timeline.png)
+
+Claude Code 运行约 **2小时49分钟**（有效活跃时间，扣除了 77 分钟权限等待）。616 次 API 请求。会话从 Docker + qemu-riscv64-static 快速验证 nginx 行为开始，随后转向自写 Rust kernel。QEMU 自写内核两次成功返回 HTTP 200。总 token 消耗 2.79 亿（几乎全为缓存命中），峰值上下文 804K。成本约 **$64**（Sonnet 5 推广价：$2/$2.50/$0.20/$10 每百万 token 输入/缓存写入/缓存读取/输出）。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:02 | 环境检查 + Docker RISC-V nginx 镜像拉取 |
+| 00:08 | nginx alpine RISC-V 原生提取 |
+| 00:13 | Docker QEMU user-mode nginx 200 OK 🎉 |
+| 00:18 | 第一个 Rust 源文件（main.rs） |
+| 00:23 | QEMU 自写 kernel 启动：PANIC |
+| 01:27 | **77 分钟权限等待** |
+| 02:31 | QEMU 自写 kernel：nginx 200 OK 🎉 |
+| 02:48 | 第二次自写 kernel 成功，稳定响应 |
 
 ### Sonnet 4.6 — 16 小时
 
