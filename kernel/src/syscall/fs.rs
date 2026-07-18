@@ -297,6 +297,9 @@ pub fn sys_writev(fd: usize, iov: *const u8, iovcnt: usize) -> isize {
     if !file.writable() {
         return -13;
     }
+    if let Err(e) = fs::wait_writable(&file) {
+        return e;
+    }
     let mut total = 0isize;
     for i in 0..iovcnt {
         let entry_bytes = translated_byte_buffer(token, unsafe { iov.add(i * 16) }, 16);
