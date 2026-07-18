@@ -61,16 +61,17 @@ pub fn sys_epoll_ctl(epfd: usize, op: usize, fd: usize, event_ptr: *const u8) ->
             entries.push(EpollEntry {
                 fd: fd as i32,
                 events,
+                data,
                 file: target,
             });
-            let _ = data;
             0
         }
         EPOLL_CTL_MOD => {
             let token = current_user_token();
-            let (events, _data) = read_epoll_event(token, event_ptr);
+            let (events, data) = read_epoll_event(token, event_ptr);
             if let Some(e) = entries.iter_mut().find(|e| e.fd == fd as i32) {
                 e.events = events;
+                e.data = data;
             }
             0
         }
