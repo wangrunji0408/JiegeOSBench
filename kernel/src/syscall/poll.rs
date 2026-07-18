@@ -121,6 +121,10 @@ pub fn sys_epoll_pwait(epfd: usize, events_ptr: *mut u8, maxevents: usize, timeo
                     revents |= EPOLLOUT;
                 }
                 if revents != 0 {
+                    crate::println!(
+                        "[dbg] epoll ready fd={} events={:#x} revents={:#x} data={:#x}",
+                        e.fd, e.events, revents, e.data
+                    );
                     write_epoll_event(token, out_ptr, revents, e.data);
                     unsafe {
                         out_ptr = out_ptr.add(16);
