@@ -192,3 +192,26 @@ pub fn translated_str(token: usize, ptr: *const u8) -> String {
     }
     s
 }
+
+/// Read a NULL-terminated array of pointers (e.g. `argv`/`envp`) out of
+/// user memory, returning each pointee as an owned string.
+pub fn translated_str_array(token: usize, ptr: *const usize) -> Vec<String> {
+    if ptr.is_null() {
+        return Vec::new();
+    }
+    let page_table = PageTable::from_token(token);
+    let mut out = Vec::new();
+    let mut va = ptr as usize;
+    loop {
+        let pa = page_table
+            .translate_va(VirtAddr(va))
+            .unwrap_or_else(|| panic!("unmapped pointer array address {:#x}", va));
+        let entry = unsafe { *(pa.0 as *const usize) };
+        if entry == 0 {
+            break;
+        }
+        out.push(translated_str(token, entry as *const u8));
+        va += core::mem::size_of::<usize>();
+    }
+    out
+}
