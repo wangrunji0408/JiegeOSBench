@@ -23,8 +23,6 @@ mod lang_items {
 
 global_asm!(include_str!("entry.asm"));
 
-const BOOT_STACK_SIZE: usize = 64 * 1024;
-
 #[unsafe(no_mangle)]
 pub extern "C" fn rust_main() -> ! {
     clear_bss();
