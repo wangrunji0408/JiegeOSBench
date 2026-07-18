@@ -49,6 +49,16 @@ pub trait File: Send + Sync {
     fn ino(&self) -> u64 {
         0
     }
+    /// Ready for a `read`/`recv`-style call to return data (or EOF)
+    /// without blocking. Used by `epoll`/`select`-style polling; regular
+    /// files and stdio are always considered ready.
+    fn poll_readable(&self) -> bool {
+        true
+    }
+    fn poll_writable(&self) -> bool {
+        true
+    }
+    fn as_any(&self) -> &dyn core::any::Any;
 }
 
 mod regular;
