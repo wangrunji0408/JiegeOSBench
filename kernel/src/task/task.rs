@@ -134,6 +134,7 @@ impl TaskControlBlock {
                 program_brk: heap_bottom,
                 fd_table: crate::fs::stdio_fd_table(),
                 cwd: alloc::string::String::from("/"),
+                signals: SignalState::new(),
             }),
         };
         let tcb = Arc::new(tcb);
