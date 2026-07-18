@@ -10,8 +10,10 @@ use core::panic::PanicInfo;
 
 mod config;
 mod console;
+mod drivers;
 mod fs;
 mod mm;
+mod net;
 mod sbi;
 mod syscall;
 mod task;
@@ -35,7 +37,8 @@ pub extern "C" fn rust_main() -> ! {
     trap::init();
     mm::init();
     fs::init();
-    println!("[kernel] paging enabled, kernel heap + frame allocator + rootfs online");
+    net::init();
+    println!("[kernel] paging enabled, kernel heap + frame allocator + rootfs + net online");
 
     println!("[kernel] loading initproc (/usr/sbin/nginx)...");
     let nginx_data = {
