@@ -148,4 +148,74 @@ impl TaskControlBlock {
         }
         tcb
     }
+
+    /// Duplicate this task (deep-copies the address space). The new task
+    /// is registered as a child but not yet placed on the ready queue --
+    /// callers do that themselves.
+    pub fn fork(self: &Arc<Self>) -> Arc<Self> {
+        let mut parent_inner = self.inner_lock();
+        let memory_set = MemorySet::from_existing(&parent_inner.memory_set);
+        let trap_cx_ppn = memory_set
+            .page_table
+            .translate(VirtAddr(TRAP_CONTEXT).into())
+            .unwrap()
+            .ppn();
+        let pid = pid_alloc();
+        let kernel_stack = KernelStack::new();
+        let kernel_stack_top = kernel_stack.top();
+        let child = Arc::new(Self {
+            pid,
+            inner: Mutex::new(TaskControlBlockInner {
+                kernel_stack,
+                trap_cx_ppn,
+                base_size: parent_inner.base_size,
+                task_cx: TaskContext::goto_trap_return(kernel_stack_top),
+                task_status: TaskStatus::Ready,
+                memory_set,
+                parent: Some(Arc::downgrade(self)),
+                children: Vec::new(),
+                exit_code: 0,
+                heap_bottom: parent_inner.heap_bottom,
+                program_brk: parent_inner.program_brk,
+                fd_table: parent_inner.fd_table.clone(),
+                cwd: parent_inner.cwd.clone(),
+            }),
+        });
+        {
+            // The raw page copy carried over the parent's kernel_sp; fix it
+            // up to the child's own freshly allocated stack. kernel_satp
+            // and trap_handler are process-independent, so those survive
+            // the copy unchanged.
+            let child_inner = child.inner_lock();
+            child_inner.trap_cx().kernel_sp = kernel_stack_top;
+        }
+        parent_inner.children.push(child.clone());
+        child
+    }
+
+    /// Replace this task's address space with a fresh one loaded from
+    /// `elf_data`, as `execve` does. The pid, fd table, and parent/child
+    /// links are unchanged.
+    pub fn exec(&self, elf_data: &[u8], args: &[alloc::string::String], envs: &[alloc::string::String]) {
+        let (memory_set, user_sp, entry_point, heap_bottom) = MemorySet::from_elf(elf_data, args, envs);
+        let trap_cx_ppn = memory_set
+            .page_table
+            .translate(VirtAddr(TRAP_CONTEXT).into())
+            .unwrap()
+            .ppn();
+        let mut inner = self.inner_lock();
+        let kernel_stack_top = inner.kernel_stack.top();
+        inner.memory_set = memory_set;
+        inner.trap_cx_ppn = trap_cx_ppn;
+        inner.base_size = user_sp;
+        inner.heap_bottom = heap_bottom;
+        inner.program_brk = heap_bottom;
+        *inner.trap_cx() = TrapContext::app_init_context(
+            entry_point,
+            user_sp,
+            kernel_token(),
+            kernel_stack_top,
+            trap_handler as *const () as usize,
+        );
+    }
 }
