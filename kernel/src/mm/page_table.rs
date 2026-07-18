@@ -145,3 +145,30 @@ impl PageTable {
         *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
     }
 }
+
+/// Split a user-space `(ptr, len)` buffer into kernel-dereferenceable
+/// slices, one per physical page it spans (a user buffer need not be
+/// physically contiguous even though it is virtually contiguous).
+pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
+    let page_table = PageTable::from_token(token);
+    let start = ptr as usize;
+    let end = start + len;
+    let mut v = Vec::new();
+    let mut cur = start;
+    while cur < end {
+        let start_va = VirtAddr(cur);
+        let vpn = start_va.floor();
+        let ppn = page_table
+            .translate(vpn)
+            .filter(|pte| pte.is_valid())
+            .unwrap_or_else(|| panic!("unmapped user address {:#x}", cur))
+            .ppn();
+        let mut next_page_va: VirtAddr = VirtPageNum(vpn.0 + 1).into();
+        if next_page_va.0 > end {
+            next_page_va = VirtAddr(end);
+        }
+        v.push(&mut ppn.as_bytes()[start_va.page_offset()..next_page_va.page_offset_or_full()]);
+        cur = next_page_va.0;
+    }
+    v
+}
