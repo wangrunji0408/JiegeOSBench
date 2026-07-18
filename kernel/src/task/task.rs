@@ -106,8 +106,8 @@ impl TaskControlBlock {
     }
 
     /// Build the very first process from an ELF image (no parent).
-    pub fn new_initproc(elf_data: &[u8]) -> Arc<Self> {
-        let (memory_set, user_sp, entry_point, heap_bottom) = MemorySet::from_elf(elf_data);
+    pub fn new_initproc(elf_data: &[u8], args: &[alloc::string::String], envs: &[alloc::string::String]) -> Arc<Self> {
+        let (memory_set, user_sp, entry_point, heap_bottom) = MemorySet::from_elf(elf_data, args, envs);
         let trap_cx_ppn = memory_set
             .page_table
             .translate(VirtAddr(TRAP_CONTEXT).into())
