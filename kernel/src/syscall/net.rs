@@ -48,9 +48,8 @@ fn write_sockaddr(token: usize, ptr: *mut u8, len_ptr: *mut u8, ep: IpEndpoint) 
     let mut raw = [0u8; 16];
     raw[0..2].copy_from_slice(&AF_INET.to_ne_bytes());
     raw[2..4].copy_from_slice(&ep.port.to_be_bytes());
-    if let IpAddress::Ipv4(v4) = ep.addr {
-        raw[4..8].copy_from_slice(&v4.0);
-    }
+    let IpAddress::Ipv4(v4) = ep.addr;
+    raw[4..8].copy_from_slice(&v4.0);
     let mut chunks = translated_byte_buffer(token, ptr, 16);
     let mut copied = 0;
     for c in chunks.iter_mut() {
