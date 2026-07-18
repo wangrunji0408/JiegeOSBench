@@ -5,6 +5,8 @@
 mod fs;
 mod mm;
 mod misc;
+mod net;
+mod poll;
 mod process;
 
 const SYSCALL_GETCWD: usize = 17;
