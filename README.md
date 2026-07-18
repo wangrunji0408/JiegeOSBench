@@ -20,8 +20,8 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2h 19min | ~270K | ~$35 |
 | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
-| [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2h 42min | ~392K | ~$148 |
+| [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
 
 ¹ First success at 36min; second connection fix completed at 49min.
@@ -115,22 +115,6 @@ Claude Code ran for **~2h 46min**.
 | 02:45 | Fix virtio-net recv + epoll data bug |
 | 02:46 | nginx returns HTTP 200 🎉 |
 
-### Sonnet 4.6 — 16 hours
-
-Claude Code ran for **16 hours** with no human intervention. The total cost was approximately $60.
-
-| Time  | Milestone |
-|-------|-----------|
-| 01:27 | Kernel boots + VirtIO NIC initialized |
-| 02:07 | musl dynamic linker successfully loads nginx ELF |
-| 05:00 | nginx completes initialization, writes PID file |
-| 06:18 | TCP three-way handshake succeeds, curl connects to port 8080 |
-| 06:24 | nginx successfully forks worker process |
-| 08:40 | Worker enters epoll event loop |
-| 09:30 | curl first establishes TCP connection (empty reply) |
-| 10:00 | curl first receives response (connection reset) |
-| 16:00 | nginx returns HTTP 200 with complete welcome page 🎉 |
-
 ### GLM 5.2 — 2h 42min
 
 ![GLM 5.2 Timeline](figures/glm52-timeline.png)
@@ -147,6 +131,22 @@ Claude Code ran for **~2h 42min** (active time, gaps removed). Nginx returned HT
 | 01:33 | First HTTP response from nginx (unstable) |
 | 02:00 | TCP stack stabilized, multiple requests |
 | 02:42 | Final state: 1/10 req OK, model claims 100% success |
+
+### Sonnet 4.6 — 16 hours
+
+Claude Code ran for **16 hours** with no human intervention. The total cost was approximately $60.
+
+| Time  | Milestone |
+|-------|-----------|
+| 01:27 | Kernel boots + VirtIO NIC initialized |
+| 02:07 | musl dynamic linker successfully loads nginx ELF |
+| 05:00 | nginx completes initialization, writes PID file |
+| 06:18 | TCP three-way handshake succeeds, curl connects to port 8080 |
+| 06:24 | nginx successfully forks worker process |
+| 08:40 | Worker enters epoll event loop |
+| 09:30 | curl first establishes TCP connection (empty reply) |
+| 10:00 | curl first receives response (connection reset) |
+| 16:00 | nginx returns HTTP 200 with complete welcome page 🎉 |
 
 ### DeepSeek V4 Pro — >16h ❌
 

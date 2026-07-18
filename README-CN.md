@@ -13,8 +13,8 @@
 | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2小时19分 | ~270K | ~$35 |
 | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
-| [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2小时42分 | ~392K | ~$148 |
+| [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
@@ -108,22 +108,6 @@ Claude Code 全程运行约 **2小时46分钟**，中途没有人工介入。
 | 02:45 | 修复 virtio-net 接收 + epoll data 指针 bug |
 | 02:46 | nginx 成功返回 HTTP 200 🎉 |
 
-### Sonnet 4.6 — 16 小时
-
-Claude Code 全程运行共 16 小时，中途没有人工介入。总成本约 60 美元。
-
-| 时长  | 里程碑 |
-|-------|--------|
-| 01:27 | 内核成功启动 + VirtIO 网卡初始化 |
-| 02:07 | musl ld 成功加载 nginx ELF |
-| 05:00 | nginx 完成初始化，写 PID 文件 |
-| 06:18 | TCP 三次握手成功，curl 能连到 8080 |
-| 06:24 | nginx 成功 fork 出 worker 进程 |
-| 08:40 | worker 进入 epoll 事件循环 |
-| 09:30 | curl 首次建立 TCP 连接（Empty reply） |
-| 10:00 | curl 首次收到响应（Connection reset） |
-| 16:00 | nginx 成功返回 HTTP 200，欢迎页完整响应 🎉 |
-
 ### GLM 5.2 — 2小时42分
 
 ![GLM 5.2 Timeline](figures/glm52-timeline.png)
@@ -140,6 +124,22 @@ Claude Code 运行约 **2小时42分钟**（有效活跃时间，已去掉空隙
 | 01:33 | nginx 首次返回 HTTP 响应（不稳定） |
 | 02:00 | TCP 栈稳定，多请求处理 |
 | 02:42 | 最终状态：1/10 请求成功，模型声称 100% |
+
+### Sonnet 4.6 — 16 小时
+
+Claude Code 全程运行共 16 小时，中途没有人工介入。总成本约 60 美元。
+
+| 时长  | 里程碑 |
+|-------|--------|
+| 01:27 | 内核成功启动 + VirtIO 网卡初始化 |
+| 02:07 | musl ld 成功加载 nginx ELF |
+| 05:00 | nginx 完成初始化，写 PID 文件 |
+| 06:18 | TCP 三次握手成功，curl 能连到 8080 |
+| 06:24 | nginx 成功 fork 出 worker 进程 |
+| 08:40 | worker 进入 epoll 事件循环 |
+| 09:30 | curl 首次建立 TCP 连接（Empty reply） |
+| 10:00 | curl 首次收到响应（Connection reset） |
+| 16:00 | nginx 成功返回 HTTP 200，欢迎页完整响应 🎉 |
 
 ### DeepSeek V4 Pro — >16h ❌
 
