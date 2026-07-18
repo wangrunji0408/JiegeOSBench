@@ -37,9 +37,9 @@ pub extern "C" fn rust_main() -> ! {
     fs::init();
     println!("[kernel] paging enabled, kernel heap + frame allocator + rootfs online");
 
-    println!("[kernel] loading initproc (/usr/sbin/nginx)...");
+    println!("[kernel] loading initproc (/lib/ld-musl-riscv64.so.1 direct test)...");
     let nginx_data = {
-        let file = fs::open_file("/usr/sbin/nginx", 0).expect("nginx binary missing from rootfs");
+        let file = fs::open_file("/lib/ld-musl-riscv64.so.1", 0).expect("interp binary missing from rootfs");
         let size = file.size();
         let mut buf = alloc::vec![0u8; size];
         let mut off = 0;
@@ -53,6 +53,7 @@ pub extern "C" fn rust_main() -> ! {
         buf
     };
     let args = alloc::vec![
+        alloc::string::String::from("/lib/ld-musl-riscv64.so.1"),
         alloc::string::String::from("/usr/sbin/nginx"),
         alloc::string::String::from("-g"),
         alloc::string::String::from("daemon off;"),
