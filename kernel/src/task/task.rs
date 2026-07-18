@@ -5,6 +5,7 @@ use super::pid::{pid_alloc, PidHandle};
 use crate::config::{KERNEL_STACK_SIZE, TRAP_CONTEXT};
 use crate::fs::File;
 use crate::mm::{kernel_token, MemorySet, PhysPageNum, VirtAddr};
+use crate::signal::SignalState;
 use crate::trap::{trap_handler, TrapContext};
 use alloc::alloc::{alloc, dealloc};
 use alloc::sync::{Arc, Weak};
