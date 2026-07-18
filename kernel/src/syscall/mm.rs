@@ -59,6 +59,7 @@ pub fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: isize, o
         let mut inner = task.inner_lock();
         inner.memory_set.mmap(fixed, len, perm)
     };
+    crate::println!("[debug]   -> base={:#x}", base);
 
     if let Some(file) = file {
         let token = current_user_token();
