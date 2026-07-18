@@ -154,7 +154,12 @@ impl MemorySet {
     pub fn from_existing(other: &MemorySet) -> Self {
         let mut memory_set = Self::new_bare();
         memory_set.map_trampoline();
+        crate::println!("[fork-dbg] copying {} areas", other.areas.len());
         for area in other.areas.iter() {
+            crate::println!(
+                "[fork-dbg] area vpn=[{:#x},{:#x}) perm={:?}",
+                area.vpn_start.0, area.vpn_end.0, area.perm
+            );
             let new_area = MapArea::new(area.vpn_start.into(), area.vpn_end.into(), area.map_type, area.perm);
             memory_set.push(new_area, None);
             let mut vpn = area.vpn_start;
