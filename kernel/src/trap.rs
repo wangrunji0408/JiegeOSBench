@@ -23,7 +23,7 @@ pub fn init() {
         fn __kernel_trap();
     }
     unsafe {
-        stvec::write(__kernel_trap as usize, stvec::TrapMode::Direct);
+        stvec::write(__kernel_trap as *const () as usize, stvec::TrapMode::Direct);
         sie::set_stimer();
         sstatus::set_sie();
     }
