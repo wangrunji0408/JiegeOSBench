@@ -23,6 +23,12 @@ pub const KERNEL_HEAP_SIZE: usize = 16 * 1024 * 1024;
 pub const KERNEL_STACK_SIZE: usize = 64 * 1024;
 pub const USER_STACK_SIZE: usize = 8 * 1024 * 1024;
 
+/// Base of the bump allocator used for `mmap` regions with no
+/// caller-specified address, and for placing the dynamic linker/interpreter
+/// image. Comfortably inside SV39's low canonical half (below 2^38) and far
+/// from ELF load addresses and the user stack/heap.
+pub const MMAP_BASE: usize = 0x0000_0020_0000_0000;
+
 /// virtio-mmio transport slots and the PLIC, as discovered from the QEMU
 /// virt machine's device tree (8 virtio-mmio slots at 0x1000 stride, PLIC
 /// spanning 0xc000000..0xc600000).
