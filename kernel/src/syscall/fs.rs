@@ -125,14 +125,9 @@ pub fn sys_openat(dirfd: isize, path: *const u8, flags: u32, _mode: u32) -> isiz
         Some(file) => {
             let task = current_task().unwrap();
             let mut inner = task.inner_lock();
-            let fd = inner.alloc_fd(file.clone());
-            crate::println!("[debug] openat({:?}) -> fd={} size={}", path, fd, file.size());
-            fd as isize
+            inner.alloc_fd(file) as isize
         }
-        None => {
-            crate::println!("[debug] openat({:?}) -> ENOENT", path);
-            -2
-        }
+        None => -2,
     }
 }
 
