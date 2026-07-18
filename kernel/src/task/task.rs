@@ -65,6 +65,7 @@ pub struct TaskControlBlockInner {
     pub program_brk: usize,
     pub fd_table: Vec<Option<Arc<dyn File>>>,
     pub cwd: alloc::string::String,
+    pub signals: SignalState,
 }
 
 impl TaskControlBlockInner {
