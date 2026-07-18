@@ -41,6 +41,14 @@ pub trait File: Send + Sync {
     fn truncate(&self, len: usize) {
         let _ = len;
     }
+    /// Unique per-inode identifier. musl's dynamic linker uses
+    /// `(st_dev, st_ino)` to detect when two paths (e.g. reached via a
+    /// symlink) name the same underlying file, so this must actually be
+    /// distinct per file -- a constant here would make it think every
+    /// shared object is a duplicate of the first one it loaded.
+    fn ino(&self) -> u64 {
+        0
+    }
 }
 
 mod regular;
