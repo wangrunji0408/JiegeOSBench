@@ -71,6 +71,7 @@ mod regular;
 mod stdio;
 mod tar;
 pub mod tmpfs;
+pub mod pipe;
 
 pub use regular::{mkdir, open_file, stat_size_and_kind, unlink, O_APPEND, O_CREAT, O_DIRECTORY, O_EXCL, O_TRUNC};
 pub use stdio::{Stdin, Stdout};
