@@ -167,6 +167,6 @@ pub fn unlink(path: &str) -> bool {
     false
 }
 
-pub fn stat_size_and_kind(path: &str) -> Option<(usize, bool)> {
-    tmpfs::resolve(path).map(|i| (i.size(), i.is_dir()))
+pub fn stat_size_and_kind(path: &str) -> Option<(usize, bool, u64)> {
+    tmpfs::resolve(path).map(|i| (i.size(), i.is_dir(), Arc::as_ptr(&i) as *const () as u64))
 }
