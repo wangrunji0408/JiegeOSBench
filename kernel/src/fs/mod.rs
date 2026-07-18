@@ -1,6 +1,5 @@
-//! Minimal file abstraction. Concrete filesystem-backed files arrive in a
-//! later milestone; for now this exists so the task module's fd table has
-//! somewhere to put stdin/stdout/stderr.
+//! File abstraction shared by stdio, tmpfs-backed regular files, and (in
+//! later milestones) pipes and sockets.
 
 use alloc::sync::Arc;
 
@@ -19,10 +18,42 @@ pub trait File: Send + Sync {
         let _ = buf;
         0
     }
+    fn read_at(&self, offset: usize, buf: &mut [u8]) -> usize {
+        let _ = (offset, buf);
+        0
+    }
+    fn write_at(&self, offset: usize, buf: &[u8]) -> usize {
+        let _ = (offset, buf);
+        0
+    }
+    fn size(&self) -> usize {
+        0
+    }
+    fn is_dir(&self) -> bool {
+        false
+    }
+    fn seek_to(&self, pos: usize) {
+        let _ = pos;
+    }
+    fn tell(&self) -> usize {
+        0
+    }
+    fn truncate(&self, len: usize) {
+        let _ = len;
+    }
 }
 
+mod regular;
 mod stdio;
+mod tar;
+pub mod tmpfs;
+
+pub use regular::{mkdir, open_file, stat_size_and_kind, unlink, O_APPEND, O_CREAT, O_DIRECTORY, O_EXCL, O_TRUNC};
 pub use stdio::{Stdin, Stdout};
+
+pub fn init() {
+    tmpfs::init();
+}
 
 pub fn stdio_fd_table() -> alloc::vec::Vec<Option<Arc<dyn File>>> {
     alloc::vec![
