@@ -126,6 +126,22 @@ fn trap_handler() -> ! {
                 cx.x[12],
                 cx.x[2],
             );
+            if sepc == 0 {
+                let token = crate::task::current_user_token();
+                for base in [cx.x[10], cx.x[11]] {
+                    if base == 0 {
+                        continue;
+                    }
+                    let bytes = crate::mm::translated_byte_buffer(token, base as *const u8, 64);
+                    crate::print!("[kernel] dump {:#x}:", base);
+                    for chunk in bytes {
+                        for b in chunk.iter() {
+                            crate::print!(" {:02x}", b);
+                        }
+                    }
+                    crate::println!();
+                }
+            }
             crate::task::exit_current_and_run_next(-1);
         }
         Trap::Exception(Exception::IllegalInstruction) => {
