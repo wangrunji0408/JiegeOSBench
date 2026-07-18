@@ -159,7 +159,15 @@ impl MemorySet {
             memory_set.push(new_area, None);
             let mut vpn = area.vpn_start;
             while vpn.0 < area.vpn_end.0 {
-                let src_ppn = other.page_table.translate(vpn).unwrap().ppn();
+                let Some(src_pte) = other.page_table.translate(vpn).filter(|p| p.is_valid()) else {
+                    crate::println!(
+                        "[fork-bug] area [{:#x},{:#x}) claims vpn={:#x} but parent PTE is invalid!",
+                        area.vpn_start.0, area.vpn_end.0, vpn.0
+                    );
+                    vpn.0 += 1;
+                    continue;
+                };
+                let src_ppn = src_pte.ppn();
                 let dst_ppn = memory_set.page_table.translate(vpn).unwrap().ppn();
                 dst_ppn.as_bytes().copy_from_slice(src_ppn.as_bytes());
                 vpn.0 += 1;
