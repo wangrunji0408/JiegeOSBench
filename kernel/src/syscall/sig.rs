@@ -131,7 +131,7 @@ pub fn sys_rt_sigsuspend(mask_ptr: *const u8) -> isize {
 }
 
 fn raise_on(pid: usize, sig: usize) -> bool {
-    let Some(target) = super::process::find_task_by_pid(pid) else {
+    let Some(target) = crate::task::find_task_by_pid(pid) else {
         return false;
     };
     if sig == 0 {
