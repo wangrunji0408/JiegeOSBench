@@ -156,6 +156,3 @@ pub fn sys_kill(pid: isize, sig: i32) -> isize {
 pub fn sys_tgkill(_tgid: isize, pid: isize, sig: i32) -> isize {
     sys_kill(pid, sig)
 }
-
-#[allow(dead_code)]
-fn _unused(_: SignalState) {}
