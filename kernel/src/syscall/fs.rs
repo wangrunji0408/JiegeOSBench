@@ -202,9 +202,9 @@ struct Stat {
 const S_IFREG: u32 = 0o100000;
 const S_IFDIR: u32 = 0o040000;
 
-fn make_stat(size: usize, is_dir: bool) -> Stat {
+fn make_stat(size: usize, is_dir: bool, ino: u64) -> Stat {
     Stat {
-        st_ino: 1,
+        st_ino: if ino != 0 { ino } else { 1 },
         st_mode: (if is_dir { S_IFDIR | 0o755 } else { S_IFREG | 0o644 }),
         st_nlink: 1,
         st_size: size as i64,
