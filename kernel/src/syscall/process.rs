@@ -26,15 +26,6 @@ pub fn sys_nanosleep(_req: *const u8) -> isize {
     0
 }
 
-pub fn sys_kill(pid: isize, _sig: i32) -> isize {
-    // Real signal delivery is a later milestone; a bare `kill` returning
-    // success (without actually delivering anything) is enough for the
-    // handful of callers in this workload that just check the return
-    // value (e.g. probing whether a pid is alive).
-    let _ = pid;
-    0
-}
-
 pub fn sys_clone(flags: usize, _child_stack: usize, _ptid: usize, _tls: usize, _ctid: usize) -> isize {
     const CSIGNAL_MASK: usize = 0xff;
     if flags & !CSIGNAL_MASK != 0 {
