@@ -4,8 +4,6 @@ use crate::task::{
     add_task, current_task, current_user_token, exit_current_and_run_next, suspend_current_and_run_next,
     TaskStatus,
 };
-use alloc::string::String;
-use alloc::sync::Arc;
 
 pub fn sys_exit(exit_code: i32) -> isize {
     exit_current_and_run_next(exit_code);
