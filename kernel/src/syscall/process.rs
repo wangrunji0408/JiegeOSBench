@@ -45,6 +45,7 @@ pub fn sys_clone(flags: usize, _child_stack: usize, _ptid: usize, _tls: usize, _
     let new_task = current.fork();
     let new_pid = new_task.pid();
     new_task.inner_lock().trap_cx().x[10] = 0;
+    crate::task::register_task(&new_task);
     add_task(new_task);
     new_pid as isize
 }
