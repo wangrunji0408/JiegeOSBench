@@ -127,7 +127,6 @@ pub fn sys_listen(fd: usize, _backlog: usize) -> isize {
 }
 
 pub fn sys_accept4(fd: usize, addr: *mut u8, len_ptr: *mut u8, _flags: usize) -> isize {
-    crate::println!("[dbg] accept4(fd={}) called by pid {}", fd, crate::task::current_pid());
     let task = current_task().unwrap();
     let file = match task.inner_lock().get_fd(fd) {
         Some(f) => f,
