@@ -8,6 +8,7 @@ mod misc;
 mod net;
 mod poll;
 mod process;
+mod sig;
 
 const SYSCALL_GETCWD: usize = 17;
 const SYSCALL_EVENTFD2: usize = 19;
