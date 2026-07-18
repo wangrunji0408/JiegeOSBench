@@ -41,6 +41,10 @@ pub fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: isize, o
     }
     let perm = prot_to_perm(prot);
     let fixed = if flags & MAP_FIXED != 0 { Some(addr) } else { None };
+    crate::println!(
+        "[debug] mmap(addr={:#x}, len={:#x}, prot={:#x}, flags={:#x}, fd={}, off={:#x})",
+        addr, len, prot, flags, fd, offset
+    );
 
     let file = if flags & MAP_ANONYMOUS == 0 && fd >= 0 {
         let task = current_task().unwrap();
