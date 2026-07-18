@@ -26,6 +26,25 @@ pub extern "C" fn rust_main() -> ! {
     clear_bss();
     println!("[kernel] hello from riscv64 kernel!");
     println!("[kernel] boot stack size = {} KiB", BOOT_STACK_SIZE / 1024);
+    trap::init();
+    println!("[kernel] trap vector installed, testing ebreak...");
+    unsafe {
+        core::arch::asm!("ebreak");
+    }
+    println!("[kernel] survived ebreak, waiting for a few timer interrupts...");
+    let start = riscv::register::time::read64();
+    let mut ticks_seen = 0u32;
+    let mut last = start;
+    while ticks_seen < 3 {
+        let now = riscv::register::time::read64();
+        if now - last > 900_000 {
+            ticks_seen += 1;
+            last = now;
+            println!("[kernel] ~timer tick {}", ticks_seen);
+        }
+        core::hint::spin_loop();
+    }
+    println!("[kernel] M1 trap handling verified. shutting down.");
     sbi::shutdown(false);
 }
 
