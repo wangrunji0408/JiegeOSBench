@@ -86,3 +86,34 @@ pub fn stdio_fd_table() -> alloc::vec::Vec<Option<Arc<dyn File>>> {
         Some(Arc::new(Stdout) as Arc<dyn File>),
     ]
 }
+
+/// EAGAIN.
+pub const EAGAIN: isize = -11;
+
+/// Wait until `file` is ready to be read (or return `EAGAIN` immediately
+/// for a non-blocking fd). Yields to the scheduler between checks, so
+/// other tasks (importantly, whatever might make the fd ready) keep
+/// running.
+pub fn wait_readable(file: &Arc<dyn File>) -> Result<(), isize> {
+    loop {
+        if file.poll_readable() {
+            return Ok(());
+        }
+        if file.is_nonblocking() {
+            return Err(EAGAIN);
+        }
+        crate::task::suspend_current_and_run_next();
+    }
+}
+
+pub fn wait_writable(file: &Arc<dyn File>) -> Result<(), isize> {
+    loop {
+        if file.poll_writable() {
+            return Ok(());
+        }
+        if file.is_nonblocking() {
+            return Err(EAGAIN);
+        }
+        crate::task::suspend_current_and_run_next();
+    }
+}
