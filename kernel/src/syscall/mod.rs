@@ -96,9 +96,6 @@ const SYSCALL_IO_SETUP: usize = 0;
 const SYSCALL_IO_DESTROY: usize = 1;
 
 pub fn syscall(id: usize, args: [usize; 6]) -> isize {
-    if crate::task::current_pid() != 0 {
-        crate::println!("[sc] pid={} id={} args=({:#x},{:#x},{:#x})", crate::task::current_pid(), id, args[0], args[1], args[2]);
-    }
     match id {
         SYSCALL_WRITE => fs::sys_write(args[0], args[1] as *const u8, args[2]),
         SYSCALL_READ => fs::sys_read(args[0], args[1] as *mut u8, args[2]),
