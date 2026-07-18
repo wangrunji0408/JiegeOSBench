@@ -2,6 +2,7 @@
 
 use super::address::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum};
 use super::frame_allocator::{frame_alloc, FrameTracker};
+use alloc::string::String;
 use alloc::vec::Vec;
 use bitflags::bitflags;
 
