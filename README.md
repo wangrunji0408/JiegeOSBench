@@ -18,6 +18,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38min | ~155K | ~$53 |
 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36min¹ | ~258K | ~$14 |
 | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
+| [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2h 19min | ~270K | — |
 | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2h 42min | ~392K | ~$148 |
@@ -79,6 +80,25 @@ Claude Code ran for **~65 minutes**.
 | 00:41 | nginx config test passes |
 | 00:43 | nginx bind + listen succeeds |
 | 00:45 | nginx official binary returns HTTP 200 🎉 |
+
+### Kimi K3 — 2h 19min
+
+![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
+
+Claude Code ran for **~2h 19min** with no human intervention. Total token consumption ~75.8M (with prompt caching). Peak context 270K.
+
+| Time | Milestone |
+|------|-----------|
+| 00:03 | Project skeleton + nginx 1.26.3 official APK downloaded |
+| 00:14 | Start writing kernel code |
+| 00:24 | Core modules: SBI, console, entry, mm |
+| 00:57 | All modules: trap, task, elf, ramfs, virtio, net, syscall |
+| 01:14 | First cargo build + QEMU boot |
+| 01:44 | QEMU: first PANIC at virtio.rs |
+| 01:48 | nginx returns HTTP 200 OK 🎉 |
+| 01:49–02:07 | Multiple PANIC fixes (virtio, task scheduler — 7 bugs total) |
+| 02:15 | nginx stable again |
+| 02:19 | Final validation: SHA256 + 100 concurrent requests all 200 ✅ |
 
 ### Opus 4.6 — 2h 46min
 

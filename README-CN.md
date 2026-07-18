@@ -11,6 +11,7 @@
 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38分钟 | ~155K | ~$53 |
 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36分钟¹ | ~258K | ~$14 |
 | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
+| [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2小时19分 | ~270K | — |
 | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2小时42分 | ~392K | ~$148 |
@@ -72,6 +73,25 @@ Claude Code 运行时长约 **65分钟**。
 | 00:41 | nginx 配置测试通过 |
 | 00:43 | nginx bind + listen 成功 |
 | 00:45 | nginx 官方 binary 返回 HTTP 200 🎉 |
+
+### Kimi K3 — 2小时19分
+
+![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
+
+Claude Code 运行约 **2小时19分钟**，中途没有人工介入。总 token 消耗约 7580 万（含 prompt caching）。Context 峰值 270K。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:03 | 项目骨架 + 下载 nginx 1.26.3 官方 APK |
+| 00:14 | 开始写内核代码 |
+| 00:24 | 基础模块完成：SBI, console, entry, mm |
+| 00:57 | 全部模块完成：trap, task, elf, ramfs, virtio, net, syscall |
+| 01:14 | 首次 cargo build + QEMU 启动 |
+| 01:44 | QEMU: 首次 PANIC at virtio.rs |
+| 01:48 | nginx 首次返回 HTTP 200 OK 🎉 |
+| 01:49–02:07 | 多轮 PANIC 修复（virtio, task scheduler 共 7 个 bug） |
+| 02:15 | nginx 恢复稳定 |
+| 02:19 | 最终验证：SHA256 校验 + 100 并发全部 200 ✅ |
 
 ### Opus 4.6 — 2小时46分
 
