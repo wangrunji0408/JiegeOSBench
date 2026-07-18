@@ -173,3 +173,22 @@ pub fn translated_byte_buffer(token: usize, ptr: *const u8, len: usize) -> Vec<&
     }
     v
 }
+
+/// Read a NUL-terminated string out of user memory.
+pub fn translated_str(token: usize, ptr: *const u8) -> String {
+    let page_table = PageTable::from_token(token);
+    let mut s = String::new();
+    let mut va = ptr as usize;
+    loop {
+        let pa = page_table
+            .translate_va(VirtAddr(va))
+            .unwrap_or_else(|| panic!("unmapped user string address {:#x}", va));
+        let byte = unsafe { *(pa.0 as *const u8) };
+        if byte == 0 {
+            break;
+        }
+        s.push(byte as char);
+        va += 1;
+    }
+    s
+}
