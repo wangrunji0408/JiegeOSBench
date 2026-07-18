@@ -4,7 +4,6 @@ mod pid;
 mod processor;
 mod task;
 
-use crate::trap::TrapContext;
 use alloc::sync::Arc;
 use context::TaskContext;
 use core::arch::global_asm;
