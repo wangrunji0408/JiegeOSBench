@@ -64,6 +64,8 @@ pub fn sys_epoll_ctl(epfd: usize, op: usize, fd: usize, event_ptr: *const u8) ->
                 events,
                 data,
                 file: target,
+                reported_readable: false,
+                reported_writable: false,
             });
             0
         }
@@ -73,6 +75,8 @@ pub fn sys_epoll_ctl(epfd: usize, op: usize, fd: usize, event_ptr: *const u8) ->
             if let Some(e) = entries.iter_mut().find(|e| e.fd == fd as i32) {
                 e.events = events;
                 e.data = data;
+                e.reported_readable = false;
+                e.reported_writable = false;
             }
             0
         }
