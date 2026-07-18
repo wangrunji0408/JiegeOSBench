@@ -35,10 +35,6 @@ pub fn sys_setgroups(_size: usize, _list: usize) -> isize {
     0
 }
 
-pub fn sys_rt_sig_stub() -> isize {
-    0
-}
-
 pub fn sys_setitimer() -> isize {
     0
 }
