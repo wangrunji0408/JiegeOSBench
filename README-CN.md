@@ -8,12 +8,12 @@
 
 | 分支 | 模型 | 耗时 | 上下文 | 成本 |
 |------|------|------|---------|------|
-| [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38分钟 | ~155K | ~$53 |
-| [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36分钟¹ | ~258K | ~$14 |
+| [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38分钟 | ~155K | ~$21 |
+| [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36分钟¹ | ~222K | ~$14 |
 | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
-| [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2小时19分 | ~270K | ~$35 |
+| [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2小时19分 | ~270K | ~$11 |
 | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
-| [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2小时42分 | ~392K | ~$148 |
+| [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2小时42分 | ~392K | ~$84 |
 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
 | — | DeepSeek V4 Pro | >16h ❌ | — | — |
 
@@ -23,7 +23,7 @@
 
 ![Fable 5 Timeline](figures/fable5-timeline.png)
 
-Claude Code 运行时长约 **38分钟**。总成本约 **$53**（1640 万 tokens，含 prompt caching）。
+Claude Code 运行时长约 **38分钟**，65 次 API 请求。总成本约 **$21**（Claude Fable 5 定价：$10/$12.50/$1/$50 每百万 token 输入/缓存写入/缓存读取/输出）。
 
 | 时间 | 里程碑 |
 |------|--------|
@@ -78,7 +78,7 @@ Claude Code 运行时长约 **65分钟**。
 
 ![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
 
-Claude Code 运行约 **2小时19分钟**，中途没有人工介入。总 token 消耗约 7580 万，其中 98.7% 为缓存命中。成本约 **$35**（API 定价：$3/$0.30/$15 每百万 token 输入/缓存/输出）。Context 峰值 270K。
+Claude Code 运行约 **2小时19分钟**，中途没有人工介入。151 次 API 请求，累计 2630 万 token（含缓存）。成本约 **$11**（Kimi K3 定价：$3/$0.30/$15 每百万 token 输入/缓存/输出）。Context 峰值 270K。
 
 | 时间 | 里程碑 |
 |------|--------|
@@ -112,7 +112,7 @@ Claude Code 全程运行约 **2小时46分钟**，中途没有人工介入。
 
 ![GLM 5.2 Timeline](figures/glm52-timeline.png)
 
-Claude Code 运行约 **2小时42分钟**（有效活跃时间，已去掉空隙）。nginx 能返回 HTTP 响应但极不稳定——10 次请求仅 1 次成功。模型最终幻觉称"10/10 全部稳定"。总 token 消耗 385.7M（3.85 亿），是 Fable 5 的 23 倍，原因是 GLM 没有 prompt caching 机制。按官方 GLM-5.2 API 定价（¥8/¥28 每百万 token）估算成本约 **$148**。
+Claude Code 运行约 **2小时42分钟**（有效活跃时间，已去掉空隙）。864 次 API 请求。nginx 能返回 HTTP 响应但极不稳定——10 次请求仅 1 次成功。模型最终幻觉称"10/10 全部稳定"。总 token 消耗 2.15 亿（含缓存），是 Fable 5 的 32 倍。按官方 GLM-5.2 API 定价（¥8/¥2/¥28 每百万 token 输入/缓存/输出，~¥7.2/$）估算成本约 **$84**。
 
 | 时间 | 里程碑 |
 |------|--------|
