@@ -78,6 +78,22 @@ impl TaskControlBlockInner {
     fn status(&self) -> TaskStatus {
         self.task_status
     }
+
+    /// Find a free slot in the fd table (extending it if necessary) and
+    /// install `file` there.
+    pub fn alloc_fd(&mut self, file: Arc<dyn File>) -> usize {
+        if let Some(fd) = self.fd_table.iter().position(|f| f.is_none()) {
+            self.fd_table[fd] = Some(file);
+            fd
+        } else {
+            self.fd_table.push(Some(file));
+            self.fd_table.len() - 1
+        }
+    }
+
+    pub fn get_fd(&self, fd: usize) -> Option<Arc<dyn File>> {
+        self.fd_table.get(fd).and_then(|f| f.clone())
+    }
 }
 
 impl TaskControlBlock {
