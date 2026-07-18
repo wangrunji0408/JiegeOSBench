@@ -459,37 +459,3 @@ fn write_user_bytes(page_table: &PageTable, va: usize, data: &[u8]) {
         cur_va += n;
     }
 }
-
-fn read_user_u64(page_table: &PageTable, va: usize) -> u64 {
-    let pa = page_table.translate_va(VirtAddr(va)).unwrap();
-    unsafe { *(pa.0 as *const u64) }
-}
-
-fn debug_dump_stack(page_table: &PageTable, sp: usize, argc: usize) {
-    let real_argc = read_user_u64(page_table, sp);
-    crate::println!("[debug] stack dump: sp={:#x} argc(read)={} argc(expected)={}", sp, real_argc, argc);
-    for i in 0..argc + 1 {
-        let ptr = read_user_u64(page_table, sp + 8 + i * 8);
-        crate::println!("[debug]   argv[{}] = {:#x}", i, ptr);
-    }
-    let mut off = sp + 8 + (argc + 1) * 8;
-    let mut i = 0;
-    loop {
-        let ptr = read_user_u64(page_table, off);
-        crate::println!("[debug]   envp[{}] = {:#x}", i, ptr);
-        off += 8;
-        i += 1;
-        if ptr == 0 || i > 5 {
-            break;
-        }
-    }
-    for _ in 0..16 {
-        let t = read_user_u64(page_table, off);
-        let v = read_user_u64(page_table, off + 8);
-        crate::println!("[debug]   auxv type={} val={:#x}", t, v);
-        off += 16;
-        if t == 0 {
-            break;
-        }
-    }
-}
