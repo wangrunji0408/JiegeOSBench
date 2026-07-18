@@ -34,10 +34,11 @@ pub extern "C" fn rust_main() -> ! {
     println!("[kernel] hello from riscv64 kernel!");
     trap::init();
     mm::init();
-    println!("[kernel] paging enabled, kernel heap + frame allocator online");
+    fs::init();
+    println!("[kernel] paging enabled, kernel heap + frame allocator + rootfs online");
 
     println!("[kernel] loading initproc (user_progs/hello.elf)...");
-    task::add_initproc(include_bytes!("user_progs/hello.elf"));
+    task::add_initproc(include_bytes!("user_progs/hello.elf"), &[], &[]);
     task::run_tasks();
 }
 
