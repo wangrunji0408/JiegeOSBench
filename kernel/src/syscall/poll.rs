@@ -143,5 +143,6 @@ pub fn sys_eventfd2(initval: usize, flags: usize) -> isize {
     const EFD_SEMAPHORE: usize = 1;
     let file = Arc::new(EventFd::new(initval as u64, flags & EFD_SEMAPHORE != 0));
     let task = current_task().unwrap();
-    task.inner_lock().alloc_fd(file) as isize
+    let fd = task.inner_lock().alloc_fd(file);
+    fd as isize
 }
