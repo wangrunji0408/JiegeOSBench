@@ -151,7 +151,7 @@ pub fn syscall(id: usize, args: [usize; 6]) -> isize {
         SYSCALL_GETRLIMIT | SYSCALL_SETRLIMIT => 0,
         SYSCALL_GETRANDOM => misc::sys_getrandom(args[0] as *mut u8, args[1], args[2]),
         SYSCALL_SETITIMER => misc::sys_setitimer(),
-        SYSCALL_IOCTL => misc::sys_ioctl(),
+        SYSCALL_IOCTL => misc::sys_ioctl(args[0], args[1], args[2]),
         SYSCALL_FCNTL => misc::sys_fcntl(args[0], args[1], args[2]),
         SYSCALL_RT_SIGACTION | SYSCALL_RT_SIGPROCMASK | SYSCALL_RT_SIGRETURN | SYSCALL_RT_SIGSUSPEND => {
             misc::sys_rt_sig_stub()
