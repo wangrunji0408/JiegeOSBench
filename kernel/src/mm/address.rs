@@ -97,6 +97,15 @@ impl VirtAddr {
     pub fn is_aligned(&self) -> bool {
         self.page_offset() == 0
     }
+    /// Like `page_offset`, but an address exactly on a page boundary maps
+    /// to `PAGE_SIZE` rather than 0 -- useful as the exclusive end index
+    /// into a page-sized byte slice.
+    pub fn page_offset_or_full(&self) -> usize {
+        match self.page_offset() {
+            0 => PAGE_SIZE,
+            off => off,
+        }
+    }
 }
 
 impl From<PhysAddr> for PhysPageNum {
