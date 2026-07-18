@@ -43,7 +43,26 @@ pub fn sys_setitimer() -> isize {
     0
 }
 
-pub fn sys_ioctl() -> isize {
+const FIONBIO: usize = 0x5421;
+
+pub fn sys_ioctl(fd: usize, request: usize, arg: usize) -> isize {
+    if request == FIONBIO {
+        if let Some(task) = current_task() {
+            if let Some(file) = task.inner_lock().get_fd(fd) {
+                let token = current_user_token();
+                let mut buf = [0u8; 4];
+                let mut chunks = translated_byte_buffer(token, arg as *const u8, 4);
+                let mut off = 0;
+                for c in chunks.iter_mut() {
+                    let n = c.len();
+                    buf[off..off + n].copy_from_slice(c);
+                    off += n;
+                }
+                let val = i32::from_ne_bytes(buf);
+                file.set_nonblocking(val != 0);
+            }
+        }
+    }
     0
 }
 
