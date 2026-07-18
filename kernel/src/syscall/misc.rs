@@ -48,7 +48,8 @@ const FIONBIO: usize = 0x5421;
 pub fn sys_ioctl(fd: usize, request: usize, arg: usize) -> isize {
     if request == FIONBIO {
         if let Some(task) = current_task() {
-            if let Some(file) = task.inner_lock().get_fd(fd) {
+            let file = task.inner_lock().get_fd(fd);
+            if let Some(file) = file {
                 let token = current_user_token();
                 let mut buf = [0u8; 4];
                 let mut chunks = translated_byte_buffer(token, arg as *const u8, 4);
