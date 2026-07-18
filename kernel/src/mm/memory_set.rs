@@ -135,6 +135,28 @@ impl MemorySet {
         }
     }
 
+    /// Deep-copy an existing (user) address space: every mapped page gets
+    /// a fresh physical frame with identical content. Used by `fork`. No
+    /// copy-on-write optimization -- acceptable for this workload's modest
+    /// process count and memory footprint.
+    pub fn from_existing(other: &MemorySet) -> Self {
+        let mut memory_set = Self::new_bare();
+        memory_set.map_trampoline();
+        for area in other.areas.iter() {
+            let new_area = MapArea::new(area.vpn_start.into(), area.vpn_end.into(), area.map_type, area.perm);
+            memory_set.push(new_area, None);
+            let mut vpn = area.vpn_start;
+            while vpn.0 < area.vpn_end.0 {
+                let src_ppn = other.page_table.translate(vpn).unwrap().ppn();
+                let dst_ppn = memory_set.page_table.translate(vpn).unwrap().ppn();
+                dst_ppn.as_bytes().copy_from_slice(src_ppn.as_bytes());
+                vpn.0 += 1;
+            }
+        }
+        memory_set.mmap_top = other.mmap_top;
+        memory_set
+    }
+
     pub fn token(&self) -> usize {
         self.page_table.token()
     }
