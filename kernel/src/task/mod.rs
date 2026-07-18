@@ -29,7 +29,7 @@ static INITPROC: Once<Arc<TaskControlBlock>> = Once::new();
 /// handful of processes, so the unbounded-until-then growth doesn't matter.
 static PID_TABLE: Mutex<BTreeMap<usize, Weak<TaskControlBlock>>> = Mutex::new(BTreeMap::new());
 
-fn register_task(task: &Arc<TaskControlBlock>) {
+pub fn register_task(task: &Arc<TaskControlBlock>) {
     PID_TABLE.lock().insert(task.pid(), Arc::downgrade(task));
 }
 
