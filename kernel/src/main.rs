@@ -29,26 +29,36 @@ const BOOT_STACK_SIZE: usize = 64 * 1024;
 pub extern "C" fn rust_main() -> ! {
     clear_bss();
     println!("[kernel] hello from riscv64 kernel!");
-    println!("[kernel] boot stack size = {} KiB", BOOT_STACK_SIZE / 1024);
     trap::init();
-    println!("[kernel] trap vector installed, testing ebreak...");
-    unsafe {
-        core::arch::asm!("ebreak");
+    mm::init();
+    println!("[kernel] paging enabled, kernel heap + frame allocator online");
+
+    // Exercise the heap allocator (Vec/BTreeMap) to prove `alloc` works.
+    use alloc::collections::BTreeMap;
+    use alloc::vec::Vec;
+    let mut v: Vec<i32> = Vec::new();
+    for i in 0..2000 {
+        v.push(i);
     }
-    println!("[kernel] survived ebreak, waiting for a few timer interrupts...");
-    let start = riscv::register::time::read64();
-    let mut ticks_seen = 0u32;
-    let mut last = start;
-    while ticks_seen < 3 {
-        let now = riscv::register::time::read64();
-        if now - last > 900_000 {
-            ticks_seen += 1;
-            last = now;
-            println!("[kernel] ~timer tick {}", ticks_seen);
-        }
-        core::hint::spin_loop();
+    assert_eq!(v.iter().sum::<i32>(), (0..2000).sum());
+    let mut m = BTreeMap::new();
+    for i in 0..100 {
+        m.insert(i, i * i);
     }
-    println!("[kernel] M1 trap handling verified. shutting down.");
+    assert_eq!(m[&50], 2500);
+    println!("[kernel] heap allocator sanity check passed (Vec + BTreeMap)");
+
+    // Exercise the frame allocator directly.
+    let f1 = mm::frame_allocator::frame_alloc().unwrap();
+    let f2 = mm::frame_allocator::frame_alloc().unwrap();
+    println!(
+        "[kernel] allocated frames ppn={:#x} ppn={:#x}",
+        f1.ppn.0, f2.ppn.0
+    );
+    drop(f1);
+    drop(f2);
+
+    println!("[kernel] M2 memory management verified. shutting down.");
     sbi::shutdown(false);
 }
 
