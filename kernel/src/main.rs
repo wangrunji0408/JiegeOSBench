@@ -9,8 +9,11 @@ use core::panic::PanicInfo;
 
 mod config;
 mod console;
+mod fs;
 mod mm;
 mod sbi;
+mod syscall;
+mod task;
 mod trap;
 mod lang_items {
     use super::*;
