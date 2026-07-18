@@ -50,12 +50,7 @@ impl File for PipeEnd {
         buf.len()
     }
     fn poll_readable(&self) -> bool {
-        // Either there is buffered data, or the peer is gone (Arc
-        // strong_count == 1 means we hold the only reference to the
-        // read-side buffer, i.e. the writer end has been dropped) --
-        // both cases should let a `read` return immediately (data, or
-        // EOF as a zero-length read).
-        !self.read_buf.lock().is_empty() || Arc::strong_count(&self.read_buf) == 1
+        !self.read_buf.lock().is_empty()
     }
     fn poll_writable(&self) -> bool {
         true
