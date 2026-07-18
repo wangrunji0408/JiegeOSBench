@@ -113,12 +113,18 @@ fn trap_handler() -> ! {
         | Trap::Exception(Exception::LoadPageFault)
         | Trap::Exception(Exception::InstructionFault)
         | Trap::Exception(Exception::InstructionPageFault) => {
+            let cx = crate::task::current_trap_cx();
             crate::println!(
-                "[kernel] pid={} memory fault {:?} at sepc={:#x}, stval(bad addr)={:#x}, killing task",
+                "[kernel] pid={} memory fault {:?} at sepc={:#x}, stval(bad addr)={:#x}, ra={:#x} a0={:#x} a1={:#x} a2={:#x} sp={:#x}, killing task",
                 crate::task::current_pid(),
                 cause.cause(),
-                crate::task::current_trap_cx().sepc,
+                cx.sepc,
                 stval_val,
+                cx.x[1],
+                cx.x[10],
+                cx.x[11],
+                cx.x[12],
+                cx.x[2],
             );
             crate::task::exit_current_and_run_next(-1);
         }
