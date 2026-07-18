@@ -120,6 +120,10 @@ impl MapArea {
 pub struct MemorySet {
     pub page_table: PageTable,
     pub areas: Vec<MapArea>,
+    /// Bump allocator for anonymous/file-backed `mmap` regions with no
+    /// caller-specified address; never reclaimed on `munmap`, which is a
+    /// fine trade for this workload's modest mmap traffic.
+    pub mmap_top: usize,
 }
 
 impl MemorySet {
@@ -127,6 +131,7 @@ impl MemorySet {
         Self {
             page_table: PageTable::new(),
             areas: Vec::new(),
+            mmap_top: crate::config::MMAP_BASE,
         }
     }
 
