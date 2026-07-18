@@ -4,8 +4,9 @@
 use core::arch::global_asm;
 use core::panic::PanicInfo;
 
-mod sbi;
 mod console;
+mod sbi;
+mod trap;
 mod lang_items {
     use super::*;
 
