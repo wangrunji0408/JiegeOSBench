@@ -137,6 +137,7 @@ impl File for TcpFile {
             super::with_net(|state| state.sockets.get_mut::<tcp::Socket>(h).send_slice(buf).unwrap_or(0))
                 .unwrap_or(0);
         super::poll();
+        crate::println!("[dbg] TcpFile::write len={} sent={}", buf.len(), n);
         n
     }
     fn poll_readable(&self) -> bool {
