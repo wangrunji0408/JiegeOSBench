@@ -88,7 +88,13 @@ pub fn poll() {
     let Some(net) = NET.get() else { return };
     let mut state = net.lock();
     let ts = now();
-    state.iface.poll(ts, &mut state.device, &mut state.sockets);
+    let NetState {
+        iface,
+        device,
+        sockets,
+        ..
+    } = &mut *state;
+    iface.poll(ts, device, sockets);
     listener::service_listeners(&mut state);
 }
 
