@@ -220,6 +220,16 @@ impl TaskControlBlock {
         inner.base_size = user_sp;
         inner.heap_bottom = heap_bottom;
         inner.program_brk = heap_bottom;
+        // Per POSIX, a successful exec resets every handled signal back to
+        // SIG_DFL (a handler address is meaningless in the new image);
+        // SIG_IGN and the blocked mask are process attributes and survive.
+        for action in inner.signals.actions.iter_mut() {
+            if action.handler != crate::signal::SIG_IGN {
+                *action = Default::default();
+            }
+        }
+        inner.signals.pending = 0;
+        inner.signals.saved_cx = None;
         *inner.trap_cx() = TrapContext::app_init_context(
             entry_point,
             user_sp,
