@@ -44,7 +44,8 @@ pub fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: isize, o
 
     let file = if flags & MAP_ANONYMOUS == 0 && fd >= 0 {
         let task = current_task().unwrap();
-        task.inner_lock().get_fd(fd as usize)
+        let f = task.inner_lock().get_fd(fd as usize);
+        f
     } else {
         None
     };
