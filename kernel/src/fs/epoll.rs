@@ -6,6 +6,7 @@ use spin::Mutex;
 pub struct EpollEntry {
     pub fd: i32,
     pub events: u32,
+    pub data: u64,
     pub file: Arc<dyn File>,
 }
 
