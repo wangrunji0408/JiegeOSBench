@@ -58,6 +58,12 @@ pub trait File: Send + Sync {
     fn poll_writable(&self) -> bool {
         true
     }
+    fn is_nonblocking(&self) -> bool {
+        false
+    }
+    fn set_nonblocking(&self, v: bool) {
+        let _ = v;
+    }
     fn as_any(&self) -> &dyn core::any::Any;
 }
 
