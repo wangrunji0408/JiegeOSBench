@@ -1,10 +1,14 @@
 #![no_std]
 #![no_main]
 
+extern crate alloc;
+
 use core::arch::global_asm;
 use core::panic::PanicInfo;
 
+mod config;
 mod console;
+mod mm;
 mod sbi;
 mod trap;
 mod lang_items {
