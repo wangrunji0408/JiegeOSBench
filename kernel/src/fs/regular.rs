@@ -99,6 +99,9 @@ impl File for RegularFile {
             data.lock().resize(len, 0);
         }
     }
+    fn ino(&self) -> u64 {
+        Arc::as_ptr(&self.inode) as *const () as u64
+    }
 }
 
 pub const O_WRONLY: u32 = 0o1;
