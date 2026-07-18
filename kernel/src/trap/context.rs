@@ -1,8 +1,6 @@
 //! Per-task trap context, saved/restored across the user<->kernel boundary
 //! by the trampoline (`trampoline.S`).
 
-use riscv::register::sstatus;
-
 /// Field offsets (in 8-byte units) must match `trampoline.S` exactly.
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
