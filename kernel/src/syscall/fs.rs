@@ -242,8 +242,8 @@ pub fn sys_newfstatat(dirfd: isize, path: *const u8, buf: *mut u8, _flags: u32) 
     let token = current_user_token();
     let path = resolve_at_path(dirfd, translated_str(token, path));
     match fs::stat_size_and_kind(&path) {
-        Some((size, is_dir)) => {
-            write_stat(token, buf, make_stat(size, is_dir));
+        Some((size, is_dir, ino)) => {
+            write_stat(token, buf, make_stat(size, is_dir, ino));
             0
         }
         None => -2,
