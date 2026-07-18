@@ -154,9 +154,10 @@ pub fn syscall(id: usize, args: [usize; 6]) -> isize {
         SYSCALL_SETITIMER => misc::sys_setitimer(),
         SYSCALL_IOCTL => misc::sys_ioctl(args[0], args[1], args[2]),
         SYSCALL_FCNTL => misc::sys_fcntl(args[0], args[1], args[2]),
-        SYSCALL_RT_SIGACTION | SYSCALL_RT_SIGPROCMASK | SYSCALL_RT_SIGRETURN | SYSCALL_RT_SIGSUSPEND => {
-            misc::sys_rt_sig_stub()
-        }
+        SYSCALL_RT_SIGACTION => sig::sys_rt_sigaction(args[0], args[1] as *const u8, args[2] as *mut u8, args[3]),
+        SYSCALL_RT_SIGPROCMASK => sig::sys_rt_sigprocmask(args[0], args[1] as *const u8, args[2] as *mut u8, args[3]),
+        SYSCALL_RT_SIGRETURN => sig::sys_rt_sigreturn(),
+        SYSCALL_RT_SIGSUSPEND => sig::sys_rt_sigsuspend(args[0] as *const u8),
         SYSCALL_IO_SETUP | SYSCALL_IO_DESTROY => -38, // ENOSYS: nginx disables AIO gracefully on this
 
         SYSCALL_SOCKET => net::sys_socket(args[0], args[1], args[2]),
