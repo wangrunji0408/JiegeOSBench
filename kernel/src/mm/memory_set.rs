@@ -151,32 +151,35 @@ impl MemorySet {
     /// a fresh physical frame with identical content. Used by `fork`. No
     /// copy-on-write optimization -- acceptable for this workload's modest
     /// process count and memory footprint.
+    ///
+    /// Copies each page's *actual current* PTE flags from the parent,
+    /// rather than re-deriving them from the owning `MapArea`'s nominal
+    /// `perm`: `mmap(MAP_FIXED)` and `mprotect` both narrow/widen
+    /// permissions on individual pages via direct PTE edits without
+    /// updating the area's `perm` field (e.g. the dynamic linker
+    /// temporarily marking part of a read-only segment writable to apply
+    /// relocations). Rebuilding from the area's nominal `perm` would
+    /// silently revert those per-page overrides in the child.
     pub fn from_existing(other: &MemorySet) -> Self {
         let mut memory_set = Self::new_bare();
         memory_set.map_trampoline();
-        crate::println!("[fork-dbg] copying {} areas", other.areas.len());
         for area in other.areas.iter() {
-            crate::println!(
-                "[fork-dbg] area vpn=[{:#x},{:#x}) perm={:?}",
-                area.vpn_start.0, area.vpn_end.0, area.perm
-            );
-            let new_area = MapArea::new(area.vpn_start.into(), area.vpn_end.into(), area.map_type, area.perm);
-            memory_set.push(new_area, None);
+            let mut new_area = MapArea::new(area.vpn_start.into(), area.vpn_end.into(), area.map_type, area.perm);
             let mut vpn = area.vpn_start;
             while vpn.0 < area.vpn_end.0 {
-                let Some(src_pte) = other.page_table.translate(vpn).filter(|p| p.is_valid()) else {
-                    crate::println!(
-                        "[fork-bug] area [{:#x},{:#x}) claims vpn={:#x} but parent PTE is invalid!",
-                        area.vpn_start.0, area.vpn_end.0, vpn.0
-                    );
-                    vpn.0 += 1;
-                    continue;
-                };
-                let src_ppn = src_pte.ppn();
-                let dst_ppn = memory_set.page_table.translate(vpn).unwrap().ppn();
-                dst_ppn.as_bytes().copy_from_slice(src_ppn.as_bytes());
+                let src_pte = other
+                    .page_table
+                    .translate(vpn)
+                    .filter(|p| p.is_valid())
+                    .unwrap_or_else(|| panic!("fork: area [{:#x},{:#x}) missing vpn {:#x}", area.vpn_start.0, area.vpn_end.0, vpn.0));
+                let frame = frame_alloc().expect("out of memory during fork");
+                let dst_ppn = frame.ppn;
+                dst_ppn.as_bytes().copy_from_slice(src_pte.ppn().as_bytes());
+                memory_set.page_table.map(vpn, dst_ppn, src_pte.flags());
+                new_area.data_frames.insert(vpn, frame);
                 vpn.0 += 1;
             }
+            memory_set.areas.push(new_area);
         }
         memory_set.mmap_top = other.mmap_top;
         memory_set
