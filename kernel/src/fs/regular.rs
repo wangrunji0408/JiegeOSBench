@@ -102,6 +102,9 @@ impl File for RegularFile {
     fn ino(&self) -> u64 {
         Arc::as_ptr(&self.inode) as *const () as u64
     }
+    fn as_any(&self) -> &dyn core::any::Any {
+        self
+    }
 }
 
 pub const O_WRONLY: u32 = 0o1;
