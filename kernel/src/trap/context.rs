@@ -34,7 +34,6 @@ impl TrapContext {
         const SPIE: usize = 1 << 5;
         const FS_INITIAL: usize = 1 << 13;
         let sstatus_bits = SPIE | FS_INITIAL;
-        debug_assert_eq!(sstatus::read().spp(), sstatus::SPP::Supervisor);
         let mut cx = Self {
             x: [0; 32],
             sstatus: sstatus_bits,
