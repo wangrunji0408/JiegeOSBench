@@ -1,5 +1,5 @@
 use crate::mm::translated_byte_buffer;
-use crate::signal::{SigAction, SignalState};
+use crate::signal::SigAction;
 use crate::task::{current_task, current_user_token, suspend_current_and_run_next};
 
 fn read_u64(token: usize, ptr: *const u8) -> u64 {
