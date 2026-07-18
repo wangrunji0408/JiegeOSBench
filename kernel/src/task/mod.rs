@@ -7,22 +7,22 @@ mod task;
 use alloc::sync::Arc;
 use context::TaskContext;
 use core::arch::global_asm;
-use manager::add_task;
 use spin::Once;
-use task::{TaskControlBlock, TaskStatus};
+use task::TaskControlBlock;
 
 global_asm!(include_str!("switch.S"));
 
+pub use manager::add_task;
 pub use processor::{
     current_task, current_trap_cx, current_user_token, run_tasks, schedule,
     suspend_current_and_run_next, take_current_task,
 };
-pub use task::TaskControlBlockInner;
+pub use task::TaskStatus;
 
 static INITPROC: Once<Arc<TaskControlBlock>> = Once::new();
 
-pub fn add_initproc(elf_data: &[u8]) {
-    let tcb = TaskControlBlock::new_initproc(elf_data);
+pub fn add_initproc(elf_data: &[u8], args: &[alloc::string::String], envs: &[alloc::string::String]) {
+    let tcb = TaskControlBlock::new_initproc(elf_data, args, envs);
     INITPROC.call_once(|| tcb.clone());
     add_task(tcb);
 }
