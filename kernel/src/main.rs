@@ -1,8 +1,6 @@
 #![no_std]
 #![no_main]
 
-extern crate alloc;
-
 use core::arch::global_asm;
 use core::panic::PanicInfo;
 
