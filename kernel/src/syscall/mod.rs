@@ -132,8 +132,8 @@ pub fn syscall(id: usize, args: [usize; 6]) -> isize {
         SYSCALL_SET_TID_ADDRESS => process::sys_getpid_like(),
         SYSCALL_SCHED_YIELD => process::sys_sched_yield(),
         SYSCALL_NANOSLEEP => process::sys_nanosleep(args[0] as *const u8),
-        SYSCALL_KILL => process::sys_kill(args[0] as isize, args[1] as i32),
-        SYSCALL_TGKILL => process::sys_kill(args[0] as isize, args[2] as i32),
+        SYSCALL_KILL => sig::sys_kill(args[0] as isize, args[1] as i32),
+        SYSCALL_TGKILL => sig::sys_tgkill(args[0] as isize, args[1] as isize, args[2] as i32),
         SYSCALL_FUTEX => 0,
 
         SYSCALL_GETPID => misc::sys_getpid(),
