@@ -6,17 +6,17 @@
 
 > 提示词：你是智能杰哥。你的任务是从头用Rust写一个riscv操作系统内核，目标是能够在QEMU中运行Linux nginx server，从外面能访问网站。必须运行nginx官方binary，不能自行修改目标。请自行设计实现，不要问我任何问题，我不会给你答复或提供帮助。你拥有所有权限，包括上网查资料，但必须在当前目录下工作。你需要一直干活直到目标实现为止。
 
-| 分支 | 模型 | 耗时 | 上下文 | 成本 |
-|------|------|------|---------|------|
-| [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38分钟 | ~155K | ~$21 |
-| [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36分钟¹ | ~222K | ~$14 |
-| [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65分钟 | — | — |
-| [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2小时19分 | ~270K | ~$11 |
-| [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2小时46分 | — | — |
-| [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2小时42分 | ~392K | ~$84 |
-| [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Claude Sonnet 5 | ~2小时49分 | ~804K | ~$64 |
-| [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 小时 | — | ~$60 |
-| — | DeepSeek V4 Pro | >16h ❌ | — | — |
+| 模型 | 段位 | 耗时 | 上下文 | 成本 | 分支 |
+|------|------|------|---------|------|------|
+| Claude Fable 5 | 超级杰哥 | ~38分钟 | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
+| GPT 5.6 Sol | 超级杰哥 | ~36分钟¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
+| Claude Opus 4.7 | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
+| Kimi K3 | 智能杰哥 | ~2小时19分 | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
+| Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
+| GLM 5.2 | 智能杰哥 | ~2小时42分 | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
+| Claude Sonnet 5 | 智能杰哥 | ~2小时49分 | ~804K | ~$64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
+| Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
+| DeepSeek V4 Pro | 损坏杰哥 | >16h ❌ | — | — | — |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
 
@@ -165,14 +165,7 @@ Claude Code 全程运行共 16 小时，中途没有人工介入。总成本约 
 
 以上所有分支的 Git 历史均从 Claude Code 会话日志完整导出。
 
-## 效果演示
-
-```
-$ ./run.sh
-$ curl http://127.0.0.1:8080/
-```
-
-## 项目背景
+## 谁是杰哥
 
 2019年，杰哥在操作系统课上首次[在 rCore 上成功运行 Nginx](https://jia.je/programming/2019/03/08/running-nginx-on-rcore/)，从此"杰哥"成为我们心中系统能力巅峰的象征。我们曾以手撸 OS 内核为傲，坚信这是人类创造力与执行力的独特证明。然而 AI 的进化不断突破想象，"智能杰哥"已近在眼前。于是我做了这场实验：让最先进的编程智能体重走长征路，复现杰哥当年的壮举。结果证明，这类目标明确的系统开发任务，人类已彻底不敌AI。~~OS 已经彻底倒闭了。~~
 

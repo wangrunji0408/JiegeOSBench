@@ -13,17 +13,17 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 > the web, but must work in the current directory. Keep working until the goal
 > is achieved.
 
-| Branch | Model | Duration | Context | Cost |
-|--------|-------|----------|---------|------|
-| [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Claude Fable 5 | ~38min | ~155K | ~$21 |
-| [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | GPT 5.6 Sol | ~36min¹ | ~222K | ~$14 |
-| [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Claude Opus 4.7 | ~65min | — | — |
-| [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Kimi K3 | ~2h 19min | ~270K | ~$11 |
-| [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Claude Opus 4.6 | ~2h 46min | — | — |
-| [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | GLM 5.2 | ~2h 42min | ~392K | ~$84 |
-| [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Claude Sonnet 5 | ~2h 49min | ~804K | ~$64 |
-| [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Claude Sonnet 4.6 | ~16 hours | — | ~$60 |
-| — | DeepSeek V4 Pro | >16h ❌ | — | — |
+| Model | Tier | Duration | Context | Cost | Branch |
+|-------|-------|----------|---------|------|--------|
+| Claude Fable 5 | Super Jiege | ~38min | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
+| GPT 5.6 Sol | Super Jiege | ~36min¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
+| Claude Opus 4.7 | Smart Jiege | ~65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
+| Kimi K3 | Smart Jiege | ~2h 19min | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
+| Claude Opus 4.6 | Smart Jiege | ~2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
+| GLM 5.2 | Smart Jiege | ~2h 42min | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
+| Claude Sonnet 5 | Smart Jiege | ~2h 49min | ~804K | ~$64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
+| Claude Sonnet 4.6 | Machine Jiege | ~16 hours | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
+| DeepSeek V4 Pro | Broken Jiege | >16h ❌ | — | — | — |
 
 ¹ First success at 36min; second connection fix completed at 49min.
 
@@ -172,14 +172,7 @@ Ran for over 16 hours but never reached a working state. Got stuck in dependency
 
 The git history for all branches above is a complete record exported from Claude Code session logs.
 
-## Demo
-
-```
-$ ./run.sh
-$ curl http://127.0.0.1:8080/
-```
-
-## Background
+## Who is Jiege
 
 In 2019, Jiege was the first to [successfully run nginx on rCore OS](https://jia.je/programming/2019/03/08/running-nginx-on-rcore/), a Rust OS built from scratch. The achievement became legendary in our community — "Jiege" turned into a symbol of peak systems engineering, the kind of thing humans take pride in being able to do. We wore our ability to hand-craft OS kernels as a badge of honor, convinced it was proof of a uniquely human creativity and drive. Then AI kept raising the bar, and "AI-Jiege" started to feel inevitable. So I ran this experiment: have the most advanced coding agent of our time retrace that legendary journey and reproduce what Jiege once pulled off. The result: for well-defined systems tasks like this, humans simply cannot compete with AI anymore. ~~OS is finished.~~
 
