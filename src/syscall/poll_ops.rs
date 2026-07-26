@@ -375,6 +375,13 @@ impl EpollInstance {
                 continue;
             }
 
+            crate::trace!(
+                "epoll: fd={} reporting {:#x} (watching {:#x})",
+                fd,
+                ready,
+                entry.events
+            );
+
             out.push(EpollEvent {
                 events: ready,
                 _pad: 0,
