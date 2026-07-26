@@ -873,6 +873,11 @@ impl Inode for Socket {
         // and `poll` depend on this being current.
         stack::poll();
         let inner = self.inner.lock();
+        if inner.inert {
+            // Never ready: an inert listener would otherwise wake nginx's event
+            // loop for an `accept` that always returns EAGAIN.
+            return false;
+        }
         match inner.state {
             SockState::Listening => {
                 let pool = inner.pool.clone();
