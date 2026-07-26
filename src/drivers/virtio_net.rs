@@ -4,6 +4,7 @@ use super::virtio::{MmioTransport, VirtQueue, VIRTIO_F_VERSION_1};
 use alloc::boxed::Box;
 use alloc::collections::VecDeque;
 use alloc::vec::Vec;
+use core::sync::atomic::{AtomicUsize, Ordering};
 use spin::Mutex;
 
 /// virtio-net feature bits.
@@ -134,6 +135,12 @@ pub fn init(transport: MmioTransport) -> Result<(), &'static str> {
     // Post RX buffers before telling the device we are ready.
     device.refill_rx();
     device.transport.finish_init();
+    crate::info!(
+        "virtio-net: features accepted {:#x}, rx free {} of {}",
+        accepted,
+        device.rx_queue.free_count(),
+        QUEUE_SIZE,
+    );
 
     crate::info!(
         "virtio-net: mac {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}, {} rx buffers posted",
@@ -244,8 +251,12 @@ impl VirtioNet {
     }
 }
 
+/// Interrupts seen, for diagnosing a silent device.
+pub static IRQ_COUNT: AtomicUsize = AtomicUsize::new(0);
+
 /// The PLIC handler. Runs with interrupts already disabled by the trap entry.
 fn on_interrupt() {
+    IRQ_COUNT.fetch_add(1, Ordering::Relaxed);
     // Only drain the queues here. Calling into smoltcp from the interrupt
     // handler would take the network stack's lock, which a task may already hold
     // — the frames sit in `rx_ready` until the next poll instead.
