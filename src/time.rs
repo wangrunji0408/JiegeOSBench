@@ -1,0 +1,80 @@
+//! Time keeping and timer interrupts.
+
+use crate::arch;
+use crate::sbi;
+use core::sync::atomic::{AtomicU64, Ordering};
+
+/// The QEMU `virt` machine's `time` CSR runs at 10 MHz.
+pub const TIMEBASE_FREQ: u64 = 10_000_000;
+/// Scheduling quantum: 10 ms.
+pub const TICK_HZ: u64 = 100;
+const TICK_INTERVAL: u64 = TIMEBASE_FREQ / TICK_HZ;
+
+static TICKS: AtomicU64 = AtomicU64::new(0);
+/// Wall clock offset: seconds to add to the monotonic clock to get real time.
+/// QEMU gives us no RTC via SBI, so start at a plausible fixed date — nginx only
+/// needs a monotonically increasing clock and sane log timestamps.
+static BOOT_UNIX_TIME: AtomicU64 = AtomicU64::new(1_774_000_000);
+
+pub fn init() {
+    schedule_next();
+}
+
+fn schedule_next() {
+    sbi::set_timer(arch::time() + TICK_INTERVAL);
+}
+
+pub fn on_timer_tick() {
+    TICKS.fetch_add(1, Ordering::Relaxed);
+    schedule_next();
+    crate::task::on_tick();
+}
+
+/// Nanoseconds since boot.
+#[inline]
+pub fn monotonic_ns() -> u64 {
+    // 10 MHz -> 100 ns per tick.
+    arch::time().wrapping_mul(100)
+}
+
+/// Microseconds since boot.
+#[inline]
+pub fn monotonic_us() -> u64 {
+    arch::time() / 10
+}
+
+/// Milliseconds since boot.
+#[inline]
+pub fn monotonic_ms() -> u64 {
+    arch::time() / 10_000
+}
+
+/// (seconds, nanoseconds) since boot.
+pub fn monotonic() -> (u64, u64) {
+    let ns = monotonic_ns();
+    (ns / 1_000_000_000, ns % 1_000_000_000)
+}
+
+/// (seconds, nanoseconds) of wall clock time.
+pub fn realtime() -> (u64, u64) {
+    let (s, ns) = monotonic();
+    (s + BOOT_UNIX_TIME.load(Ordering::Relaxed), ns)
+}
+
+/// Set the wall clock (used by `clock_settime`).
+pub fn set_realtime(secs: u64) {
+    let (mono, _) = monotonic();
+    BOOT_UNIX_TIME.store(secs.saturating_sub(mono), Ordering::Relaxed);
+}
+
+pub fn ticks() -> u64 {
+    TICKS.load(Ordering::Relaxed)
+}
+
+/// Busy-wait for the given number of microseconds.
+pub fn delay_us(us: u64) {
+    let target = arch::time() + us * (TIMEBASE_FREQ / 1_000_000);
+    while arch::time() < target {
+        core::hint::spin_loop();
+    }
+}
