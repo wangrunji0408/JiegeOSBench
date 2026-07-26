@@ -200,22 +200,11 @@ pub fn sys_mremap(
         return Ok(old_addr as isize);
     }
 
-    // Try to grow in place: is the space right after us free?
-    let tail_free = aspace
-        .areas
-        .range(old_addr + old_len..old_addr + new_len)
-        .next()
-        .is_none()
-        && vma.end <= old_addr + old_len;
-    if tail_free && flags & MREMAP_FIXED == 0 {
-        aspace.map_region(
-            old_addr,
-            old_addr + new_len,
-            vma.prot,
-            vma.backing.clone(),
-            vma.shared,
-            vma.name,
-        );
+    // Try to grow in place, keeping the pages already populated.
+    if flags & MREMAP_FIXED == 0
+        && vma.start == old_addr
+        && aspace.resize_vma(old_addr, old_addr + new_len)
+    {
         return Ok(old_addr as isize);
     }
 
