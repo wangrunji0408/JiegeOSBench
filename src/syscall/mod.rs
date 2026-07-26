@@ -36,6 +36,13 @@ pub fn dispatch(cx: &mut TrapContext) -> isize {
         sys::WRITEV => fs_ops::sys_writev(a[0] as i32, a[1], a[2]),
         sys::PREAD64 => fs_ops::sys_pread(a[0] as i32, a[1], a[2], a[3] as i64),
         sys::PWRITE64 => fs_ops::sys_pwrite(a[0] as i32, a[1], a[2], a[3] as i64),
+        // The `v2` variants take the offset as a split lo/hi pair on 32-bit
+        // targets; on riscv64 a[3] carries the whole value.
+        sys::PREADV2 => fs_ops::sys_preadv2(a[0] as i32, a[1], a[2], a[3] as i64),
+        sys::PWRITEV2 => fs_ops::sys_pwritev2(a[0] as i32, a[1], a[2], a[3] as i64),
+        sys::COPY_FILE_RANGE => {
+            fs_ops::sys_copy_file_range(a[0] as i32, a[1], a[2] as i32, a[3], a[4])
+        }
         sys::OPENAT => fs_ops::sys_openat(a[0] as i32, a[1], a[2] as u32, a[3] as u32),
         sys::CLOSE => fs_ops::sys_close(a[0] as i32),
         sys::LSEEK => fs_ops::sys_lseek(a[0] as i32, a[1] as i64, a[2] as u32),

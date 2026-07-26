@@ -278,9 +278,164 @@ pub fn sys_fcntl(fd: i32, cmd: u32, arg: usize) -> Result<isize> {
     }
 }
 
+/// Terminal-independent ioctls handled at the file layer.
+const FIONBIO: usize = 0x5421;
+const FIONREAD: usize = 0x541b;
+const FIOCLEX: usize = 0x5451;
+const FIONCLEX: usize = 0x5450;
+
 pub fn sys_ioctl(fd: i32, cmd: usize, arg: usize) -> Result<isize> {
+    let task = task::current();
+    let file = task.files.lock().get_or_err(fd)?;
+
+    // `FIONBIO` and the cloexec ioctls act on the open file description, not the
+    // underlying object, so handle them here for every descriptor kind. nginx
+    // sets non-blocking mode this way on its channel sockets.
+    match cmd {
+        FIONBIO => {
+            let on: u32 = uaccess::read(arg)?;
+            let mut flags = file.flags.lock();
+            if on != 0 {
+                *flags |= OpenFlags::NONBLOCK;
+            } else {
+                *flags &= !OpenFlags::NONBLOCK;
+            }
+            drop(flags);
+            // Sockets track it separately, since blocking decisions happen deep
+            // inside the socket code.
+            if let Some(socket) = file.as_socket() {
+                socket
+                    .nonblock
+                    .store(on != 0, core::sync::atomic::Ordering::Relaxed);
+            }
+            return Ok(0);
+        }
+        FIOCLEX => {
+            task.files.lock().set_cloexec(fd, true)?;
+            return Ok(0);
+        }
+        FIONCLEX => {
+            task.files.lock().set_cloexec(fd, false)?;
+            return Ok(0);
+        }
+        _ => {}
+    }
+
+    match file.inode.ioctl(cmd, arg) {
+        // Fall back to a generic FIONREAD for objects that don't implement it.
+        Err(e) if cmd == FIONREAD && e.errno() == fs::errno::ENOTTY => {
+            let available = file.inode.size().saturating_sub(file.offset());
+            uaccess::write(arg, available as u32)?;
+            Ok(0)
+        }
+        other => other,
+    }
+}
+
+pub fn sys_preadv2(fd: i32, iov: usize, count: usize, offset: i64) -> Result<isize> {
+    // A negative offset means "use the file position", i.e. plain `readv`.
+    if offset < 0 {
+        return sys_readv(fd, iov, count);
+    }
     let file = task::current().files.lock().get_or_err(fd)?;
-    file.inode.ioctl(cmd, arg)
+    let vecs = uaccess::read_iovecs(iov, count)?;
+    let mut pos = offset as usize;
+    let mut total = 0isize;
+    for v in vecs {
+        if v.len == 0 {
+            continue;
+        }
+        let mut data = alloc::vec![0u8; v.len.min(16 * 1024 * 1024)];
+        let n = file.read_at(pos, &mut data)?;
+        uaccess::write_bytes(v.base, &data[..n])?;
+        pos += n;
+        total += n as isize;
+        if n < data.len() {
+            break;
+        }
+    }
+    Ok(total)
+}
+
+pub fn sys_pwritev2(fd: i32, iov: usize, count: usize, offset: i64) -> Result<isize> {
+    if offset < 0 {
+        return sys_writev(fd, iov, count);
+    }
+    let file = task::current().files.lock().get_or_err(fd)?;
+    if !file.writable() {
+        bail!(EBADF);
+    }
+    let vecs = uaccess::read_iovecs(iov, count)?;
+    let mut pos = offset as usize;
+    let mut total = 0isize;
+    for v in vecs {
+        if v.len == 0 {
+            continue;
+        }
+        let data = uaccess::read_bytes(v.base, v.len.min(16 * 1024 * 1024))?;
+        let n = file.write_at(pos, &data)?;
+        pos += n;
+        total += n as isize;
+        if n < data.len() {
+            break;
+        }
+    }
+    Ok(total)
+}
+
+/// `copy_file_range`.
+pub fn sys_copy_file_range(
+    fd_in: i32,
+    off_in_ptr: usize,
+    fd_out: i32,
+    off_out_ptr: usize,
+    len: usize,
+) -> Result<isize> {
+    let task = task::current();
+    let in_file = task.files.lock().get_or_err(fd_in)?;
+    let out_file = task.files.lock().get_or_err(fd_out)?;
+
+    let mut in_off = if off_in_ptr != 0 {
+        uaccess::read::<i64>(off_in_ptr)? as usize
+    } else {
+        in_file.offset()
+    };
+    let mut out_off = if off_out_ptr != 0 {
+        uaccess::read::<i64>(off_out_ptr)? as usize
+    } else {
+        out_file.offset()
+    };
+
+    let mut remaining = len;
+    let mut total = 0usize;
+    let mut buf = alloc::vec![0u8; 64 * 1024];
+    while remaining > 0 {
+        let want = remaining.min(buf.len());
+        let n = in_file.read_at(in_off, &mut buf[..want])?;
+        if n == 0 {
+            break;
+        }
+        let written = out_file.write_at(out_off, &buf[..n])?;
+        in_off += written;
+        out_off += written;
+        total += written;
+        remaining -= written;
+        if written < n {
+            break;
+        }
+    }
+
+    if off_in_ptr != 0 {
+        uaccess::write(off_in_ptr, in_off as i64)?;
+    } else {
+        in_file.set_offset(in_off);
+    }
+    if off_out_ptr != 0 {
+        uaccess::write(off_out_ptr, out_off as i64)?;
+    } else {
+        out_file.set_offset(out_off);
+    }
+    Ok(total as isize)
 }
 
 pub fn sys_fstat(fd: i32, buf: usize) -> Result<isize> {
