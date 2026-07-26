@@ -253,11 +253,16 @@ impl PageTable {
                 if !l1[i1].is_valid() || l1[i1].is_leaf() {
                     continue;
                 }
-                let l2 = Self::table_at(l1[i1].phys_addr());
+                let l2_pa = l1[i1].phys_addr();
                 for i2 in 0..512 {
-                    if l2[i2].is_valid() {
+                    // Re-derive the pointer each iteration so the closure gets an
+                    // independent `&'static mut` rather than a reborrow of `l2`.
+                    let entry = unsafe {
+                        &mut *((phys_to_virt(l2_pa) as *mut PageTableEntry).add(i2))
+                    };
+                    if entry.is_valid() {
                         let va = (i0 << 30) | (i1 << 21) | (i2 << 12);
-                        f(va, &mut l2[i2]);
+                        f(va, entry);
                     }
                 }
             }

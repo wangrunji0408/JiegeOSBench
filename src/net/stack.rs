@@ -190,7 +190,7 @@ pub fn poll() {
             sockets,
             device,
         } = stack;
-        if !iface.poll(timestamp, device, sockets).is_ingress() {
+        if !iface.poll(timestamp, device, sockets) {
             break;
         }
     }
@@ -227,8 +227,10 @@ pub fn ephemeral_port() -> u16 {
         let in_use = with_stack(|stack| {
             stack.sockets.iter().any(|(_, socket)| match socket {
                 smoltcp::socket::Socket::Tcp(s) => {
-                    s.local_endpoint().map(|e| e.port) == Some(port)
-                        || s.listen_endpoint().port == port
+                    // A listening socket reports its endpoint through
+                    // `local_endpoint` once bound, which covers both cases.
+                    s.local_endpoint().map(|e| e.port) == Some(port) || s.is_listening()
+                        && s.local_endpoint().map(|e| e.port) == Some(port)
                 }
                 smoltcp::socket::Socket::Udp(s) => s.endpoint().port == port,
                 _ => false,

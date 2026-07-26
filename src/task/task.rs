@@ -456,7 +456,7 @@ bitflags::bitflags! {
 extern "C" fn task_entry() -> ! {
     // Interrupts were disabled by the scheduler across `__switch`.
     crate::trap::enable_interrupts();
-    let cx = current_trap_context();
+    let cx = super::sched::current_trap_context();
     unsafe { crate::trap::__trap_return(cx) }
 }
 
@@ -478,7 +478,7 @@ pub fn dump_user_context(cx: &TrapContext) {
     }
     // Show which VMA the faulting pc lies in, which quickly tells us whether we
     // are in the executable, the linker, or a library.
-    let task = current();
+    let task = super::sched::current();
     let aspace = task.aspace.lock();
     if let Some(vma) = aspace.find_vma(cx.sepc) {
         crate::println!(

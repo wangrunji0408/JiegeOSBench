@@ -111,7 +111,7 @@ impl SockAddr {
                     family: AF_INET,
                     port: port.to_be(),
                     addr: match addr {
-                        Some(a) => u32::from_be_bytes(a.octets()).to_be(),
+                        Some(a) => u32::from_be_bytes(a.0).to_be(),
                         None => 0,
                     },
                     zero: [0; 8],
