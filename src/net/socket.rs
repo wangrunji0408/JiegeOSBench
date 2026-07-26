@@ -982,13 +982,21 @@ impl Inode for Socket {
             return false;
         }
         drop(inner);
-        stack::with_tcp(handle, |s| {
+        let hung = stack::with_tcp(handle, |s| {
             matches!(
                 s.state(),
                 tcp::State::Closed | tcp::State::CloseWait | tcp::State::TimeWait
             )
         })
-        .unwrap_or(false)
+        .unwrap_or(false);
+        if hung {
+            crate::trace!(
+                "poll_hangup: socket {} reports hangup, tcp state {:?}",
+                self.ino,
+                stack::with_tcp(handle, |s| s.state()),
+            );
+        }
+        hung
     }
 
     fn poll_error(&self) -> bool {
