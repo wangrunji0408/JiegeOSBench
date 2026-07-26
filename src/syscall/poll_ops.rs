@@ -515,6 +515,12 @@ pub fn sys_epoll_pwait(
     } else {
         Some(crate::time::monotonic_ms() + timeout_ms as u64)
     };
+    crate::trace!(
+        "epoll_pwait: epfd={} max={} timeout={}ms",
+        epfd,
+        max_events,
+        timeout_ms
+    );
     epoll_wait_inner(epfd, events_ptr, max_events as usize, deadline)
 }
 
