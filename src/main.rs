@@ -86,7 +86,6 @@ pub extern "C" fn rust_main(hartid: usize, dtb: usize) -> ! {
         } else {
             info!("timer: {} Hz tick confirmed", time::TICK_HZ);
         }
-        trap::disable_interrupts();
     }
 
     let (used, total) = mm::frame::stats();
