@@ -329,9 +329,15 @@ impl Socket {
         let mut found = None;
         for (i, &handle) in inner.pool.iter().enumerate() {
             let ready = stack::with_tcp(handle, |socket| {
-                // `may_send() || may_recv()` covers ESTABLISHED and the
-                // half-closed states where data is still readable.
-                socket.is_active() && (socket.may_recv() || socket.may_send())
+                // A parked socket has become a connection once it leaves the
+                // listening states. Accept it even if the peer has already sent
+                // FIN — the request may be fully buffered and still deserves a
+                // response.
+                socket.is_active()
+                    && !matches!(
+                        socket.state(),
+                        tcp::State::Listen | tcp::State::SynSent | tcp::State::SynReceived
+                    )
             })
             .unwrap_or(false);
             if ready {
