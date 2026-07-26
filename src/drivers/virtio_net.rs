@@ -87,6 +87,8 @@ pub struct VirtioNet {
     tx_buffers: Vec<Option<Buffer>>,
     /// Frames received and waiting to be handed to the network stack.
     rx_ready: VecDeque<Vec<u8>>,
+    /// RX buffers not currently posted to the device, ready to be reposted.
+    rx_free: Vec<Buffer>,
     /// TX buffers we can reuse.
     tx_free: Vec<Buffer>,
     pub mac: [u8; 6],
@@ -136,6 +138,8 @@ pub fn init(transport: MmioTransport) -> Result<(), &'static str> {
         rx_buffers: (0..QUEUE_SIZE).map(|_| None).collect(),
         tx_buffers: (0..QUEUE_SIZE).map(|_| None).collect(),
         rx_ready: VecDeque::new(),
+        // Allocate the whole RX buffer pool up front, once.
+        rx_free: (0..QUEUE_SIZE).map(|_| Buffer::new()).collect(),
         tx_free: Vec::new(),
         mac,
         rx_packets: 0,
@@ -171,26 +175,32 @@ pub fn init(transport: MmioTransport) -> Result<(), &'static str> {
 }
 
 impl VirtioNet {
-    /// Post as many RX buffers as the queue will hold.
+    /// Hand every free RX buffer back to the device.
     fn refill_rx(&mut self) {
         let mut posted = 0;
-        while self.rx_queue.free_count() >= 1 {
-            let buffer = Buffer::new();
+        while let Some(buffer) = self.rx_free.pop() {
+            if self.rx_queue.free_count() < 1 {
+                self.rx_free.push(buffer);
+                break;
+            }
             let addr = buffer.addr();
             // The whole buffer is device-writable: header plus frame.
             match self.rx_queue.add(&[], &[(addr, BUFFER_SIZE)]) {
                 Some(head) => {
                     debug_assert!(
                         self.rx_buffers[head as usize].is_none(),
-                        "reposting a descriptor whose buffer is still owned by the device",
+                        "reposting a descriptor whose buffer the device still owns",
                     );
                     self.rx_buffers[head as usize] = Some(buffer);
                     posted += 1;
                 }
-                None => break,
+                None => {
+                    self.rx_free.push(buffer);
+                    break;
+                }
             }
         }
-        // Only notify when we actually handed the device something new.
+        // Only kick the device when we actually gave it something new.
         if posted > 0 {
             self.transport.notify(RX_QUEUE);
         }
@@ -220,6 +230,8 @@ impl VirtioNet {
                     self.rx_dropped += 1;
                 }
             }
+            // Recycle the buffer rather than freeing it.
+            self.rx_free.push(buffer);
         }
         self.refill_rx();
     }
