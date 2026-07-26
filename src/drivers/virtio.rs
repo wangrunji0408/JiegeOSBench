@@ -350,32 +350,39 @@ impl VirtQueue {
             return None;
         }
 
+        // Unlink the descriptors we need from the free list *before* writing
+        // anything, so overwriting a descriptor's `next` can't corrupt the list.
         let head = self.free_head;
-        let mut last = head;
-        let mut current = head;
+        let mut chain = [0u16; 8];
+        let chain = if count <= chain.len() {
+            &mut chain[..count]
+        } else {
+            // Chains longer than 8 descriptors don't occur in this driver (the
+            // longest is a header plus a frame), so refuse rather than allocate.
+            return None;
+        };
+        let mut cursor = head;
+        for slot in chain.iter_mut() {
+            *slot = cursor;
+            cursor = self.desc_mut(cursor).next;
+        }
+        self.free_head = cursor;
+        self.num_free -= count as u16;
 
+        // Now fill them in, linking each to the next member of the chain.
         for (i, &(addr, len)) in readable.iter().chain(writable.iter()).enumerate() {
             let is_write = i >= readable.len();
-            let next_free = self.desc_mut(current).next;
-            {
-                let desc = self.desc_mut(current);
-                desc.addr = mm::virt_to_phys(addr) as u64;
-                desc.len = len as u32;
-                desc.flags = if is_write { VRING_DESC_F_WRITE } else { 0 };
-                if i + 1 < count {
-                    desc.flags |= VRING_DESC_F_NEXT;
-                    desc.next = next_free;
-                } else {
-                    desc.next = 0;
-                }
+            let desc = self.desc_mut(chain[i]);
+            desc.addr = mm::virt_to_phys(addr) as u64;
+            desc.len = len as u32;
+            desc.flags = if is_write { VRING_DESC_F_WRITE } else { 0 };
+            if i + 1 < count {
+                desc.flags |= VRING_DESC_F_NEXT;
+                desc.next = chain[i + 1];
+            } else {
+                desc.next = 0;
             }
-            last = current;
-            current = next_free;
         }
-        let _ = last;
-
-        self.free_head = current;
-        self.num_free -= count as u16;
 
         // Publish the head in the avail ring.
         let ring_index = self.avail_idx % self.size;
