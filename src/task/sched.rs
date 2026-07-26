@@ -422,3 +422,55 @@ pub fn wait_until_timeout(mut cond: impl FnMut() -> bool, deadline_ms: Option<u6
         yield_now();
     }
 }
+
+/// Make a task current during boot, before the scheduler runs.
+///
+/// `loader::exec` and the uaccess helpers need a current task; at boot there
+/// isn't one yet, so we install it temporarily. The task's page table must be
+/// active for the loader's writes to the new stack to land.
+pub fn set_current_for_init(task: Arc<Task>) {
+    let satp = task.aspace.lock().satp();
+    crate::mm::page_table::activate(satp);
+    unsafe {
+        CURRENT = Some(task);
+    }
+}
+
+/// Undo [`set_current_for_init`], restoring the kernel page table.
+pub fn clear_current_for_init() {
+    unsafe {
+        CURRENT = None;
+    }
+    let satp = crate::mm::vma::kernel_page_table().satp();
+    crate::mm::page_table::activate(satp);
+}
+
+/// Deliver pending signals — re-exported so the trap handler can call
+/// `task::handle_pending_signals`.
+pub fn handle_pending_signals(cx: &mut TrapContext) {
+    crate::signal::handle_pending(cx);
+}
+
+/// Raise a signal on the current task and terminate if it is fatal.
+pub fn force_signal(sig: usize) {
+    if !has_current() {
+        return;
+    }
+    let task = current();
+    // Clear any handler-blocking so a fault-generated signal always lands: Linux
+    // forces the default action when a synchronous fault signal is blocked.
+    {
+        let mut signals = task.signals.lock();
+        signals.mask.remove(sig);
+    }
+    crate::signal::send_to_task(&task, sig);
+}
+
+/// Send a signal to the current task (used by the pipe/socket EPIPE paths).
+pub fn send_signal_to_self(sig: usize) {
+    if !has_current() {
+        return;
+    }
+    let task = current();
+    crate::signal::send_to_task(&task, sig);
+}
