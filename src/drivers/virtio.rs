@@ -401,9 +401,19 @@ impl VirtQueue {
 
     /// Is there a completed request waiting?
     pub fn can_pop(&self) -> bool {
-        fence(Ordering::SeqCst);
+        // The device writes `used.idx` last, after the ring entry it describes.
+        // An acquire fence after the read pairs with that, so the entry we go on
+        // to read is the one the index promises.
         let used_idx = unsafe { read_volatile(core::ptr::addr_of!((*self.used()).idx)) };
+        fence(Ordering::Acquire);
         used_idx != self.last_used_idx
+    }
+
+    /// How many completions are pending.
+    pub fn pending(&self) -> u16 {
+        let used_idx = unsafe { read_volatile(core::ptr::addr_of!((*self.used()).idx)) };
+        fence(Ordering::Acquire);
+        used_idx.wrapping_sub(self.last_used_idx)
     }
 
     /// Take one completed request, returning (head descriptor, bytes written).
