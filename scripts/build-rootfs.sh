@@ -48,6 +48,10 @@ rm -rf "$STAGE/usr/share/man" "$STAGE/usr/share/doc" "$STAGE/usr/lib/pkgconfig" 
        "$STAGE/usr/lib/engines-3" "$STAGE/usr/lib/ossl-modules" 2>/dev/null || true
 
 echo "==> creating directories nginx needs at runtime"
+# The nginx package ships /var/lib/nginx/{logs,run,modules} as symlinks into
+# /var/log and /run; replace them with real directories so the kernel's ramfs
+# doesn't have to resolve them.
+rm -f "$STAGE"/var/lib/nginx/logs "$STAGE"/var/lib/nginx/run "$STAGE"/var/lib/nginx/modules
 mkdir -p "$STAGE"/{dev,proc,sys,tmp,run,root}
 mkdir -p "$STAGE"/var/{log,tmp,run}
 mkdir -p "$STAGE"/var/log/nginx
