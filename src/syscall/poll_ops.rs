@@ -312,11 +312,30 @@ impl EpollInstance {
     /// Gather ready events.
     fn collect(&self, max: usize) -> Vec<EpollEvent> {
         let task = task::current();
-        let mut out = Vec::new();
-        let mut entries = self.entries.lock();
-        let mut stale: Vec<i32> = Vec::new();
 
-        for (&fd, entry) in entries.iter_mut() {
+        // Snapshot the watch list, then release the lock before touching any
+        // file.
+        //
+        // `poll_readable` on a socket drives the whole network stack, and a
+        // driver or scheduler path reached from there can call back into epoll
+        // (`poll_readable` on an epoll fd, for instance). `spin::Mutex` is not
+        // reentrant, so holding `entries` across those calls risks deadlocking
+        // the hart — which presents as the worker simply never waking up again.
+        let watches: Vec<(i32, EpollEntry)> = self
+            .entries
+            .lock()
+            .iter()
+            .map(|(&fd, e)| (fd, e.clone()))
+            .collect();
+
+        let mut out = Vec::new();
+        let mut stale: Vec<i32> = Vec::new();
+        // Readiness we observed, to write back into the entries afterwards.
+        let mut observed: Vec<(i32, u32)> = Vec::new();
+        // Watches to disarm because they carried EPOLLONESHOT.
+        let mut oneshot: Vec<i32> = Vec::new();
+
+        for (fd, entry) in watches {
             if out.len() >= max {
                 break;
             }
@@ -332,6 +351,7 @@ impl EpollInstance {
                 stale.push(fd);
                 continue;
             }
+            let entry = &entry;
 
             let mut ready = 0u32;
             if entry.events & (EPOLLIN | EPOLLRDNORM) != 0 && file.poll_readable() {
@@ -367,7 +387,7 @@ impl EpollInstance {
                 let fresh = ready & !entry.last_reported;
                 // Remember exactly what is set now, so a bit that clears is
                 // eligible to fire again the moment it returns.
-                entry.last_reported = ready;
+                observed.push((fd, ready));
                 if fresh == 0 {
                     continue;
                 }
@@ -390,11 +410,26 @@ impl EpollInstance {
 
             // EPOLLONESHOT: disable the watch after reporting.
             if entry.events & EPOLLONESHOT != 0 {
-                entry.events &= !(EPOLLIN | EPOLLOUT | EPOLLRDNORM | EPOLLRDHUP | EPOLLPRI);
+                oneshot.push(fd);
             }
         }
-        for fd in stale {
-            entries.remove(&fd);
+
+        // Write the observations back, and prune watches whose descriptor is gone.
+        {
+            let mut entries = self.entries.lock();
+            for (fd, ready) in observed {
+                if let Some(entry) = entries.get_mut(&fd) {
+                    entry.last_reported = ready;
+                }
+            }
+            for fd in oneshot {
+                if let Some(entry) = entries.get_mut(&fd) {
+                    entry.events &= !(EPOLLIN | EPOLLOUT | EPOLLRDNORM | EPOLLRDHUP | EPOLLPRI);
+                }
+            }
+            for fd in stale {
+                entries.remove(&fd);
+            }
         }
         out
     }
