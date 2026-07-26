@@ -23,7 +23,14 @@ const QUEUE_SIZE: u16 = 256;
 const BUFFER_SIZE: usize = 2048;
 
 /// The virtio-net header that precedes every frame.
-#[repr(C)]
+///
+/// The `num_buffers` field exists only when `VIRTIO_NET_F_MRG_RXBUF` is
+/// negotiated. We don't negotiate it, so the header is 10 bytes, not 12 — and
+/// `repr(C)` would pad this struct to 12 anyway because of the `u16` alignment.
+/// Both mistakes shift every received frame by two bytes, which corrupts the
+/// Ethernet header just enough that ARP still works (the device pads short
+/// frames) while TCP sees phantom payload bytes and stalls.
+#[repr(C, packed)]
 #[derive(Clone, Copy, Default)]
 struct VirtioNetHdr {
     flags: u8,
@@ -32,13 +39,11 @@ struct VirtioNetHdr {
     gso_size: u16,
     csum_start: u16,
     csum_offset: u16,
-    /// Only present when VIRTIO_NET_F_MRG_RXBUF was negotiated. We don't
-    /// negotiate it, but the field is part of the v1 header layout for
-    /// non-legacy devices, so it must be included.
-    num_buffers: u16,
 }
 
+/// Size of the header the device actually prepends.
 const HDR_SIZE: usize = core::mem::size_of::<VirtioNetHdr>();
+const _: () = assert!(HDR_SIZE == 10, "virtio-net header must be 10 bytes without MRG_RXBUF");
 
 /// A buffer used for a queued RX or TX request: the header followed by the frame.
 struct Buffer {
