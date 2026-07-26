@@ -28,6 +28,9 @@ pub const SOCK_RAW: u32 = 3;
 pub const SOCK_NONBLOCK: u32 = 0o4000;
 pub const SOCK_CLOEXEC: u32 = 0o2000;
 
+/// `sendto` on an unconnected datagram socket with no destination.
+const EDESTADDRREQ: isize = 89;
+
 /// Default socket buffer sizes. nginx serves static files with `sendfile`-sized
 /// writes, so a generous TX buffer keeps it from blocking.
 const DEFAULT_RX_BUFFER: usize = 64 * 1024;
@@ -597,7 +600,7 @@ impl Socket {
                     .lock()
                     .peer
                     .clone()
-                    .ok_or(fs::Error::new(fs::errno::EDESTADDRREQ))?;
+                    .ok_or(fs::Error::new(EDESTADDRREQ))?;
                 self.send_to(buf, &peer, nonblock)
             }
             SocketKind::Other => Ok(buf.len()),
@@ -939,10 +942,3 @@ impl Drop for Socket {
     }
 }
 
-// `EDESTADDRREQ` isn't in our errno list; define it locally.
-impl fs::Error {
-    #[allow(non_snake_case)]
-    fn EDESTADDRREQ() -> Self {
-        fs::Error::new(89)
-    }
-}
