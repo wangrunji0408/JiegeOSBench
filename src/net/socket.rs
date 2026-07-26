@@ -234,6 +234,13 @@ impl Socket {
             .listen_endpoint
             .ok_or(fs::Error::new(fs::errno::EINVAL))?;
 
+        // Only one live listener per port. Two pools on the same endpoint would
+        // both attract SYNs, and connections landing in the pool whose fd nginx
+        // isn't polling would never be accepted — the client just times out.
+        if !stack::claim_listen_port(endpoint.port) {
+            bail!(EADDRINUSE);
+        }
+
         let pool_size = backlog.clamp(1, LISTEN_POOL);
         for _ in 0..pool_size {
             let Some(handle) = self.spawn_listener(endpoint) else {
@@ -242,6 +249,7 @@ impl Socket {
             inner.pool.push(handle);
         }
         if inner.pool.is_empty() {
+            stack::release_listen_port(endpoint.port);
             bail!(EADDRINUSE);
         }
         inner.backlog = backlog;
@@ -943,6 +951,11 @@ impl Drop for Socket {
         // Release the bound port so a restarted listener can reclaim it. Only a
         // socket that owns the binding (bound or listening) should do this — an
         // accepted connection shares the listener's port.
+        if inner.state == SockState::Listening {
+            if let Some(endpoint) = inner.listen_endpoint {
+                stack::release_listen_port(endpoint.port);
+            }
+        }
         let owned_port = match inner.state {
             SockState::Bound | SockState::Listening => inner.local.as_ref().map(|a| a.port()),
             SockState::Connecting | SockState::Connected | SockState::Closed => {

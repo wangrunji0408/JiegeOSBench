@@ -268,14 +268,21 @@ pub fn poll_and_yield() {
     poll();
 }
 
-/// Ports currently claimed by a bound or listening socket.
+/// Ports currently claimed by a bound socket, and separately those with a live
+/// listener.
 ///
-/// smoltcp doesn't expose a way to enumerate listening endpoints, so we track
-/// the allocation ourselves. `bind` claims a port and `Socket::drop` releases it.
+/// smoltcp doesn't expose a way to enumerate listening endpoints, so we track the
+/// allocation ourselves. Two sets are needed because `SO_REUSEADDR` lets a second
+/// socket *bind* a port whose previous owner has closed, but never lets two live
+/// listeners share one: nginx binds both `0.0.0.0:80` and `[::]:80`, and since we
+/// map the IPv6 wildcard onto our single IPv4 address, the second `listen` must
+/// fail rather than create a competing pool that silently swallows connections.
 static BOUND_PORTS: Mutex<alloc::collections::BTreeSet<u16>> =
     Mutex::new(alloc::collections::BTreeSet::new());
+static LISTENING_PORTS: Mutex<alloc::collections::BTreeSet<u16>> =
+    Mutex::new(alloc::collections::BTreeSet::new());
 
-/// Claim `port`. Returns false if it is already taken.
+/// Claim `port` for a bind. Returns false if it is already taken.
 pub fn claim_port(port: u16) -> bool {
     BOUND_PORTS.lock().insert(port)
 }
@@ -286,6 +293,15 @@ pub fn release_port(port: u16) {
 
 pub fn is_port_bound(port: u16) -> bool {
     BOUND_PORTS.lock().contains(&port)
+}
+
+/// Claim `port` for a listener. Returns false if something is already listening.
+pub fn claim_listen_port(port: u16) -> bool {
+    LISTENING_PORTS.lock().insert(port)
+}
+
+pub fn release_listen_port(port: u16) {
+    LISTENING_PORTS.lock().remove(&port);
 }
 
 /// A free ephemeral port. smoltcp needs us to pick one for `connect` and for
