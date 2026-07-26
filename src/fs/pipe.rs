@@ -230,6 +230,68 @@ pub fn capacity(end: &PipeEnd) -> usize {
     end.pipe.capacity.load(Ordering::Relaxed)
 }
 
+/// A bidirectional endpoint built from two pipe halves, used to back
+/// `socketpair`. Reads drain `read_end`; writes go to `write_end`.
+pub struct Duplex {
+    ino: u64,
+    read_end: Arc<PipeEnd>,
+    write_end: Arc<PipeEnd>,
+}
+
+/// Pair a read end with a write end into one bidirectional inode.
+pub fn duplex(read_end: Arc<PipeEnd>, write_end: Arc<PipeEnd>) -> Arc<Duplex> {
+    Arc::new(Duplex {
+        ino: next_ino(),
+        read_end,
+        write_end,
+    })
+}
+
+impl Inode for Duplex {
+    fn kind(&self) -> InodeKind {
+        InodeKind::Socket
+    }
+    fn ino(&self) -> u64 {
+        self.ino
+    }
+    fn mode(&self) -> u32 {
+        0o600
+    }
+    fn size(&self) -> usize {
+        self.read_end.size()
+    }
+
+    fn read(&self, offset: usize, buf: &mut [u8], nonblock: bool) -> Result<usize> {
+        self.read_end.read(offset, buf, nonblock)
+    }
+
+    fn write(&self, offset: usize, buf: &[u8], nonblock: bool) -> Result<usize> {
+        self.write_end.write(offset, buf, nonblock)
+    }
+
+    fn read_at(&self, _offset: usize, buf: &mut [u8]) -> Result<usize> {
+        self.read_end.read(0, buf, true)
+    }
+
+    fn write_at(&self, _offset: usize, buf: &[u8]) -> Result<usize> {
+        self.write_end.write(0, buf, true)
+    }
+
+    fn poll_readable(&self) -> bool {
+        self.read_end.poll_readable()
+    }
+
+    fn poll_writable(&self) -> bool {
+        self.write_end.poll_writable()
+    }
+
+    fn poll_hangup(&self) -> bool {
+        self.read_end.poll_hangup()
+    }
+
+    impl_as_any!();
+}
+
 /// A named FIFO in the filesystem. Opening it yields pipe-like behaviour; we
 /// back it with a single shared buffer regardless of how many openers there are,
 /// which is enough for the `mkfifo` calls programs occasionally make.
