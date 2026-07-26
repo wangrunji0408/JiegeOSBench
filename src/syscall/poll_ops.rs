@@ -353,28 +353,26 @@ impl EpollInstance {
                 }
             }
 
-            if ready == 0 {
-                entry.last_reported = 0;
-                continue;
-            }
-
-            // Edge-triggered: report only readiness that is newly set.
+            // Edge-triggered: report only the bits that have newly become set.
             //
-            // Dropping bits that have gone away matters as much as suppressing
-            // the ones that haven't. A connected socket stays writable, so
-            // `ready` is essentially never empty; if `last_reported` were only
-            // cleared when `ready` hit zero, a remembered EPOLLIN would make
-            // every later arrival look already-reported, and the connection
-            // would stall until some unrelated event woke the loop. Masking
-            // first forgets EPOLLIN as soon as the socket is drained, so the
-            // next arrival is a fresh edge.
+            // Per-bit tracking is what makes this correct. `EPOLLHUP` latches on
+            // for the rest of a half-closed connection's life, and a writable
+            // socket keeps `EPOLLOUT` set; if the comparison were on the whole
+            // mask, one sticky bit would keep `last_reported` non-zero and make
+            // every later `EPOLLIN` arrival look already-reported. nginx would
+            // then never learn about the next request on a keep-alive connection:
+            // the kernel ACKs the bytes, the worker sits in `epoll_wait`, and the
+            // client times out.
             if entry.events & EPOLLET != 0 {
-                let remembered = entry.last_reported & ready;
-                let fresh = ready & !remembered;
+                let fresh = ready & !entry.last_reported;
+                // Remember exactly what is set now, so a bit that clears is
+                // eligible to fire again the moment it returns.
                 entry.last_reported = ready;
                 if fresh == 0 {
                     continue;
                 }
+            } else if ready == 0 {
+                continue;
             }
 
             out.push(EpollEvent {
