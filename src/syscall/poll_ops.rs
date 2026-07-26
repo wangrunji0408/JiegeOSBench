@@ -348,6 +348,10 @@ impl EpollInstance {
             // The fd number was recycled onto a different open file: our watch
             // died with the old description.
             if !entry.matches(&file) {
+                crate::trace!(
+                    "epoll: pruning fd={} — registration no longer matches its description",
+                    fd
+                );
                 stale.push(fd);
                 continue;
             }
