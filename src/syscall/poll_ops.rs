@@ -264,13 +264,35 @@ const EPOLLET: u32 = 1 << 31;
 const EPOLLONESHOT: u32 = 1 << 30;
 
 /// One watched descriptor.
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 struct EpollEntry {
     events: u32,
     data: u64,
     /// For edge-triggered watches: the readiness we last reported, so we only
     /// report the transition.
     last_reported: u32,
+    /// The open file description this watch was registered against.
+    ///
+    /// Linux keys epoll registrations on the *description*, not the descriptor
+    /// number, and drops a registration automatically when its last descriptor
+    /// closes. Without this, a recycled fd number inherits the stale watch and
+    /// `EPOLL_CTL_ADD` fails with `EEXIST` — which nginx reports as
+    /// "epoll_ctl(1, 3) failed (17: File exists)" and then drops the connection.
+    /// A weak reference lets us notice the description is gone.
+    file: alloc::sync::Weak<File>,
+}
+
+impl EpollEntry {
+    /// Is this registration still valid for `fd`?
+    ///
+    /// It is stale if the description was freed, or if the descriptor now refers
+    /// to a different description than the one we registered.
+    fn matches(&self, current: &Arc<File>) -> bool {
+        match self.file.upgrade() {
+            Some(registered) => Arc::ptr_eq(&registered, current),
+            None => false,
+        }
+    }
 }
 
 /// An epoll instance, exposed to user space as a file descriptor.
@@ -304,6 +326,12 @@ impl EpollInstance {
                 stale.push(fd);
                 continue;
             };
+            // The fd number was recycled onto a different open file: our watch
+            // died with the old description.
+            if !entry.matches(&file) {
+                stale.push(fd);
+                continue;
+            }
 
             let mut ready = 0u32;
             if entry.events & (EPOLLIN | EPOLLRDNORM) != 0 && file.poll_readable() {
@@ -404,14 +432,19 @@ pub fn sys_epoll_ctl(epfd: i32, op: u32, fd: i32, event_ptr: usize) -> Result<is
         bail!(EINVAL);
     }
     // The target must be a valid descriptor.
-    task.files.lock().get_or_err(fd)?;
+    let target = task.files.lock().get_or_err(fd)?;
 
     match op {
         EPOLL_CTL_ADD => {
             let event: EpollEvent = uaccess::read(event_ptr)?;
             let mut entries = instance.entries.lock();
-            if entries.contains_key(&fd) {
-                bail!(EEXIST);
+            // Only an entry still pointing at *this* description conflicts. A
+            // leftover from a closed fd that happened to reuse this number does
+            // not: Linux would have dropped it when the description died.
+            if let Some(existing) = entries.get(&fd) {
+                if existing.matches(&target) {
+                    bail!(EEXIST);
+                }
             }
             entries.insert(
                 fd,
@@ -419,6 +452,7 @@ pub fn sys_epoll_ctl(epfd: i32, op: u32, fd: i32, event_ptr: usize) -> Result<is
                     events: event.events,
                     data: event.data,
                     last_reported: 0,
+                    file: Arc::downgrade(&target),
                 },
             );
             Ok(0)
@@ -427,6 +461,9 @@ pub fn sys_epoll_ctl(epfd: i32, op: u32, fd: i32, event_ptr: usize) -> Result<is
             let event: EpollEvent = uaccess::read(event_ptr)?;
             let mut entries = instance.entries.lock();
             let entry = entries.get_mut(&fd).ok_or(crate::err!(ENOENT))?;
+            if !entry.matches(&target) {
+                bail!(ENOENT);
+            }
             entry.events = event.events;
             entry.data = event.data;
             // Re-arm edge-triggered reporting.
