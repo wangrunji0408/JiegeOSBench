@@ -599,7 +599,11 @@ impl Socket {
             .ok_or(fs::Error::new(fs::errno::ENETDOWN))?;
 
             match outcome {
-                RecvOutcome::Data(n) => return Ok(n),
+                RecvOutcome::Data(n) => {
+                    // Let the stack push out the widened receive window.
+                    self.announce_window(handle);
+                    return Ok(n);
+                }
                 RecvOutcome::Eof => {
                     // Don't mark the socket Closed: the peer is done sending, but
                     // we may still have a response to write. Only `send` and the
@@ -870,6 +874,18 @@ impl Socket {
             }
         }
         None
+    }
+
+    /// Ensure the peer sees an up-to-date, non-shrinking receive window.
+    ///
+    /// After we drain the receive buffer, smoltcp only advertises the reopened
+    /// window on its next outgoing segment. If the connection then goes quiet —
+    /// which is exactly the keep-alive case, where we send the response and wait
+    /// — the peer is left believing the window is still small. Polling the stack
+    /// once more after a read lets smoltcp emit the window update.
+    fn announce_window(&self, handle: SocketHandle) {
+        let _ = handle;
+        stack::poll();
     }
 
     /// Enable or disable Nagle's algorithm (`TCP_NODELAY`).
