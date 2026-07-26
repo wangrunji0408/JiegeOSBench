@@ -848,6 +848,24 @@ impl Socket {
         None
     }
 
+    /// Enable or disable Nagle's algorithm (`TCP_NODELAY`).
+    ///
+    /// Applies to the live connection as well as to any parked listeners, so an
+    /// option set on a listening socket is inherited by what it accepts.
+    pub fn set_nodelay(&self, on: bool) {
+        self.nodelay.store(on, Ordering::Relaxed);
+        if self.kind != SocketKind::Tcp {
+            return;
+        }
+        let (handle, pool) = {
+            let inner = self.inner.lock();
+            (inner.handle, inner.pool.clone())
+        };
+        for h in handle.into_iter().chain(pool) {
+            stack::with_tcp(h, |s| s.set_nagle_enabled(!on));
+        }
+    }
+
     /// Bytes available to read.
     pub fn available(&self) -> usize {
         let Some(handle) = self.inner.lock().handle else {

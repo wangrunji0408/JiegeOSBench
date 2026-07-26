@@ -407,7 +407,12 @@ pub fn sys_setsockopt(
             Ok(0)
         }
         (IPPROTO_TCP, TCP_NODELAY) => {
-            socket.nodelay.store(int_value != 0, Ordering::Relaxed);
+            // Push it through to smoltcp, not just into our record. nginx sets
+            // this on every accepted connection; leaving Nagle enabled makes
+            // smoltcp withhold the response segment while an earlier one is
+            // unacknowledged, so the client waits out a retransmit timer instead
+            // of getting its reply.
+            socket.set_nodelay(int_value != 0);
             Ok(0)
         }
         // Accepted and ignored: these tune behaviour we don't implement, and
