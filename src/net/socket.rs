@@ -1003,6 +1003,11 @@ impl Inode for Socket {
             }),
             _ => {
                 let Some(handle) = handle else {
+                    crate::trace!(
+                        "poll_readable: ino={} state={:?} has NO handle",
+                        self.ino,
+                        state
+                    );
                     return false;
                 };
                 match self.kind {
@@ -1030,7 +1035,22 @@ impl Inode for Socket {
                     SocketKind::Other => false,
                 }
             }
+        };
+        if crate::console::trace_enabled() {
+            let (q, st) = stack::with_tcp(handle.unwrap_or_default(), |s| {
+                (s.recv_queue(), s.state())
+            })
+            .unwrap_or((0, tcp::State::Closed));
+            if q > 0 && !result {
+                crate::println!(
+                    "\x1b[33m[bug]\x1b[0m poll_readable=false but queue={} state={:?} sock={:?}",
+                    q,
+                    st,
+                    state
+                );
+            }
         }
+        result
     }
 
     fn poll_writable(&self) -> bool {
