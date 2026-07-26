@@ -72,6 +72,23 @@ pub extern "C" fn rust_main(hartid: usize, dtb: usize) -> ! {
 
     unsafe { arch::sie::enable_all() };
 
+    // Verify the timer actually fires before we hand control to user space: a
+    // dead timer means no preemption, which is very hard to diagnose later.
+    {
+        trap::enable_interrupts();
+        let start = time::ticks();
+        let deadline = arch::time() + time::TIMEBASE_FREQ / 4; // 250 ms
+        while time::ticks() == start && arch::time() < deadline {
+            arch::wfi();
+        }
+        if time::ticks() == start {
+            warn!("timer interrupts are not being delivered; preemption is disabled");
+        } else {
+            info!("timer: {} Hz tick confirmed", time::TICK_HZ);
+        }
+        trap::disable_interrupts();
+    }
+
     let (used, total) = mm::frame::stats();
     info!(
         "memory: {} MiB free of {} MiB physical, {} MiB kernel heap",
