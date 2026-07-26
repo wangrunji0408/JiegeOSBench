@@ -352,10 +352,15 @@ impl Socket {
         })
         .unwrap_or((None, None));
 
-        // Apply the listener's options to the accepted socket, as Linux does.
-        if self.nodelay.load(Ordering::Relaxed) {
-            stack::with_tcp(handle, |socket| socket.set_nagle_enabled(false));
-        }
+        // Disable Nagle on accepted connections.
+        //
+        // Nagle withholds a small segment while earlier data is unacknowledged.
+        // On this kernel that interacts badly with how nginx writes a response —
+        // headers via `writev`, body via `sendfile` — and the held segment waits
+        // out a retransmit timer, which the client sees as a multi-second stall.
+        // nginx sets TCP_NODELAY on accepted sockets anyway; doing it here too
+        // closes the window before that call arrives.
+        stack::with_tcp(handle, |socket| socket.set_nagle_enabled(false));
 
         let local = local.unwrap_or(SockAddr::V4 {
             addr: Some(stack::local_ip()),
