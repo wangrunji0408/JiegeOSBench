@@ -909,6 +909,13 @@ impl Inode for Socket {
         // and `poll` depend on this being current.
         stack::poll();
         let inner = self.inner.lock();
+        if let Some(handle) = inner.handle {
+            if self.kind == SocketKind::Tcp {
+                let (q, st) = stack::with_tcp(handle, |s| (s.recv_queue(), s.state()))
+                    .unwrap_or((0, tcp::State::Closed));
+                crate::trace!("poll_readable: ino={} queue={} state={:?}", self.ino, q, st);
+            }
+        }
         if inner.inert {
             // Never ready: an inert listener would otherwise wake nginx's event
             // loop for an `accept` that always returns EAGAIN.
