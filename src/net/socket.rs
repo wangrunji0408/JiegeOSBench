@@ -542,6 +542,8 @@ impl Socket {
 
         loop {
             stack::poll();
+            // Read the smoltcp state without holding our own lock, so the closure
+            // stays free of lock-ordering hazards.
             let outcome = stack::with_tcp(handle, |socket| {
                 if socket.can_recv() {
                     let result = if peek {
@@ -554,29 +556,17 @@ impl Socket {
                         Err(_) => RecvOutcome::Eof,
                     }
                 } else {
-                    // No buffered data. Whether that is EOF or "not yet" depends
-                    // on the connection state; getting this wrong turns an idle
-                    // keep-alive connection into a spurious EOF.
-                    crate::trace!(
-                        "recv_tcp: no data, tcp state {:?}, sock state {:?}",
-                        socket.state(),
-                        self.inner.lock().state,
-                    );
+                    // No buffered data. Whether that is EOF or merely "not yet"
+                    // depends on the TCP state; reporting EOF on an idle
+                    // keep-alive connection makes nginx close it after one
+                    // request.
                     match socket.state() {
                         // The peer sent FIN and we have drained the buffer.
                         tcp::State::CloseWait
                         | tcp::State::LastAck
                         | tcp::State::Closing
                         | tcp::State::TimeWait => RecvOutcome::Eof,
-                        tcp::State::Closed => {
-                            // An established connection that reached Closed
-                            // without a FIN was reset.
-                            if self.state() == SockState::Connected {
-                                RecvOutcome::Reset
-                            } else {
-                                RecvOutcome::Eof
-                            }
-                        }
+                        tcp::State::Closed => RecvOutcome::Reset,
                         // Established (idle keep-alive), or still handshaking.
                         _ => RecvOutcome::WouldBlock,
                     }
@@ -587,12 +577,24 @@ impl Socket {
             match outcome {
                 RecvOutcome::Data(n) => return Ok(n),
                 RecvOutcome::Eof => {
-                    self.inner.lock().state = SockState::Closed;
+                    // Don't mark the socket Closed: the peer is done sending, but
+                    // we may still have a response to write. Only `send` and the
+                    // connect path change the recorded state.
                     return Ok(0);
                 }
                 RecvOutcome::Reset => {
-                    self.inner.lock().state = SockState::Closed;
-                    bail!(ECONNRESET)
+                    let was_connected = {
+                        let mut inner = self.inner.lock();
+                        let was = inner.state == SockState::Connected;
+                        inner.state = SockState::Closed;
+                        was
+                    };
+                    // A connection that reached Closed without a FIN was reset;
+                    // one we had already torn down just reports EOF.
+                    if was_connected {
+                        bail!(ECONNRESET)
+                    }
+                    return Ok(0);
                 }
                 RecvOutcome::WouldBlock => {}
             }
