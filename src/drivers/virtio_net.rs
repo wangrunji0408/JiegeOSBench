@@ -308,6 +308,22 @@ pub fn poll_device_locked() {
     }
 }
 
+/// Are there received frames the network stack has not consumed yet?
+///
+/// Called with interrupts already masked by the network stack's poll loop.
+pub fn has_pending_rx() -> bool {
+    match DEVICE.lock().as_mut() {
+        Some(device) => {
+            if device.rx_ready.is_empty() {
+                // A completion may have landed since the last drain.
+                device.collect_rx();
+            }
+            !device.rx_ready.is_empty()
+        }
+        None => false,
+    }
+}
+
 /// (rx_packets, tx_packets, rx_dropped)
 pub fn stats() -> (usize, usize, usize) {
     with_device(|d| (d.rx_packets, d.tx_packets, d.rx_dropped)).unwrap_or((0, 0, 0))

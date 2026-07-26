@@ -235,17 +235,26 @@ pub fn poll() {
         POLL_COUNT.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
         // Drain whatever the interrupt handler queued, and reclaim TX buffers.
         crate::drivers::virtio_net::poll_device_locked();
-        // `poll` returns whether anything changed; loop while it keeps making
-        // progress so a burst of frames is drained in one go, with a bound so a
-        // pathological flood can't starve everything else. Re-read the clock
-        // each pass so smoltcp's timers advance during a long burst.
-        for _ in 0..32 {
+
+        // Keep polling until the receive backlog is empty and smoltcp reports no
+        // further progress.
+        //
+        // `Interface::poll` returning false does *not* mean the driver has no
+        // more frames: a frame that changes no socket state (a duplicate ACK, a
+        // segment for a closed port) leaves nothing to report. Breaking on the
+        // first `false` would leave the rest of the backlog queued until some
+        // later poll, which shows up as multi-second stalls while the peer
+        // retransmits. So bound the loop on the backlog, not on the return value.
+        for _ in 0..64 {
             let NetStack {
                 iface,
                 sockets,
                 device,
             } = stack;
-            if !iface.poll(now(), device, sockets) {
+            // Re-read the clock each pass so smoltcp's timers advance during a
+            // long burst.
+            let progressed = iface.poll(now(), device, sockets);
+            if !progressed && !crate::drivers::virtio_net::has_pending_rx() {
                 break;
             }
         }
