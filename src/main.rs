@@ -43,9 +43,14 @@ fn clear_bss() {
     }
 }
 
+/// Set to true to log every syscall. Handy while bringing new binaries up; the
+/// output is voluminous, so it defaults off.
+const TRACE_SYSCALLS: bool = option_env!("JIEGE_TRACE").is_some();
+
 #[no_mangle]
 pub extern "C" fn rust_main(hartid: usize, dtb: usize) -> ! {
     clear_bss();
+    console::set_trace(TRACE_SYSCALLS);
 
     println!();
     println!("\x1b[1;36m╔══════════════════════════════════════════════╗\x1b[0m");

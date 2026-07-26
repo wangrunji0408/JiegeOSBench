@@ -19,4 +19,5 @@ exec qemu-system-riscv64 \
     -kernel "$KERNEL" \
     -netdev "user,id=net0,hostfwd=tcp::${HOST_PORT}-:80" \
     -device virtio-net-device,netdev=net0 \
+    -global virtio-mmio.force-legacy=false \
     "$@"
