@@ -118,9 +118,11 @@ pub fn init() {
 }
 
 /// Run `f` with the stack locked.
+///
+/// Interrupts stay disabled for the duration: the virtio handler must not
+/// interleave with a `poll` in progress, and `spin::Mutex` is not reentrant.
 pub fn with_stack<T>(f: impl FnOnce(&mut NetStack) -> T) -> Option<T> {
-    let mut guard = STACK.lock();
-    guard.as_mut().map(f)
+    crate::trap::without_interrupts(|| STACK.lock().as_mut().map(f))
 }
 
 /// Is the network stack up?
@@ -176,24 +178,28 @@ pub fn with_udp<T>(handle: SocketHandle, f: impl FnOnce(&mut udp::Socket<'static
 /// Called from the idle loop, from the virtio interrupt handler, and from
 /// blocking socket operations.
 pub fn poll() {
-    let mut guard = STACK.lock();
-    let Some(stack) = guard.as_mut() else {
-        return;
-    };
-    let timestamp = now();
-    // `poll` returns whether anything changed; loop while it keeps making
-    // progress so a burst of frames is drained in one go, with a bound so a
-    // pathological flood can't starve everything else.
-    for _ in 0..16 {
-        let NetStack {
-            iface,
-            sockets,
-            device,
-        } = stack;
-        if !iface.poll(timestamp, device, sockets) {
-            break;
+    crate::trap::without_interrupts(|| {
+        let mut guard = STACK.lock();
+        let Some(stack) = guard.as_mut() else {
+            return;
+        };
+        // Drain whatever the interrupt handler queued, and reclaim TX buffers.
+        crate::drivers::virtio_net::poll_device_locked();
+        let timestamp = now();
+        // `poll` returns whether anything changed; loop while it keeps making
+        // progress so a burst of frames is drained in one go, with a bound so a
+        // pathological flood can't starve everything else.
+        for _ in 0..32 {
+            let NetStack {
+                iface,
+                sockets,
+                device,
+            } = stack;
+            if !iface.poll(timestamp, device, sockets) {
+                break;
+            }
         }
-    }
+    });
 }
 
 /// Called from the virtio interrupt handler.

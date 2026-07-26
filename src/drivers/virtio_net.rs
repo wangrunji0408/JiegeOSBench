@@ -86,6 +86,15 @@ pub struct VirtioNet {
 
 static DEVICE: Mutex<Option<VirtioNet>> = Mutex::new(None);
 
+/// Run `f` with the device locked and interrupts disabled.
+///
+/// The PLIC handler takes this same lock, and `spin::Mutex` is not reentrant, so
+/// every acquisition must mask interrupts or an IRQ arriving mid-critical-section
+/// deadlocks the hart.
+fn with_device<T>(f: impl FnOnce(&mut VirtioNet) -> T) -> Option<T> {
+    crate::trap::without_interrupts(|| DEVICE.lock().as_mut().map(f))
+}
+
 /// Initialize a virtio-net device.
 pub fn init(transport: MmioTransport) -> Result<(), &'static str> {
     let wanted = VIRTIO_F_VERSION_1 | VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS;
@@ -235,45 +244,49 @@ impl VirtioNet {
     }
 }
 
-/// The PLIC handler.
+/// The PLIC handler. Runs with interrupts already disabled by the trap entry.
 fn on_interrupt() {
+    // Only drain the queues here. Calling into smoltcp from the interrupt
+    // handler would take the network stack's lock, which a task may already hold
+    // — the frames sit in `rx_ready` until the next poll instead.
     let mut guard = DEVICE.lock();
     if let Some(device) = guard.as_mut() {
         device.transport.ack_interrupt();
         device.collect_rx();
         device.collect_tx();
     }
-    drop(guard);
-    // Let the network stack process what arrived. It is safe to call from the
-    // interrupt handler because the stack's own lock is never held across a
-    // context switch.
-    crate::net::on_interrupt();
 }
 
 /// Is a network device present?
 pub fn present() -> bool {
-    DEVICE.lock().is_some()
+    crate::trap::without_interrupts(|| DEVICE.lock().is_some())
 }
 
 pub fn mac_address() -> Option<[u8; 6]> {
-    DEVICE.lock().as_ref().map(|d| d.mac)
+    crate::trap::without_interrupts(|| DEVICE.lock().as_ref().map(|d| d.mac))
 }
 
 /// Take the next received frame, if any.
 pub fn receive() -> Option<Vec<u8>> {
-    DEVICE.lock().as_mut()?.receive()
+    with_device(|d| d.receive()).flatten()
 }
 
 /// Send a frame. Returns false if it was dropped.
 pub fn transmit(frame: &[u8]) -> bool {
-    match DEVICE.lock().as_mut() {
-        Some(device) => device.transmit(frame),
-        None => false,
-    }
+    with_device(|d| d.transmit(frame)).unwrap_or(false)
 }
 
 /// Poll the device for completions without waiting for an interrupt.
 pub fn poll_device() {
+    with_device(|d| {
+        d.collect_rx();
+        d.collect_tx();
+    });
+}
+
+/// Same as [`poll_device`], for callers that already hold their own lock with
+/// interrupts masked (the network stack's `poll`).
+pub fn poll_device_locked() {
     if let Some(device) = DEVICE.lock().as_mut() {
         device.collect_rx();
         device.collect_tx();
@@ -282,8 +295,5 @@ pub fn poll_device() {
 
 /// (rx_packets, tx_packets, rx_dropped)
 pub fn stats() -> (usize, usize, usize) {
-    match DEVICE.lock().as_ref() {
-        Some(d) => (d.rx_packets, d.tx_packets, d.rx_dropped),
-        None => (0, 0, 0),
-    }
+    with_device(|d| (d.rx_packets, d.tx_packets, d.rx_dropped)).unwrap_or((0, 0, 0))
 }
