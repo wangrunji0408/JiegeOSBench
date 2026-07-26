@@ -61,6 +61,8 @@ pub struct File {
     dir_pos: Mutex<usize>,
     /// The path this was opened by, for `/proc/self/fd` and diagnostics.
     pub path: Mutex<alloc::string::String>,
+    /// Incremented whenever a read consumes data. See [`File::read_generation`].
+    read_generation: core::sync::atomic::AtomicU64,
 }
 
 impl File {
@@ -71,6 +73,7 @@ impl File {
             offset: Mutex::new(0),
             dir_pos: Mutex::new(0),
             path: Mutex::new(alloc::string::String::new()),
+            read_generation: core::sync::atomic::AtomicU64::new(0),
         }
     }
 
@@ -100,6 +103,16 @@ impl File {
         *self.offset.lock() = off;
     }
 
+    /// A counter bumped every time a read consumes data from this description.
+    ///
+    /// Edge-triggered `epoll` uses it to tell a genuinely new arrival from data
+    /// that was already reported and never read. Polling alone cannot: between a
+    /// reader draining the object and the next byte arriving, nothing observes the
+    /// not-ready state in between.
+    pub fn read_generation(&self) -> u64 {
+        self.read_generation.load(core::sync::atomic::Ordering::Acquire)
+    }
+
     /// Sequential read, advancing the cursor.
     pub fn read(&self, buf: &mut [u8]) -> Result<usize> {
         if !self.readable() {
@@ -114,6 +127,10 @@ impl File {
         // `dup`ed fd.
         let off = *self.offset.lock();
         let n = self.inode.read(off, buf, nonblock)?;
+        if n > 0 {
+            self.read_generation
+                .fetch_add(1, core::sync::atomic::Ordering::AcqRel);
+        }
         let mut cursor = self.offset.lock();
         *cursor = off + n;
         Ok(n)
