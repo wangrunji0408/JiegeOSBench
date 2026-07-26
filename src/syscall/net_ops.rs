@@ -8,35 +8,21 @@ use crate::{bail, task};
 use alloc::sync::Arc;
 
 /// Extract the socket behind an fd.
-fn get_socket(fd: i32) -> Result<(Arc<File>, Arc<Socket>)> {
+///
+/// The returned `Arc<File>` keeps the inode — and therefore the `Socket` — alive
+/// for as long as the caller holds it, so the borrow is safe across blocking
+/// operations.
+fn get_socket(fd: i32) -> Result<(Arc<File>, &'static Socket)> {
     let file = task::current().files.lock().get_or_err(fd)?;
     let socket = file
         .inode
         .as_any()
         .downcast_ref::<Socket>()
         .ok_or(crate::err!(ENOTSOCK))?;
-    // Re-derive an owning Arc from the inode so callers can hold it across
-    // blocking operations.
-    let arc = file
-        .inode
-        .clone()
-        .as_any()
-        .downcast_ref::<Socket>()
-        .map(|_| unsafe { arc_from_inode(&file.inode) })
-        .ok_or(crate::err!(ENOTSOCK))?;
-    let _ = socket;
-    Ok((file, arc))
-}
-
-/// Recover an `Arc<Socket>` from an `Arc<dyn Inode>` known to hold a `Socket`.
-///
-/// # Safety
-/// The caller must have verified via `downcast_ref` that the inode is a
-/// `Socket`; this only re-types the pointer, preserving the refcount.
-unsafe fn arc_from_inode(inode: &crate::fs::InodeRef) -> Arc<Socket> {
-    let cloned = inode.clone();
-    let raw = Arc::into_raw(cloned) as *const Socket;
-    Arc::from_raw(raw)
+    // Extend the borrow to 'static: the `Arc<File>` we return owns the inode, so
+    // the referent outlives every use in this module.
+    let socket: &'static Socket = unsafe { &*(socket as *const Socket) };
+    Ok((file, socket))
 }
 
 pub fn sys_socket(domain: u32, ty: u32, _protocol: u32) -> Result<isize> {
