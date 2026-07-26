@@ -670,16 +670,33 @@ impl Socket {
         loop {
             stack::poll();
             let outcome = stack::with_tcp(handle, |socket| {
-                if !socket.may_send() {
-                    SendOutcome::Broken
-                } else if socket.can_send() {
-                    match socket.send_slice(buf) {
-                        Ok(0) => SendOutcome::WouldBlock,
-                        Ok(n) => SendOutcome::Sent(n),
-                        Err(_) => SendOutcome::Broken,
+                // `may_send` is false in states where the local side has already
+                // sent a FIN, and also — importantly — before the handshake
+                // completes and in TIME_WAIT. Only treat states from which no
+                // further data can ever flow as broken; a socket that is merely
+                // not yet ready should block instead, or nginx sees a spurious
+                // EPIPE mid-response and aborts the connection.
+                match socket.state() {
+                    tcp::State::Closed
+                    | tcp::State::Closing
+                    | tcp::State::LastAck
+                    | tcp::State::FinWait1
+                    | tcp::State::FinWait2
+                    | tcp::State::TimeWait => SendOutcome::Broken,
+                    tcp::State::Established | tcp::State::CloseWait => {
+                        // CloseWait means the peer sent FIN but we may still send.
+                        if socket.can_send() {
+                            match socket.send_slice(buf) {
+                                Ok(0) => SendOutcome::WouldBlock,
+                                Ok(n) => SendOutcome::Sent(n),
+                                Err(_) => SendOutcome::Broken,
+                            }
+                        } else {
+                            SendOutcome::WouldBlock
+                        }
                     }
-                } else {
-                    SendOutcome::WouldBlock
+                    // SYN-SENT / SYN-RECEIVED / LISTEN: not ready yet.
+                    _ => SendOutcome::WouldBlock,
                 }
             })
             .ok_or(fs::Error::new(fs::errno::ENETDOWN))?;
