@@ -552,6 +552,7 @@ fn epoll_wait_inner(
         .downcast_ref::<EpollInstance>()
         .ok_or(crate::err!(EINVAL))?;
 
+    let mut spins = 0usize;
     loop {
         crate::net::poll();
         let ready = instance.collect(max_events);
@@ -569,6 +570,15 @@ fn epoll_wait_inner(
         }
         if task::has_pending_signal() {
             bail!(EINTR);
+        }
+        spins += 1;
+        if crate::console::trace_enabled() && spins % 200_000 == 0 {
+            crate::println!(
+                "\x1b[90m[epoll]\x1b[0m fd={} spinning {} times with {} watches",
+                epfd,
+                spins,
+                instance.entries.lock().len(),
+            );
         }
         task::yield_now();
     }
