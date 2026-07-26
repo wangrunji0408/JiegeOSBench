@@ -553,7 +553,17 @@ impl Socket {
             // Read the smoltcp state without holding our own lock, so the closure
             // stays free of lock-ordering hazards.
             let outcome = stack::with_tcp(handle, |socket| {
-                if socket.can_recv() {
+                // Gate on the queue length, not `can_recv()`.
+                //
+                // smoltcp's `can_recv` is false whenever `may_recv` is false, and
+                // `may_recv` goes false as soon as the peer sends FIN — so data
+                // already sitting in the receive buffer becomes invisible the
+                // moment the connection is half-closed. `recv_slice` still
+                // returns it. Gating on `can_recv` silently swallows the last
+                // request on every keep-alive connection: the kernel ACKs the
+                // bytes, so the peer believes they were delivered, and both sides
+                // wait until a timeout.
+                if socket.recv_queue() > 0 {
                     let result = if peek {
                         socket.peek_slice(buf)
                     } else {
@@ -960,7 +970,11 @@ impl Inode for Socket {
                         // return EOF so the reader learns the peer is done. An
                         // idle established connection is *not* readable — saying
                         // it is would spin nginx's event loop.
-                        s.can_recv()
+                        //
+                        // Use `recv_queue`, not `can_recv`: the latter reports
+                        // false once the peer has sent FIN, hiding data that is
+                        // still buffered and readable.
+                        s.recv_queue() > 0
                             || matches!(
                                 s.state(),
                                 tcp::State::CloseWait
