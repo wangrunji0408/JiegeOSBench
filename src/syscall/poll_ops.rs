@@ -353,27 +353,28 @@ impl EpollInstance {
                 }
             }
 
-            // Edge-triggered: report only readiness that is newly set, and clear
-            // the memory of any bit that has since gone away — that is the edge.
+            if ready == 0 {
+                entry.last_reported = 0;
+                continue;
+            }
+
+            // Edge-triggered: report only readiness that is newly set.
             //
-            // The clearing matters as much as the suppression. A socket usually
-            // stays writable, so `ready` is never empty; if we only forgot old
-            // state when `ready` hit zero, the remembered EPOLLIN would make
-            // every subsequent arrival look already-reported and the connection
-            // would stall until some other event woke the loop.
+            // Dropping bits that have gone away matters as much as suppressing
+            // the ones that haven't. A connected socket stays writable, so
+            // `ready` is essentially never empty; if `last_reported` were only
+            // cleared when `ready` hit zero, a remembered EPOLLIN would make
+            // every later arrival look already-reported, and the connection
+            // would stall until some unrelated event woke the loop. Masking
+            // first forgets EPOLLIN as soon as the socket is drained, so the
+            // next arrival is a fresh edge.
             if entry.events & EPOLLET != 0 {
-                entry.last_reported &= ready;
-                let fresh = ready & !entry.last_reported;
+                let remembered = entry.last_reported & ready;
+                let fresh = ready & !remembered;
                 entry.last_reported = ready;
                 if fresh == 0 {
                     continue;
                 }
-            } else if ready == 0 {
-                continue;
-            }
-
-            if ready == 0 {
-                continue;
             }
 
             out.push(EpollEvent {
