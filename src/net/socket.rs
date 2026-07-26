@@ -1036,18 +1036,19 @@ impl Inode for Socket {
                 }
             }
         };
-        if crate::console::trace_enabled() {
-            let (q, st) = stack::with_tcp(handle.unwrap_or_default(), |s| {
-                (s.recv_queue(), s.state())
-            })
-            .unwrap_or((0, tcp::State::Closed));
-            if q > 0 && !result {
-                crate::println!(
-                    "\x1b[33m[bug]\x1b[0m poll_readable=false but queue={} state={:?} sock={:?}",
-                    q,
-                    st,
-                    state
-                );
+        if crate::console::trace_enabled() && !result {
+            if let Some(h) = handle {
+                let (q, st) =
+                    stack::with_tcp(h, |s| (s.recv_queue(), s.state())).unwrap_or((0, tcp::State::Closed));
+                if q > 0 {
+                    crate::println!(
+                        "\x1b[33m[bug]\x1b[0m ino={} poll_readable=false but queue={} tcp={:?} sock={:?}",
+                        self.ino,
+                        q,
+                        st,
+                        state
+                    );
+                }
             }
         }
         result
