@@ -234,12 +234,17 @@ pub fn sys_pselect6(
 // epoll
 // ---------------------------------------------------------------------------
 
-/// `struct epoll_event`. The riscv64 ABI packs this to 12 bytes, so it must be
-/// `repr(packed)` — getting this wrong misaligns every event nginx reads.
-#[repr(C, packed)]
+/// `struct epoll_event`.
+///
+/// Only x86 packs this struct; on riscv64 (and every other architecture) it is
+/// naturally aligned, so `data` sits at offset 8 and the whole thing is 16 bytes.
+/// Getting this wrong truncates every pointer nginx stores in `data`, which
+/// shows up as a segfault deep in its event loop rather than as a bad syscall.
+#[repr(C)]
 #[derive(Clone, Copy, Default)]
 struct EpollEvent {
     events: u32,
+    _pad: u32,
     data: u64,
 }
 
@@ -336,6 +341,7 @@ impl EpollInstance {
 
             out.push(EpollEvent {
                 events: ready,
+                _pad: 0,
                 data: entry.data,
             });
 
