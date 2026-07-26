@@ -1021,6 +1021,31 @@ impl Inode for Socket {
         .unwrap_or(false)
     }
 
+    fn poll_rdhup(&self) -> bool {
+        let inner = self.inner.lock();
+        let Some(handle) = inner.handle else {
+            return false;
+        };
+        if self.kind != SocketKind::Tcp {
+            return false;
+        }
+        drop(inner);
+        stack::with_tcp(handle, |s| {
+            // The peer has sent FIN: no more data will arrive, but we may still
+            // write. This is the state nginx uses to decide it can stop waiting
+            // for more request bytes while still sending the response.
+            matches!(
+                s.state(),
+                tcp::State::CloseWait
+                    | tcp::State::LastAck
+                    | tcp::State::Closing
+                    | tcp::State::TimeWait
+                    | tcp::State::Closed
+            )
+        })
+        .unwrap_or(false)
+    }
+
     fn poll_error(&self) -> bool {
         self.error.load(Ordering::Relaxed) != 0
     }

@@ -193,6 +193,10 @@ impl File {
         self.inode.poll_hangup()
     }
 
+    pub fn poll_rdhup(&self) -> bool {
+        self.inode.poll_rdhup()
+    }
+
     pub fn poll_error(&self) -> bool {
         self.inode.poll_error()
     }

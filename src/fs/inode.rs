@@ -188,9 +188,17 @@ pub trait Inode: Send + Sync {
         true
     }
 
-    /// Has the peer hung up / reached EOF? (For pipes and sockets.)
+    /// Is the connection fully torn down in both directions? (`EPOLLHUP`)
     fn poll_hangup(&self) -> bool {
         false
+    }
+
+    /// Has the peer closed its sending half? (`EPOLLRDHUP` / `POLLRDHUP`)
+    ///
+    /// Distinct from [`poll_hangup`]: a peer that has sent FIN is done sending,
+    /// but the local side can still write a reply.
+    fn poll_rdhup(&self) -> bool {
+        self.poll_hangup()
     }
 
     /// Is there an error condition pending?

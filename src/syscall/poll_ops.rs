@@ -52,9 +52,9 @@ fn check_events(file: &Arc<File>, requested: u16) -> u16 {
     }
     if file.poll_hangup() {
         revents |= POLLHUP;
-        if requested & POLLRDHUP != 0 {
-            revents |= POLLRDHUP;
-        }
+    }
+    if requested & POLLRDHUP != 0 && file.poll_rdhup() {
+        revents |= POLLRDHUP;
     }
     revents
 }
@@ -348,9 +348,9 @@ impl EpollInstance {
             }
             if file.poll_hangup() {
                 ready |= EPOLLHUP;
-                if entry.events & EPOLLRDHUP != 0 {
-                    ready |= EPOLLRDHUP;
-                }
+            }
+            if entry.events & EPOLLRDHUP != 0 && file.poll_rdhup() {
+                ready |= EPOLLRDHUP;
             }
 
             // Edge-triggered: report only the bits that have newly become set.
