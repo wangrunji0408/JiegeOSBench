@@ -45,6 +45,12 @@ const HDR_SIZE: usize = core::mem::size_of::<VirtioNetHdr>();
 const _: () = assert!(HDR_SIZE == 12, "virtio 1.0 net header is 12 bytes");
 
 /// A buffer used for a queued RX or TX request: the header followed by the frame.
+///
+/// Buffers are allocated once at initialization and reused for the life of the
+/// device. Allocating per frame would work, but it puts the device's DMA target
+/// at the mercy of the kernel allocator's reuse decisions on a hot path — a
+/// buffer freed while a descriptor still referenced it would be silently
+/// overwritten. Owning them outright makes that impossible.
 struct Buffer {
     data: Box<[u8; BUFFER_SIZE]>,
 }
