@@ -578,40 +578,6 @@ fn epoll_wait_inner(
             bail!(EINTR);
         }
         spins += 1;
-        if crate::console::trace_enabled() && spins % 100_000 == 0 {
-            let watches: alloc::vec::Vec<(i32, u32)> = instance
-                .entries
-                .lock()
-                .iter()
-                .map(|(&fd, e)| (fd, e.events))
-                .collect();
-            let mut detail = alloc::string::String::new();
-            for (fd, events) in &watches {
-                let queued = task
-                    .files
-                    .lock()
-                    .get(*fd)
-                    .and_then(|f| {
-                        f.inode
-                            .as_any()
-                            .downcast_ref::<crate::net::socket::Socket>()
-                            .map(|s| s.available())
-                    })
-                    .unwrap_or(0);
-                detail.push_str(&alloc::format!(
-                    "fd{}(ev{:#x},q{}) ",
-                    fd,
-                    events,
-                    queued
-                ));
-            }
-            crate::println!(
-                "\x1b[90m[epoll]\x1b[0m spin {} on epfd {}: {}",
-                spins,
-                epfd,
-                detail
-            );
-        }
         task::yield_now();
     }
 }
