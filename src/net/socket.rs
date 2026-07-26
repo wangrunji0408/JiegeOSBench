@@ -966,26 +966,45 @@ impl Inode for Socket {
         // Poll the stack so readiness reflects freshly arrived data. `epoll_wait`
         // and `poll` depend on this being current.
         stack::poll();
-        let inner = self.inner.lock();
-        if inner.inert {
+
+        // Copy what we need out of `inner` and drop the lock before touching the
+        // network stack: holding both at once risks a lock-order inversion
+        // against the paths that go the other way.
+        let (inert, state, handle, pool) = {
+            let inner = self.inner.lock();
+            (
+                inner.inert,
+                inner.state,
+                inner.handle,
+                if inner.state == SockState::Listening {
+                    inner.pool.clone()
+                } else {
+                    Vec::new()
+                },
+            )
+        };
+
+        if inert {
             // Never ready: an inert listener would otherwise wake nginx's event
             // loop for an `accept` that always returns EAGAIN.
             return false;
         }
-        match inner.state {
-            SockState::Listening => {
-                let pool = inner.pool.clone();
-                drop(inner);
-                pool.iter().any(|&h| {
-                    stack::with_tcp(h, |s| s.is_active() && (s.may_recv() || s.may_send()))
-                        .unwrap_or(false)
+
+        match state {
+            SockState::Listening => pool.iter().any(|&h| {
+                stack::with_tcp(h, |s| {
+                    s.is_active()
+                        && !matches!(
+                            s.state(),
+                            tcp::State::Listen | tcp::State::SynSent | tcp::State::SynReceived
+                        )
                 })
-            }
+                .unwrap_or(false)
+            }),
             _ => {
-                let Some(handle) = inner.handle else {
+                let Some(handle) = handle else {
                     return false;
                 };
-                drop(inner);
                 match self.kind {
                     SocketKind::Tcp => stack::with_tcp(handle, |s| {
                         // Readable when data is buffered, or when a read would
