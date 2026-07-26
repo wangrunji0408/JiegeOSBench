@@ -25,8 +25,13 @@ impl Write for Stdout {
 }
 
 pub fn print_fmt(args: fmt::Arguments) {
-    let _guard = CONSOLE_LOCK.lock();
-    let _ = Stdout.write_fmt(args);
+    // Interrupts must stay off while we hold the lock: the timer and virtio
+    // handlers also print, and `spin::Mutex` is not reentrant, so an interrupt
+    // taken here would deadlock against us.
+    crate::trap::without_interrupts(|| {
+        let _guard = CONSOLE_LOCK.lock();
+        let _ = Stdout.write_fmt(args);
+    });
 }
 
 /// Print without taking the lock — used from the panic path, where the lock may
@@ -37,12 +42,14 @@ pub fn print_fmt_nolock(args: fmt::Arguments) {
 
 /// Write raw bytes (used by the tty device for user-space writes).
 pub fn write_bytes(bytes: &[u8]) {
-    let _guard = CONSOLE_LOCK.lock();
-    if !sbi::console_write(bytes) {
-        for &b in bytes {
-            sbi::console_putchar(b);
+    crate::trap::without_interrupts(|| {
+        let _guard = CONSOLE_LOCK.lock();
+        if !sbi::console_write(bytes) {
+            for &b in bytes {
+                sbi::console_putchar(b);
+            }
         }
-    }
+    });
 }
 
 #[macro_export]
