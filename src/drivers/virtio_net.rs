@@ -87,6 +87,7 @@ pub struct VirtioNet {
     pub rx_packets: usize,
     pub tx_packets: usize,
     pub rx_dropped: usize,
+    pub tx_dropped: usize,
 }
 
 static DEVICE: Mutex<Option<VirtioNet>> = Mutex::new(None);
@@ -134,6 +135,7 @@ pub fn init(transport: MmioTransport) -> Result<(), &'static str> {
         rx_packets: 0,
         tx_packets: 0,
         rx_dropped: 0,
+        tx_dropped: 0,
     };
 
     // Post RX buffers before telling the device we are ready.
@@ -234,8 +236,26 @@ impl VirtioNet {
         }
         self.collect_tx();
         if self.tx_queue.free_count() < 1 {
-            // Queue full: drop. TCP will retransmit.
-            return false;
+            // The queue is full and nothing has completed yet. Dropping here
+            // would be silently lossy: smoltcp treats a consumed TxToken as sent
+            // and advances its send window, so the segment is gone rather than
+            // retransmitted promptly, and the connection stalls until the peer's
+            // retransmit timer fires seconds later.
+            //
+            // Spin briefly for a completion instead. The device drains the queue
+            // in microseconds, so this is a much shorter wait than the stall it
+            // avoids, and it cannot deadlock: we hold no lock the device needs.
+            for _ in 0..10_000 {
+                core::hint::spin_loop();
+                self.collect_tx();
+                if self.tx_queue.free_count() >= 1 {
+                    break;
+                }
+            }
+            if self.tx_queue.free_count() < 1 {
+                self.tx_dropped += 1;
+                return false;
+            }
         }
         let mut buffer = self.tx_free.pop().unwrap_or_else(Buffer::new);
         // Clear the header and copy the frame in after it.
@@ -328,7 +348,8 @@ pub fn has_pending_rx() -> bool {
     }
 }
 
-/// (rx_packets, tx_packets, rx_dropped)
-pub fn stats() -> (usize, usize, usize) {
-    with_device(|d| (d.rx_packets, d.tx_packets, d.rx_dropped)).unwrap_or((0, 0, 0))
+/// (rx_packets, tx_packets, rx_dropped, tx_dropped)
+pub fn stats() -> (usize, usize, usize, usize) {
+    with_device(|d| (d.rx_packets, d.tx_packets, d.rx_dropped, d.tx_dropped))
+        .unwrap_or((0, 0, 0, 0))
 }
