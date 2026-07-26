@@ -456,6 +456,12 @@ pub fn sys_epoll_ctl(epfd: i32, op: u32, fd: i32, event_ptr: usize) -> Result<is
                     bail!(EEXIST);
                 }
             }
+            crate::trace!(
+                "epoll_ctl ADD fd={} events={:#x}{}",
+                fd,
+                event.events,
+                if event.events & EPOLLET != 0 { " [ET]" } else { "" }
+            );
             entries.insert(
                 fd,
                 EpollEntry {
