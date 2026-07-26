@@ -283,6 +283,15 @@ const FIONBIO: usize = 0x5421;
 const FIONREAD: usize = 0x541b;
 const FIOCLEX: usize = 0x5451;
 const FIONCLEX: usize = 0x5450;
+/// Request SIGIO on readiness. We never generate it, but nginx sets it on its
+/// channel descriptors and treats a failure as fatal, so accept it.
+const FIOASYNC: usize = 0x5452;
+/// Owner of SIGIO/SIGURG delivery.
+const FIOSETOWN: usize = 0x8901;
+const FIOGETOWN: usize = 0x8903;
+const SIOCGPGRP: usize = 0x8904;
+const SIOCSPGRP: usize = 0x8902;
+const SIOCATMARK: usize = 0x8905;
 
 pub fn sys_ioctl(fd: i32, cmd: usize, arg: usize) -> Result<isize> {
     let task = task::current();
@@ -316,6 +325,31 @@ pub fn sys_ioctl(fd: i32, cmd: usize, arg: usize) -> Result<isize> {
         }
         FIONCLEX => {
             task.files.lock().set_cloexec(fd, false)?;
+            return Ok(0);
+        }
+        // Signal-driven I/O: accepted and recorded in the flags, but we never
+        // raise SIGIO. Programs that ask for it also poll, so this is safe.
+        FIOASYNC => {
+            let on: u32 = uaccess::read(arg)?;
+            let mut flags = file.flags.lock();
+            // O_ASYNC is 0o20000 on the generic ABI.
+            const O_ASYNC: u32 = 0o20000;
+            let bits = if on != 0 {
+                flags.bits() | O_ASYNC
+            } else {
+                flags.bits() & !O_ASYNC
+            };
+            *flags = OpenFlags::from_bits_truncate(bits);
+            return Ok(0);
+        }
+        FIOSETOWN | SIOCSPGRP => return Ok(0),
+        FIOGETOWN | SIOCGPGRP => {
+            uaccess::write(arg, task.pgid() as i32)?;
+            return Ok(0);
+        }
+        // No out-of-band data, ever.
+        SIOCATMARK => {
+            uaccess::write(arg, 0i32)?;
             return Ok(0);
         }
         _ => {}
