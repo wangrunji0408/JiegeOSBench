@@ -116,6 +116,9 @@ pub fn sys_mmap(
             Backing::File {
                 file: file.clone(),
                 offset,
+                // A plain `mmap` reads the whole file; the kernel already stops
+                // at EOF, so the limit only has to not truncate anything.
+                limit: usize::MAX,
             },
             "[file]",
         )

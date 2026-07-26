@@ -47,7 +47,18 @@ pub enum Backing {
     /// Zero-filled anonymous memory.
     Anon,
     /// Contents read from a file at `offset + (va - start)`.
-    File { file: Arc<File>, offset: usize },
+    File {
+        file: Arc<File>,
+        offset: usize,
+        /// Hard limit: never read at or past this file offset; the remainder of
+        /// the page reads as zero.
+        ///
+        /// ELF segments are not page aligned, so the last page of a segment's
+        /// file-backed part usually extends past `p_filesz` into the `.bss`.
+        /// Reading the file that far would splice whatever section follows in the
+        /// image (typically `.riscv.attributes`) into the program's zeroed data.
+        limit: usize,
+    },
 }
 
 /// A virtual memory area.
@@ -178,6 +189,7 @@ impl AddrSpace {
         }
 
         // Tear down the page table entries and release the frames.
+        // (`limit` is an absolute file offset, so splitting leaves it unchanged.)
         let mut va = start;
         while va < end {
             if let Some(pa) = self.page_table.unmap(va) {
@@ -335,12 +347,20 @@ impl AddrSpace {
         let Some(pa) = frame::alloc_frame() else {
             return false;
         };
-        if let Backing::File { file, offset } = &vma.backing {
+        if let Backing::File {
+            file,
+            offset,
+            limit,
+        } = &vma.backing
+        {
             let file_off = offset + (va - vma.start);
-            let buf = unsafe { phys_slice(pa, PAGE_SIZE) };
-            // Short reads are fine: the tail of the last page stays zero, which
-            // is exactly what ELF `p_memsz > p_filesz` needs.
-            let _ = file.read_at(file_off, buf);
+            if file_off < *limit {
+                // Read no further than the limit, so bytes belonging to the
+                // segment's zero-filled tail stay zero.
+                let want = (*limit - file_off).min(PAGE_SIZE);
+                let buf = unsafe { phys_slice(pa, want) };
+                let _ = file.read_at(file_off, buf);
+            }
         }
         self.page_table.map(va, pa, vma.prot.pte_flags());
         flush_tlb_page(va);

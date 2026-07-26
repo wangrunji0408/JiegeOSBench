@@ -210,6 +210,10 @@ fn map_segments(
                 Backing::File {
                     file: file.clone(),
                     offset: file_offset,
+                    // Stop exactly at the end of this segment's file data. The
+                    // last page usually straddles `p_filesz`, and the bytes past
+                    // it belong to the segment's zero-filled tail, not the file.
+                    limit: (ph.offset + ph.filesz) as usize,
                 },
                 false,
                 name,
