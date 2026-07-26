@@ -1009,10 +1009,14 @@ impl Inode for Socket {
         }
         drop(inner);
         stack::with_tcp(handle, |s| {
-            matches!(
-                s.state(),
-                tcp::State::Closed | tcp::State::CloseWait | tcp::State::TimeWait
-            )
+            // `EPOLLHUP` means *both* directions are done — the connection is
+            // fully torn down. A peer that has only sent FIN is `CloseWait`, and
+            // reporting HUP there tells nginx the connection is dead when it can
+            // still write the response; it closes the keep-alive connection
+            // instead of serving the request it just read. That half-closed state
+            // is what `EPOLLRDHUP` is for, and `poll_readable` already reports
+            // the readable-EOF that goes with it.
+            matches!(s.state(), tcp::State::Closed | tcp::State::TimeWait)
         })
         .unwrap_or(false)
     }
