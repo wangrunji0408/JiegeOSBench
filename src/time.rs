@@ -25,9 +25,24 @@ fn schedule_next() {
 }
 
 pub fn on_timer_tick() {
-    TICKS.fetch_add(1, Ordering::Relaxed);
+    let ticks = TICKS.fetch_add(1, Ordering::Relaxed) + 1;
     schedule_next();
     crate::task::on_tick();
+    crate::syscall::misc_ops::check_itimers();
+
+    // Periodic health line, for diagnosing a stalled network or scheduler.
+    if crate::console::trace_enabled() && ticks % (TICK_HZ * 3) == 0 {
+        let (rx, tx, dropped) = crate::drivers::virtio_net::stats();
+        crate::println!(
+            "\x1b[90m[health]\x1b[0m t={}s rx={} tx={} drop={} switches={} tasks={}",
+            ticks / TICK_HZ,
+            rx,
+            tx,
+            dropped,
+            crate::task::context_switches(),
+            crate::task::all_tasks().len(),
+        );
+    }
 }
 
 /// Nanoseconds since boot.
