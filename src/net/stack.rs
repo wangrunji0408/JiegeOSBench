@@ -212,35 +212,44 @@ pub fn poll_and_yield() {
     poll();
 }
 
+/// Ports currently claimed by a bound or listening socket.
+///
+/// smoltcp doesn't expose a way to enumerate listening endpoints, so we track
+/// the allocation ourselves. `bind` claims a port and `Socket::drop` releases it.
+static BOUND_PORTS: Mutex<alloc::collections::BTreeSet<u16>> =
+    Mutex::new(alloc::collections::BTreeSet::new());
+
+/// Claim `port`. Returns false if it is already taken.
+pub fn claim_port(port: u16) -> bool {
+    BOUND_PORTS.lock().insert(port)
+}
+
+pub fn release_port(port: u16) {
+    BOUND_PORTS.lock().remove(&port);
+}
+
+pub fn is_port_bound(port: u16) -> bool {
+    BOUND_PORTS.lock().contains(&port)
+}
+
 /// A free ephemeral port. smoltcp needs us to pick one for `connect` and for
 /// `bind(0)`.
 pub fn ephemeral_port() -> u16 {
     use core::sync::atomic::{AtomicU16, Ordering};
     static NEXT: AtomicU16 = AtomicU16::new(32768);
-    loop {
+    for _ in 0..(60999 - 32768) {
         let port = NEXT.fetch_add(1, Ordering::Relaxed);
         if port < 32768 {
             NEXT.store(32768, Ordering::Relaxed);
             continue;
         }
-        // Check the port isn't already in use by a listening or connected socket.
-        let in_use = with_stack(|stack| {
-            stack.sockets.iter().any(|(_, socket)| match socket {
-                smoltcp::socket::Socket::Tcp(s) => {
-                    // A listening socket reports its endpoint through
-                    // `local_endpoint` once bound, which covers both cases.
-                    s.local_endpoint().map(|e| e.port) == Some(port) || s.is_listening()
-                        && s.local_endpoint().map(|e| e.port) == Some(port)
-                }
-                smoltcp::socket::Socket::Udp(s) => s.endpoint().port == port,
-                _ => false,
-            })
-        })
-        .unwrap_or(false);
-        if !in_use {
+        if claim_port(port) {
             return port;
         }
     }
+    // Every ephemeral port is claimed; reuse the counter's value and let smoltcp
+    // reject the collision rather than spinning forever.
+    NEXT.load(Ordering::Relaxed)
 }
 
 /// Our IP address, for `getsockname` on an unbound socket.
