@@ -186,7 +186,7 @@ impl SignalState {
 
 /// `struct siginfo_t`. Only the fields handlers actually read are filled in.
 #[repr(C)]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct SigInfo {
     pub signo: i32,
     pub errno: i32,
@@ -196,6 +196,21 @@ pub struct SigInfo {
     pub uid: u32,
     pub status: i32,
     pub _pad: [u8; 92],
+}
+
+impl Default for SigInfo {
+    fn default() -> Self {
+        Self {
+            signo: 0,
+            errno: 0,
+            code: 0,
+            _pad0: 0,
+            pid: 0,
+            uid: 0,
+            status: 0,
+            _pad: [0; 92],
+        }
+    }
 }
 
 /// The frame we push on the user stack before entering a handler.

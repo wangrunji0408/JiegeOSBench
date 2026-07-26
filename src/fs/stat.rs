@@ -110,6 +110,7 @@ pub struct SysInfo {
 
 /// `struct utsname`.
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct UtsName {
     pub sysname: [u8; 65],
     pub nodename: [u8; 65],

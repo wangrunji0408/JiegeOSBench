@@ -180,6 +180,12 @@ impl Socket {
                 port: stack::ephemeral_port(),
             }
         } else {
+            // Claim the explicit port. SO_REUSEADDR lets a restarting server
+            // rebind a port left over from a socket that has since closed, which
+            // is exactly what nginx does on reload.
+            if !stack::claim_port(endpoint.port) && !self.reuseaddr.load(Ordering::Relaxed) {
+                bail!(EADDRINUSE);
+            }
             endpoint
         };
 
@@ -934,10 +940,29 @@ impl Drop for Socket {
             .into_iter()
             .chain(inner.pool.iter().copied())
             .collect();
+        // Release the bound port so a restarted listener can reclaim it. Only a
+        // socket that owns the binding (bound or listening) should do this — an
+        // accepted connection shares the listener's port.
+        let owned_port = match inner.state {
+            SockState::Bound | SockState::Listening => inner.local.as_ref().map(|a| a.port()),
+            SockState::Connecting | SockState::Connected | SockState::Closed => {
+                // A client socket owns its ephemeral local port, but an accepted
+                // one does not: it has no `listen_endpoint`.
+                if inner.listen_endpoint.is_some() {
+                    inner.local.as_ref().map(|a| a.port())
+                } else {
+                    None
+                }
+            }
+            SockState::Unbound => None,
+        };
         drop(inner);
         stack::poll();
         for handle in handles {
             stack::remove_socket(handle);
+        }
+        if let Some(port) = owned_port.filter(|&p| p != 0) {
+            stack::release_port(port);
         }
     }
 }
