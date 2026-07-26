@@ -115,6 +115,52 @@ pub fn init() {
         GATEWAY_IP,
         hw
     );
+
+    self_test();
+}
+
+/// Verify the driver can move frames before we hand the stack to user space.
+///
+/// Sends a gratuitous ARP announcement and waits briefly for any inbound frame.
+/// A silent device here means the problem is in the virtqueue plumbing, not in
+/// the socket layer — worth distinguishing loudly at boot.
+fn self_test() {
+    let Some(mac) = virtio_net::mac_address() else {
+        return;
+    };
+
+    // An ARP request for the gateway: 42 bytes, no padding needed (the device
+    // pads to the Ethernet minimum itself).
+    let mut frame = [0u8; 42];
+    frame[0..6].copy_from_slice(&[0xff; 6]); // broadcast
+    frame[6..12].copy_from_slice(&mac);
+    frame[12..14].copy_from_slice(&0x0806u16.to_be_bytes()); // ARP
+    frame[14..16].copy_from_slice(&1u16.to_be_bytes()); // Ethernet
+    frame[16..18].copy_from_slice(&0x0800u16.to_be_bytes()); // IPv4
+    frame[18] = 6; // hardware length
+    frame[19] = 4; // protocol length
+    frame[20..22].copy_from_slice(&1u16.to_be_bytes()); // request
+    frame[22..28].copy_from_slice(&mac);
+    frame[28..32].copy_from_slice(&GUEST_IP.0);
+    frame[32..38].copy_from_slice(&[0; 6]);
+    frame[38..42].copy_from_slice(&GATEWAY_IP.0);
+
+    let sent = virtio_net::transmit(&frame);
+    // Give the device up to 200 ms to answer.
+    let deadline = crate::time::monotonic_ms() + 200;
+    let mut got = None;
+    while crate::time::monotonic_ms() < deadline {
+        virtio_net::poll_device();
+        if let Some(reply) = virtio_net::receive() {
+            got = Some(reply.len());
+            break;
+        }
+    }
+    match (sent, got) {
+        (true, Some(len)) => crate::info!("network: link is up (ARP reply, {} bytes)", len),
+        (true, None) => crate::warn!("network: sent ARP but got no reply; RX path may be broken"),
+        (false, _) => crate::warn!("network: TX failed; virtqueue may be misconfigured"),
+    }
 }
 
 /// Run `f` with the stack locked.
