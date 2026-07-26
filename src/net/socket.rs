@@ -318,6 +318,9 @@ impl Socket {
     /// Returns the accepted socket, or `None` if nothing is pending.
     fn try_accept(&self) -> Option<Arc<Socket>> {
         let mut inner = self.inner.lock();
+        if inner.inert {
+            return None;
+        }
         let endpoint = inner.listen_endpoint?;
 
         let mut found = None;
@@ -979,7 +982,7 @@ impl Drop for Socket {
         // Release the bound port so a restarted listener can reclaim it. Only a
         // socket that owns the binding (bound or listening) should do this — an
         // accepted connection shares the listener's port.
-        if inner.state == SockState::Listening {
+        if inner.state == SockState::Listening && !inner.inert {
             if let Some(endpoint) = inner.listen_endpoint {
                 stack::release_listen_port(endpoint.port);
             }
