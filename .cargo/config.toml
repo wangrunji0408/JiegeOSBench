@@ -1,0 +1,9 @@
+[build]
+target = "riscv64gc-unknown-none-elf"
+
+[target.riscv64gc-unknown-none-elf]
+rustflags = [
+    "-Clink-arg=-Tkernel/linker.ld",
+    "-Cforce-frame-pointers=yes",
+    "-Ctarget-feature=+relax",
+]

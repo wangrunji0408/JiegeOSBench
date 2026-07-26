@@ -1,0 +1,28 @@
+[package]
+name = "jiege-kernel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+buddy_system_allocator = "0.9"
+bitflags = "2"
+spin = { version = "0.9", default-features = false, features = ["spin_mutex", "mutex", "lazy"] }
+log = "0.4"
+
+[dependencies.smoltcp]
+version = "0.11"
+default-features = false
+features = [
+    "alloc", "medium-ethernet",
+    "proto-ipv4", "proto-dhcpv4",
+    "socket-tcp", "socket-udp", "socket-icmp", "socket-raw", "socket-dhcpv4",
+]
+
+[profile.release]
+debug = true
+panic = "abort"
+opt-level = 2
+codegen-units = 1
+
+[profile.dev]
+panic = "abort"
