@@ -187,6 +187,10 @@ pub fn block_current() {
 }
 
 /// Save the current task with `state` and return to the idle loop.
+///
+/// Interrupts are masked only across the register switch. The idle loop
+/// re-enables them on arrival (it runs with them on), and when this task is
+/// later resumed we restore whatever state the caller had.
 fn switch_to_idle(state: TaskState) {
     let was_enabled = crate::trap::disable_interrupts();
     let task = current();
@@ -205,7 +209,8 @@ fn switch_to_idle(state: TaskState) {
         CONTEXT_SWITCHES.fetch_add(1, Ordering::Relaxed);
         crate::trap::__switch(task_cx_ptr, idle);
     }
-    // We are back: this task was rescheduled.
+    // We are back: this task was rescheduled by the idle loop, which masked
+    // interrupts across the switch. Restore the caller's state.
     crate::trap::restore_interrupts(was_enabled);
 }
 
