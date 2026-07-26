@@ -113,6 +113,15 @@ impl File {
         self.read_generation.load(core::sync::atomic::Ordering::Acquire)
     }
 
+    /// Record that data was consumed through a path other than [`File::read`] —
+    /// `recvfrom`, `recvmsg`, and `pread` all reach the object directly.
+    pub fn note_read(&self, bytes: usize) {
+        if bytes > 0 {
+            self.read_generation
+                .fetch_add(1, core::sync::atomic::Ordering::AcqRel);
+        }
+    }
+
     /// Sequential read, advancing the cursor.
     pub fn read(&self, buf: &mut [u8]) -> Result<usize> {
         if !self.readable() {
