@@ -923,9 +923,19 @@ impl Inode for Socket {
                 drop(inner);
                 match self.kind {
                     SocketKind::Tcp => stack::with_tcp(handle, |s| {
-                        // Readable when data is buffered, or at EOF so the
-                        // reader learns the peer closed.
-                        s.can_recv() || !s.may_recv()
+                        // Readable when data is buffered, or when a read would
+                        // return EOF so the reader learns the peer is done. An
+                        // idle established connection is *not* readable — saying
+                        // it is would spin nginx's event loop.
+                        s.can_recv()
+                            || matches!(
+                                s.state(),
+                                tcp::State::CloseWait
+                                    | tcp::State::LastAck
+                                    | tcp::State::Closing
+                                    | tcp::State::TimeWait
+                                    | tcp::State::Closed
+                            )
                     })
                     .unwrap_or(false),
                     SocketKind::Udp => stack::with_udp(handle, |s| s.can_recv()).unwrap_or(false),
