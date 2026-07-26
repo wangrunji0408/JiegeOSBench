@@ -393,12 +393,21 @@ impl EpollInstance {
                 // eligible to fire again the moment it returns.
                 observed.push((fd, ready));
                 if fresh == 0 {
+                    if ready != 0 && crate::console::trace_enabled() {
+                        crate::println!(
+                            "\x1b[33m[et]\x1b[0m fd={} suppressing {:#x}: already reported {:#x}",
+                            fd,
+                            ready,
+                            entry.last_reported
+                        );
+                    }
                     continue;
                 }
             } else if ready == 0 {
                 continue;
             }
 
+            let _ = fd;
             crate::trace!(
                 "epoll: fd={} reporting {:#x} (watching {:#x})",
                 fd,
