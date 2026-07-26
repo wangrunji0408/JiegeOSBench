@@ -210,20 +210,31 @@ fn switch_to_idle(state: TaskState) {
 }
 
 /// The idle loop: pick a task and run it, forever.
+///
+/// Interrupts are enabled while we are here, so timer and device IRQs are always
+/// serviced; each `__switch` into a task masks them only across the switch
+/// itself, and `task_entry` / `switch_to_idle` re-enable them on the far side.
 pub fn run() -> ! {
+    crate::trap::enable_interrupts();
     loop {
+        // Service the network stack every pass, so packets flow even when a
+        // busy task never blocks.
+        crate::net::poll();
+
         let next = READY.lock().pop_front();
         let Some(task) = next else {
             // Nothing to run. Reap dead tasks and wait for an interrupt.
             reap_zombies();
-            if ALL_TASKS.lock().iter().all(|t| t.is_zombie()) && !ALL_TASKS.lock().is_empty() {
+            let all = ALL_TASKS.lock();
+            if !all.is_empty() && all.iter().all(|t| t.is_zombie()) {
+                drop(all);
                 crate::info!("all tasks exited; shutting down");
                 crate::sbi::shutdown(false);
             }
-            crate::trap::enable_interrupts();
+            drop(all);
+            // `wfi` returns as soon as any interrupt is pending, and interrupts
+            // are enabled, so this cannot hang.
             crate::arch::wfi();
-            // Poll the network device: with no runnable task, nothing else will.
-            crate::net::poll();
             continue;
         };
 
@@ -235,7 +246,7 @@ pub fn run() -> ! {
             }
         }
 
-        crate::trap::disable_interrupts();
+        let was_enabled = crate::trap::disable_interrupts();
         task.set_state(TaskState::Runnable);
         let satp = task.aspace.lock().satp();
         crate::mm::page_table::activate(satp);
@@ -255,9 +266,7 @@ pub fn run() -> ! {
         unsafe {
             CURRENT = None;
         }
-        // Service the network stack between tasks so packets flow even when a
-        // busy task never blocks.
-        crate::net::poll();
+        crate::trap::restore_interrupts(was_enabled);
     }
 }
 
