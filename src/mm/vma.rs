@@ -152,6 +152,49 @@ impl AddrSpace {
         });
     }
 
+    /// Grow or shrink the VMA starting exactly at `start` to end at `new_end`,
+    /// without disturbing the pages already populated inside it.
+    ///
+    /// This is what `brk` and an in-place `mremap` need: `map_region` would
+    /// unmap the old range first and throw away the program's live heap.
+    ///
+    /// Returns false if no VMA starts at `start`.
+    pub fn resize_vma(&mut self, start: usize, new_end: usize) -> bool {
+        let new_end = page_up(new_end);
+        let Some(vma) = self.areas.get_mut(&start) else {
+            return false;
+        };
+        let old_end = vma.end;
+        if new_end == old_end {
+            return true;
+        }
+        // Don't let a resize swallow a neighbour.
+        if new_end > old_end {
+            let blocked = self
+                .areas
+                .range(old_end..new_end)
+                .next()
+                .map(|(&k, _)| k)
+                .is_some();
+            if blocked {
+                return false;
+            }
+        }
+        self.areas.get_mut(&start).unwrap().end = new_end;
+        // Shrinking releases the pages above the new end.
+        if new_end < old_end {
+            let mut va = new_end;
+            while va < old_end {
+                if let Some(pa) = self.page_table.unmap(va) {
+                    frame::decref(pa);
+                }
+                va += PAGE_SIZE;
+            }
+            flush_tlb_all();
+        }
+        true
+    }
+
     /// Remove all mappings in `[start, end)`, splitting VMAs as needed.
     pub fn unmap_range(&mut self, start: usize, end: usize) {
         let start = page_down(start);

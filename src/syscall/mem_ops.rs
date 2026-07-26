@@ -51,31 +51,13 @@ pub fn sys_brk(new_brk: usize) -> Result<isize> {
         return Ok(aspace.brk as isize);
     }
 
-    let old = aspace.brk;
     let start = aspace.brk_start;
-    if new_brk > old {
-        // Grow: extend the heap VMA.
-        aspace.map_region(
-            start,
-            mm::page_up(new_brk),
-            Prot::READ | Prot::WRITE,
-            Backing::Anon,
-            false,
-            "[heap]",
-        );
-    } else if new_brk < old {
-        // Shrink: release the pages above the new break.
-        aspace.unmap_range(mm::page_up(new_brk), mm::page_up(old));
-        if new_brk > start {
-            aspace.map_region(
-                start,
-                mm::page_up(new_brk),
-                Prot::READ | Prot::WRITE,
-                Backing::Anon,
-                false,
-                "[heap]",
-            );
-        }
+    // Resize the heap VMA in place. Using `map_region` here would unmap the old
+    // range first and discard everything the program has allocated.
+    if !aspace.resize_vma(start, mm::page_up(new_brk)) {
+        // No heap VMA yet (or something is in the way): report the old break,
+        // which tells malloc to fall back to mmap.
+        return Ok(aspace.brk as isize);
     }
     aspace.brk = new_brk;
     Ok(new_brk as isize)
