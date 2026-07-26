@@ -38,6 +38,9 @@ const DEFAULT_TX_BUFFER: usize = 64 * 1024;
 /// How many smoltcp sockets a listener keeps parked on its endpoint.
 const LISTEN_POOL: usize = 16;
 
+/// Sockets whose `poll_readable` was consulted, for diagnosing lost wakeups.
+pub static POLL_READABLE_CALLS: AtomicUsize = AtomicUsize::new(0);
+
 /// What kind of socket this is.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum SocketKind {

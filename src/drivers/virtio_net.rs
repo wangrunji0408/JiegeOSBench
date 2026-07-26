@@ -167,18 +167,27 @@ pub fn init(transport: MmioTransport) -> Result<(), &'static str> {
 impl VirtioNet {
     /// Post as many RX buffers as the queue will hold.
     fn refill_rx(&mut self) {
+        let mut posted = 0;
         while self.rx_queue.free_count() >= 1 {
             let buffer = Buffer::new();
             let addr = buffer.addr();
             // The whole buffer is device-writable: header plus frame.
             match self.rx_queue.add(&[], &[(addr, BUFFER_SIZE)]) {
                 Some(head) => {
+                    debug_assert!(
+                        self.rx_buffers[head as usize].is_none(),
+                        "reposting a descriptor whose buffer is still owned by the device",
+                    );
                     self.rx_buffers[head as usize] = Some(buffer);
+                    posted += 1;
                 }
                 None => break,
             }
         }
-        self.transport.notify(RX_QUEUE);
+        // Only notify when we actually handed the device something new.
+        if posted > 0 {
+            self.transport.notify(RX_QUEUE);
+        }
     }
 
     /// Collect completed RX descriptors into `rx_ready`.
