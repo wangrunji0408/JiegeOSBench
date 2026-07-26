@@ -557,6 +557,11 @@ impl Socket {
                     // No buffered data. Whether that is EOF or "not yet" depends
                     // on the connection state; getting this wrong turns an idle
                     // keep-alive connection into a spurious EOF.
+                    crate::trace!(
+                        "recv_tcp: no data, tcp state {:?}, sock state {:?}",
+                        socket.state(),
+                        self.inner.lock().state,
+                    );
                     match socket.state() {
                         // The peer sent FIN and we have drained the buffer.
                         tcp::State::CloseWait
