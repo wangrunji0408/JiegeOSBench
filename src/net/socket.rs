@@ -553,16 +553,28 @@ impl Socket {
                         Ok(n) => RecvOutcome::Data(n),
                         Err(_) => RecvOutcome::Eof,
                     }
-                } else if !socket.may_recv() {
-                    // Peer closed (FIN) or the connection is gone.
-                    match socket.state() {
-                        tcp::State::Closed if self.state() == SockState::Connected => {
-                            RecvOutcome::Reset
-                        }
-                        _ => RecvOutcome::Eof,
-                    }
                 } else {
-                    RecvOutcome::WouldBlock
+                    // No buffered data. Whether that is EOF or "not yet" depends
+                    // on the connection state; getting this wrong turns an idle
+                    // keep-alive connection into a spurious EOF.
+                    match socket.state() {
+                        // The peer sent FIN and we have drained the buffer.
+                        tcp::State::CloseWait
+                        | tcp::State::LastAck
+                        | tcp::State::Closing
+                        | tcp::State::TimeWait => RecvOutcome::Eof,
+                        tcp::State::Closed => {
+                            // An established connection that reached Closed
+                            // without a FIN was reset.
+                            if self.state() == SockState::Connected {
+                                RecvOutcome::Reset
+                            } else {
+                                RecvOutcome::Eof
+                            }
+                        }
+                        // Established (idle keep-alive), or still handshaking.
+                        _ => RecvOutcome::WouldBlock,
+                    }
                 }
             })
             .ok_or(fs::Error::new(fs::errno::ENETDOWN))?;
