@@ -177,6 +177,10 @@ impl VirtioNet {
 
     /// Collect completed RX descriptors into `rx_ready`.
     fn collect_rx(&mut self) {
+        // Drain every completion before reposting. `refill_rx` hands descriptors
+        // back to the device, and a descriptor index it reuses would clobber a
+        // `rx_buffers` slot we have not yet taken — so the two phases must not
+        // interleave.
         while let Some((head, len)) = self.rx_queue.pop() {
             let Some(buffer) = self.rx_buffers[head as usize].take() else {
                 crate::warn!("virtio-net: RX completion for unknown descriptor {}", head);
@@ -187,7 +191,7 @@ impl VirtioNet {
                 let frame_len = len - HDR_SIZE;
                 // Bound the backlog: if the stack isn't draining, dropping is
                 // better than growing the heap without limit.
-                if self.rx_ready.len() < 512 {
+                if self.rx_ready.len() < 1024 {
                     self.rx_ready
                         .push_back(buffer.frame()[..frame_len].to_vec());
                     self.rx_packets += 1;
