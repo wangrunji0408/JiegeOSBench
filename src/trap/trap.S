@@ -74,8 +74,10 @@ __user_trap:
     sd t2, CTX_SSTATUS(sp)
 
     // Save the FPU only if the user dirtied it since the last restore.
-    andi t3, t2, SSTATUS_FS_DIRTY
+    // SSTATUS_FS_DIRTY is 0x6000, outside andi's 12-bit immediate range, so the
+    // mask goes through a register.
     li   t4, SSTATUS_FS_DIRTY
+    and  t3, t2, t4
     bne  t3, t4, 1f
     mv   t5, sp
     .set n, 0
@@ -106,7 +108,8 @@ __trap_return:
     csrw sstatus, t1
 
     // Restore the FPU if the context says it is live.
-    andi t2, t1, SSTATUS_FS_DIRTY
+    li   t2, SSTATUS_FS_DIRTY
+    and  t2, t1, t2
     beqz t2, 2f
     mv   t3, sp
     ld   t4, CTX_FCSR(t3)
