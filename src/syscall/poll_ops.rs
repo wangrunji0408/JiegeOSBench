@@ -271,6 +271,9 @@ struct EpollEntry {
     /// For edge-triggered watches: the readiness we last reported, so we only
     /// report the transition.
     last_reported: u32,
+    /// The file's read generation when we last reported. A change means data was
+    /// consumed since then, so the watch is re-armed.
+    generation: u64,
     /// The open file description this watch was registered against.
     ///
     /// Linux keys epoll registrations on the *description*, not the descriptor
@@ -331,7 +334,7 @@ impl EpollInstance {
         let mut out = Vec::new();
         let mut stale: Vec<i32> = Vec::new();
         // Readiness we observed, to write back into the entries afterwards.
-        let mut observed: Vec<(i32, u32)> = Vec::new();
+        let mut observed: Vec<(i32, u32, u64)> = Vec::new();
         // Watches to disarm because they carried EPOLLONESHOT.
         let mut oneshot: Vec<i32> = Vec::new();
 
@@ -387,27 +390,33 @@ impl EpollInstance {
             // then never learn about the next request on a keep-alive connection:
             // the kernel ACKs the bytes, the worker sits in `epoll_wait`, and the
             // client times out.
+            // Edge-triggered: report only readiness that is newly set.
+            //
+            // "Newly set" is decided against the readiness we last reported *and*
+            // the object's data generation. Polling alone cannot tell a fresh
+            // arrival from a still-unread one: between nginx reading request N and
+            // request N+1 arriving, nothing calls `collect`, so the remembered
+            // `EPOLLIN` would suppress the new arrival forever — the worker sits
+            // in `epoll_wait` while the kernel has already ACKed the bytes.
+            //
+            // The generation counter closes that gap: every read that consumes
+            // data bumps it, so a subsequent arrival is unambiguously a new edge.
             if entry.events & EPOLLET != 0 {
-                let fresh = ready & !entry.last_reported;
-                // Remember exactly what is set now, so a bit that clears is
-                // eligible to fire again the moment it returns.
-                observed.push((fd, ready));
+                let generation = file.read_generation();
+                let re_armed = generation != entry.generation;
+                let fresh = if re_armed {
+                    ready
+                } else {
+                    ready & !entry.last_reported
+                };
+                observed.push((fd, ready, generation));
                 if fresh == 0 {
-                    if ready != 0 && crate::console::trace_enabled() {
-                        crate::println!(
-                            "\x1b[33m[et]\x1b[0m fd={} suppressing {:#x}: already reported {:#x}",
-                            fd,
-                            ready,
-                            entry.last_reported
-                        );
-                    }
                     continue;
                 }
             } else if ready == 0 {
                 continue;
             }
 
-            let _ = fd;
             crate::trace!(
                 "epoll: fd={} reporting {:#x} (watching {:#x})",
                 fd,
@@ -430,9 +439,10 @@ impl EpollInstance {
         // Write the observations back, and prune watches whose descriptor is gone.
         {
             let mut entries = self.entries.lock();
-            for (fd, ready) in observed {
+            for (fd, ready, generation) in observed {
                 if let Some(entry) = entries.get_mut(&fd) {
                     entry.last_reported = ready;
+                    entry.generation = generation;
                 }
             }
             for fd in oneshot {
@@ -521,6 +531,9 @@ pub fn sys_epoll_ctl(epfd: i32, op: u32, fd: i32, event_ptr: usize) -> Result<is
                     events: event.events,
                     data: event.data,
                     last_reported: 0,
+                    // A fresh watch starts un-armed against the current
+                    // generation, so the first poll reports whatever is ready.
+                    generation: target.read_generation().wrapping_sub(1),
                     file: Arc::downgrade(&target),
                 },
             );
@@ -535,8 +548,10 @@ pub fn sys_epoll_ctl(epfd: i32, op: u32, fd: i32, event_ptr: usize) -> Result<is
             }
             entry.events = event.events;
             entry.data = event.data;
-            // Re-arm edge-triggered reporting.
+            // Re-arm edge-triggered reporting: `EPOLL_CTL_MOD` is how nginx says
+            // "tell me again".
             entry.last_reported = 0;
+            entry.generation = target.read_generation().wrapping_sub(1);
             Ok(0)
         }
         EPOLL_CTL_DEL => {
