@@ -223,25 +223,29 @@ pub fn with_udp<T>(handle: SocketHandle, f: impl FnOnce(&mut udp::Socket<'static
 ///
 /// Called from the idle loop, from the virtio interrupt handler, and from
 /// blocking socket operations.
+/// Number of times the stack has been polled, for diagnostics.
+pub static POLL_COUNT: core::sync::atomic::AtomicUsize = core::sync::atomic::AtomicUsize::new(0);
+
 pub fn poll() {
     crate::trap::without_interrupts(|| {
         let mut guard = STACK.lock();
         let Some(stack) = guard.as_mut() else {
             return;
         };
+        POLL_COUNT.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
         // Drain whatever the interrupt handler queued, and reclaim TX buffers.
         crate::drivers::virtio_net::poll_device_locked();
-        let timestamp = now();
         // `poll` returns whether anything changed; loop while it keeps making
         // progress so a burst of frames is drained in one go, with a bound so a
-        // pathological flood can't starve everything else.
+        // pathological flood can't starve everything else. Re-read the clock
+        // each pass so smoltcp's timers advance during a long burst.
         for _ in 0..32 {
             let NetStack {
                 iface,
                 sockets,
                 device,
             } = stack;
-            if !iface.poll(timestamp, device, sockets) {
+            if !iface.poll(now(), device, sockets) {
                 break;
             }
         }

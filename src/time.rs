@@ -35,12 +35,13 @@ pub fn on_timer_tick() {
         let (rx, tx, dropped) = crate::drivers::virtio_net::stats();
         let irqs = crate::drivers::virtio_net::IRQ_COUNT.load(Ordering::Relaxed);
         crate::println!(
-            "\x1b[90m[health]\x1b[0m t={}s rx={} tx={} drop={} irq={} sw={} tasks={}",
+            "\x1b[90m[health]\x1b[0m t={}s rx={} tx={} drop={} irq={} poll={} sw={} tasks={}",
             ticks / TICK_HZ,
             rx,
             tx,
             dropped,
             irqs,
+            crate::net::stack::POLL_COUNT.load(Ordering::Relaxed),
             crate::task::context_switches(),
             crate::task::all_tasks().len(),
         );
