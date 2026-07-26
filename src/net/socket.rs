@@ -74,6 +74,9 @@ struct Inner {
     listen_endpoint: Option<IpListenEndpoint>,
     /// Backlog requested by `listen`.
     backlog: usize,
+    /// This socket accepts operations but carries no traffic — an IPv6 listener
+    /// on a stack that only speaks IPv4.
+    inert: bool,
 }
 
 pub struct Socket {
@@ -114,6 +117,7 @@ impl Socket {
                 state: SockState::Unbound,
                 listen_endpoint: None,
                 backlog: 0,
+                inert: false,
             }),
             nonblock: AtomicBool::new(nonblock),
             reuseaddr: AtomicBool::new(false),
@@ -168,6 +172,24 @@ impl Socket {
             self.inner.lock().state = SockState::Bound;
             return Ok(());
         }
+
+        // We carry no IPv6 traffic, so an AF_INET6 socket becomes inert: it binds
+        // and listens successfully but never sees a connection. This mirrors a
+        // real dual-stack kernel with IPV6_V6ONLY set, and matters because nginx
+        // configures `listen [::]:80` alongside `listen 80` and treats a failure
+        // on either as fatal — while two live listeners on one port would swallow
+        // connections nobody ever accepts.
+        if matches!(addr, SockAddr::V6 { .. }) {
+            let mut inner = self.inner.lock();
+            if inner.state != SockState::Unbound {
+                bail!(EINVAL);
+            }
+            inner.local = Some(addr);
+            inner.state = SockState::Bound;
+            inner.inert = true;
+            return Ok(());
+        }
+
         let mut inner = self.inner.lock();
         if inner.state != SockState::Unbound {
             bail!(EINVAL);
@@ -229,6 +251,12 @@ impl Socket {
         }
         if inner.state != SockState::Bound {
             bail!(EINVAL);
+        }
+        // An inert (IPv6) listener needs no pool: report success and stay quiet.
+        if inner.inert {
+            inner.backlog = backlog;
+            inner.state = SockState::Listening;
+            return Ok(());
         }
         let endpoint = inner
             .listen_endpoint
