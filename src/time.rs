@@ -33,13 +33,17 @@ pub fn on_timer_tick() {
     // Periodic health line, for diagnosing a stalled network or scheduler.
     if crate::console::trace_enabled() && ticks % (TICK_HZ * 4) == 0 {
         let (rx, tx, rx_drop, tx_drop) = crate::drivers::virtio_net::stats();
+        let (posted, pending, ready) = crate::drivers::virtio_net::rx_debug();
         crate::println!(
-            "\x1b[90m[health]\x1b[0m t={}s rx={} tx={} drop={}/{} irq={} poll={} sw={} tasks={}",
+            "\x1b[90m[health]\x1b[0m t={}s rx={} tx={} drop={}/{} ring={}/{}/{} irq={} poll={} sw={} tasks={}",
             ticks / TICK_HZ,
             rx,
             tx,
             rx_drop,
             tx_drop,
+            posted,
+            pending,
+            ready,
             crate::drivers::virtio_net::IRQ_COUNT.load(Ordering::Relaxed),
             crate::net::stack::POLL_COUNT.load(Ordering::Relaxed),
             crate::task::context_switches(),

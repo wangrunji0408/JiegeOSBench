@@ -375,6 +375,18 @@ pub fn has_pending_rx() -> bool {
     }
 }
 
+/// Diagnostic snapshot of the RX path: (posted, pending_completions, ready).
+pub fn rx_debug() -> (u16, u16, usize) {
+    with_device(|d| {
+        (
+            QUEUE_SIZE - d.rx_queue.free_count(),
+            d.rx_queue.pending(),
+            d.rx_ready.len(),
+        )
+    })
+    .unwrap_or((0, 0, 0))
+}
+
 /// (rx_packets, tx_packets, rx_dropped, tx_dropped)
 pub fn stats() -> (usize, usize, usize, usize) {
     with_device(|d| (d.rx_packets, d.tx_packets, d.rx_dropped, d.tx_dropped))
