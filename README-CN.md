@@ -11,6 +11,7 @@
 | Claude Fable 5 | 超级杰哥 | ~38分钟 | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
 | GPT 5.6 Sol | 超级杰哥 | ~36分钟¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
 | Claude Opus 4.7 | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
+| Claude Opus 5 | 智能杰哥 | ~67分钟² | ~334K | ~$26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
 | Kimi K3 | 智能杰哥 | ~2小时19分 | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
 | Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
 | GLM 5.2 | 智能杰哥 | ~2小时42分 | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
@@ -19,6 +20,7 @@
 | DeepSeek V4 Pro | 损坏杰哥 | >16h ❌ | — | — | — |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
+² 67 分钟首次 HTTP 200（零内核 panic）；后续持续修复 TCP/epoll/VirtIO 边界问题，125 分钟完全稳定。
 
 ## Fable 5 — 38分钟
 

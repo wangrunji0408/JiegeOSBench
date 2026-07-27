@@ -18,6 +18,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | Claude Fable 5 | Super Jiege | ~38min | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
 | GPT 5.6 Sol | Super Jiege | ~36min¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
 | Claude Opus 4.7 | Smart Jiege | ~65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
+| Claude Opus 5 | Smart Jiege | ~67min² | ~334K | ~$26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
 | Kimi K3 | Smart Jiege | ~2h 19min | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
 | Claude Opus 4.6 | Smart Jiege | ~2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
 | GLM 5.2 | Smart Jiege | ~2h 42min | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
@@ -26,6 +27,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | DeepSeek V4 Pro | Broken Jiege | >16h ❌ | — | — | — |
 
 ¹ First success at 36min; second connection fix completed at 49min.
+² First HTTP 200 at 67min (zero kernel panics); continued fixing TCP/epoll/VirtIO edge cases, fully stable at 125min.
 
 ## Fable 5 — 38min
 
