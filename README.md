@@ -17,8 +17,8 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 |-------|-------|----------|---------|------|--------|
 | Claude Fable 5 | Super Jiege | ~38min | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
 | GPT 5.6 Sol | Super Jiege | ~36min¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
-| Claude Opus 4.7 | Smart Jiege | ~65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
 | Claude Opus 5 | Smart Jiege | ~67min² | ~334K | ~$26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
+| Claude Opus 4.7 | Smart Jiege | ~65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
 | Kimi K3 | Smart Jiege | ~2h 19min | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
 | Claude Opus 4.6 | Smart Jiege | ~2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
 | GLM 5.2 | Smart Jiege | ~2h 42min | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
@@ -83,6 +83,27 @@ Claude Code ran for **~65 minutes**.
 | 00:41 | nginx config test passes |
 | 00:43 | nginx bind + listen succeeds |
 | 00:45 | nginx official binary returns HTTP 200 🎉 |
+
+### Opus 5 — 67min (stable at 125min)
+
+![Opus 5 Timeline](figures/opus5-timeline.png)
+
+Claude Code ran for **~67 minutes** to first HTTP 200, then spent another **58 minutes** fixing TCP/epoll/VirtIO edge cases until fully stable. **Zero kernel panics** — the only model to achieve this. 322 API requests. Cost approximately **$26** at the 67min mark (Opus 5 pricing: $5/$6.25/$0.50/$25 per MTok input/cache write/cache read/output). Peak context 334K.
+
+| Time | Milestone |
+|------|-----------|
+| 00:04 | Project skeleton, linker script, toolchain verified |
+| 00:37 | main.rs written — kernel core complete |
+| 00:43 | First QEMU boot: no panic, nginx starts but returns 502 |
+| 00:53 | nginx listening on port 80 (QEMU slirp network issue) |
+| 01:07 | First HTTP 200 OK 🎉 (but 2nd request fails) |
+| 01:07–01:20 | Fix dual-listener race + spurious EOF on keep-alive |
+| 01:22–01:23 | Fix RX ring free_chain corruption |
+| 01:24–01:35 | Fix smoltcp poll() early exit + TCP Nagle stall |
+| 01:36–01:47 | Fix CloseWait data loss + edge-triggered notification suppression (31,222 suppressed events) |
+| 02:00 | 3000/3000 keep-alive requests at 1185 req/s ✅ |
+| 02:01 | 50 concurrent connections + 320 fresh connections ✅ |
+| 02:05 | Final validation complete |
 
 ### Kimi K3 — 2h 19min
 

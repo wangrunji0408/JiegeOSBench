@@ -10,8 +10,8 @@
 |------|------|------|---------|------|------|
 | Claude Fable 5 | 超级杰哥 | ~38分钟 | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
 | GPT 5.6 Sol | 超级杰哥 | ~36分钟¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
-| Claude Opus 4.7 | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
 | Claude Opus 5 | 智能杰哥 | ~67分钟² | ~334K | ~$26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
+| Claude Opus 4.7 | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
 | Kimi K3 | 智能杰哥 | ~2小时19分 | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
 | Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
 | GLM 5.2 | 智能杰哥 | ~2小时42分 | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
@@ -76,6 +76,27 @@ Claude Code 运行时长约 **65分钟**。
 | 00:41 | nginx 配置测试通过 |
 | 00:43 | nginx bind + listen 成功 |
 | 00:45 | nginx 官方 binary 返回 HTTP 200 🎉 |
+
+### Opus 5 — 67分钟（125分钟完全稳定）
+
+![Opus 5 Timeline](figures/opus5-timeline.png)
+
+Claude Code 运行约 **67 分钟**拿到首次 HTTP 200，后续又花了 **58 分钟**修复 TCP/epoll/VirtIO 边界问题直到完全稳定。**零内核 panic**——唯一做到这一点的模型。322 次 API 请求。67 分钟时成本约 **$26**（Opus 5 定价：$5/$6.25/$0.50/$25 每百万 token 输入/缓存写入/缓存读取/输出）。Context 峰值 334K。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:04 | 项目骨架、链接脚本、工具链验证 |
+| 00:37 | main.rs 完成——内核核心就绪 |
+| 00:43 | 首次 QEMU 启动：无 panic，nginx 启动但返回 502 |
+| 00:53 | nginx 在 80 端口监听（QEMU slirp 网络问题） |
+| 01:07 | 首次 HTTP 200 OK 🎉（但第二个请求失败） |
+| 01:07–01:20 | 修复双监听器竞争 + keep-alive 虚假 EOF |
+| 01:22–01:23 | 修复 RX ring free_chain 损坏 |
+| 01:24–01:35 | 修复 smoltcp poll() 提前退出 + TCP Nagle 阻塞 |
+| 01:36–01:47 | 修复 CloseWait 数据丢失 + edge-triggered 通知抑制（31,222 次被抑制） |
+| 02:00 | 3000/3000 keep-alive 请求，1185 req/s ✅ |
+| 02:01 | 50 并发 + 320 短连接全部通过 ✅ |
+| 02:05 | 最终验证完成 |
 
 ### Kimi K3 — 2小时19分
 
