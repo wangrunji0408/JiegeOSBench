@@ -13,27 +13,28 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 > the web, but must work in the current directory. Keep working until the goal
 > is achieved.
 
-| Model | Tier | Duration | Context | Cost | Branch |
-|-------|-------|----------|---------|------|--------|
-| Claude Fable 5 | Super Jiege | ~38min | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
-| GPT 5.6 Sol | Super Jiege | ~36min¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
-| Claude Opus 5 | Smart Jiege | ~67min² | ~334K | ~$26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
-| Claude Opus 4.7 | Smart Jiege | ~65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
-| Kimi K3 | Smart Jiege | ~2h 19min | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
-| Claude Opus 4.6 | Smart Jiege | ~2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
-| GLM 5.2 | Smart Jiege | ~2h 42min | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
-| Claude Sonnet 5 | Smart Jiege | ~2h 49min | ~804K | ~$64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| Claude Sonnet 4.6 | Machine Jiege | ~16 hours | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
-| DeepSeek V4 Pro | Broken Jiege | >16h ❌ | — | — | — |
+| # | Model | Tier | Duration | Context | Cost | Branch |
+|---|-------|-------|----------|---------|------|--------|
+| 🏅 | Claude Fable 5 | Jiege | ~38min | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
+| 🥈 | GPT 5.6 Sol | Fast Jiege | ~36min¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
+| 🥉 | Claude Opus 5 | Smart Jiege | ~67min² | ~334K | ~$26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
+| 4 | Claude Opus 4.7 | Smart Jiege | ~65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
+| 5 | Kimi K3 | Smart Jiege | ~2h 19min | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
+| 6 | Claude Opus 4.6 | Smart Jiege | ~2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
+| 7 | GLM 5.2 | Smart Jiege | ~2h 42min | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
+| 8 | Claude Sonnet 5 | Smart Jiege | ~2h 49min | ~804K | ~$64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
+| 9 | Claude Sonnet 4.6 | Machine Jiege | ~16 hours | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
+| 10 | DeepSeek V4 Pro | Broken Jiege | >16h ❌ | — | — | — |
 
 ¹ First success at 36min; second connection fix completed at 49min.
+
 ² First HTTP 200 at 67min (zero kernel panics); continued fixing TCP/epoll/VirtIO edge cases, fully stable at 125min.
 
 ## Fable 5 — 38min
 
 ![Fable 5 Timeline](figures/fable5-timeline.png)
 
-Claude Code ran for **~38min**, 65 API requests. Total cost approximately **$21** (Fable 5 pricing: $10/$12.50/$1/$50 per MTok input/cache write/cache read/output).
+Claude Code ran for **~38min**, 65 API requests. Total cost approximately **$21**. Nearly a one-shot success — it wrote the entire kernel from memory with minimal debugging.
 
 | Time | Milestone |
 |------|-----------|
@@ -49,7 +50,7 @@ Claude Code ran for **~38min**, 65 API requests. Total cost approximately **$21*
 
 ![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
 
-OpenAI Codex ran for **~36 minutes** to reach first success, then spent another **13 minutes** fixing a second-connection bug discovered by the user. Total cost: **~$14** at OpenAI API pricing ($5/$0.50 cached input, $30 output per MTok).
+OpenAI Codex ran for **~36 minutes** to reach first success, then spent another **13 minutes** fixing a second-connection bug discovered by the user. Total cost: **~$14**.
 
 > ⚠️ Note: the model initially claimed "done" at 36min, but the second consecutive HTTP request failed. The bug (virtio TX descriptor reuse race) was fixed after user prompt at 49min.
 
@@ -88,7 +89,7 @@ Claude Code ran for **~65 minutes**.
 
 ![Opus 5 Timeline](figures/opus5-timeline.png)
 
-Claude Code ran for **~67 minutes** to first HTTP 200, then spent another **58 minutes** fixing TCP/epoll/VirtIO edge cases until fully stable. **Zero kernel panics** — the only model to achieve this. 322 API requests. Cost approximately **$26** at the 67min mark (Opus 5 pricing: $5/$6.25/$0.50/$25 per MTok input/cache write/cache read/output). Peak context 334K.
+Claude Code ran for **~67 minutes** to first HTTP 200, then spent another **58 minutes** fixing TCP/epoll/VirtIO edge cases until fully stable. **Zero kernel panics** — the only model to achieve this. 322 API requests. Cost approximately **$26** at the 67min mark. Peak context 334K.
 
 | Time | Milestone |
 |------|-----------|
@@ -109,7 +110,7 @@ Claude Code ran for **~67 minutes** to first HTTP 200, then spent another **58 m
 
 ![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
 
-Claude Code ran for **~2h 19min** with no human intervention. 151 API requests, 26.3M tokens total (including cache). Cost approximately **$11** (Kimi K3 pricing: $3/$0.30/$15 per MTok input/cache/output). Peak context 270K.
+Claude Code ran for **~2h 19min** with no human intervention. 151 API requests, 26.3M tokens total (including cache). Cost approximately **$11**. Peak context 270K.
 
 | Time | Milestone |
 |------|-----------|
@@ -143,7 +144,7 @@ Claude Code ran for **~2h 46min**.
 
 ![GLM 5.2 Timeline](figures/glm52-timeline.png)
 
-Claude Code ran for **~2h 42min** (active time, gaps removed), 864 API requests. Nginx returned HTTP responses but was extremely unstable — only 1/10 requests succeeded. The model hallucinated claiming "10/10 all stable". Total token consumption was 215M (including cache), 32x that of Fable 5. Estimated cost: **~$84** at official GLM-5.2 API pricing (¥8/¥2/¥28 per MTok input/cache/output, ~¥7.2/$).
+Claude Code ran for **~2h 42min** (active time, gaps removed), 864 API requests. Nginx returned HTTP responses but was extremely unstable — only 1/10 requests succeeded. The model hallucinated claiming "10/10 all stable". Total token consumption was 215M (including cache), 32x that of Fable 5. Estimated cost: **~$84**.
 
 | Time | Milestone |
 |------|-----------|
@@ -160,7 +161,7 @@ Claude Code ran for **~2h 42min** (active time, gaps removed), 864 API requests.
 
 ![Sonnet 5 Timeline](figures/sonnet5-timeline.png)
 
-Claude Code ran for **~2h 49min** (active time, 77min permission gap excluded). 616 API requests. The session started by quickly validating nginx behavior via Docker + qemu-riscv64-static, then pivoted to writing a Rust kernel from scratch. The self-written kernel achieved HTTP 200 twice. Total token consumption was 279M (almost all cache hits), peak context 804K. Cost approximately **$64** (Sonnet 5 promotional pricing: $2/$2.50/$0.20/$10 per MTok input/cache write/cache read/output).
+Claude Code ran for **~2h 49min** (active time, 77min permission gap excluded). 616 API requests. The session started by quickly validating nginx behavior via Docker + qemu-riscv64-static, then pivoted to writing a Rust kernel from scratch. The self-written kernel achieved HTTP 200 twice. Total token consumption was 279M (almost all cache hits), peak context 804K. Cost approximately **$64**.
 
 | Time | Milestone |
 |------|-----------|

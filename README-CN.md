@@ -6,27 +6,28 @@
 
 > 提示词：你是智能杰哥。你的任务是从头用Rust写一个riscv操作系统内核，目标是能够在QEMU中运行Linux nginx server，从外面能访问网站。必须运行nginx官方binary，不能自行修改目标。请自行设计实现，不要问我任何问题，我不会给你答复或提供帮助。你拥有所有权限，包括上网查资料，但必须在当前目录下工作。你需要一直干活直到目标实现为止。
 
-| 模型 | 段位 | 耗时 | 上下文 | 成本 | 分支 |
-|------|------|------|---------|------|------|
-| Claude Fable 5 | 超级杰哥 | ~38分钟 | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
-| GPT 5.6 Sol | 超级杰哥 | ~36分钟¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
-| Claude Opus 5 | 智能杰哥 | ~67分钟² | ~334K | ~$26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
-| Claude Opus 4.7 | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
-| Kimi K3 | 智能杰哥 | ~2小时19分 | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
-| Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
-| GLM 5.2 | 智能杰哥 | ~2小时42分 | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
-| Claude Sonnet 5 | 智能杰哥 | ~2小时49分 | ~804K | ~$64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
-| DeepSeek V4 Pro | 损坏杰哥 | >16h ❌ | — | — | — |
+| # | 模型 | 段位 | 耗时 | 上下文 | 成本 | 分支 |
+|---|------|------|------|---------|------|------|
+| 🏅 | Claude Fable 5 | 杰哥 | ~38分钟 | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
+| 🥈 | GPT 5.6 Sol | 快速杰哥 | ~36分钟¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
+| 🥉 | Claude Opus 5 | 智能杰哥 | ~67分钟² | ~334K | ~$26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
+| 4 | Claude Opus 4.7 | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
+| 5 | Kimi K3 | 智能杰哥 | ~2小时19分 | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
+| 6 | Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
+| 7 | GLM 5.2 | 智能杰哥 | ~2小时42分 | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
+| 8 | Claude Sonnet 5 | 智能杰哥 | ~2小时49分 | ~804K | ~$64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
+| 9 | Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
+| 10 | DeepSeek V4 Pro | 损坏杰哥 | >16小时 未完成 | — | — | — |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
+
 ² 67 分钟首次 HTTP 200（零内核 panic）；后续持续修复 TCP/epoll/VirtIO 边界问题，125 分钟完全稳定。
 
 ## Fable 5 — 38分钟
 
 ![Fable 5 Timeline](figures/fable5-timeline.png)
 
-Claude Code 运行时长约 **38分钟**，65 次 API 请求。总成本约 **$21**（Claude Fable 5 定价：$10/$12.50/$1/$50 每百万 token 输入/缓存写入/缓存读取/输出）。
+Claude Code 运行时长约 **38分钟**，65 次 API 请求。总成本约 **$21**。几乎是一次默写成功——凭记忆写出整个内核，几乎没怎么调试。
 
 | 时间 | 里程碑 |
 |------|--------|
@@ -42,7 +43,7 @@ Claude Code 运行时长约 **38分钟**，65 次 API 请求。总成本约 **$2
 
 ![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
 
-OpenAI Codex 运行 **~36 分钟** 达成首次成功，后在用户提醒下用 **13 分钟** 修复了第二次连接失败的问题。总成本约 **$14**（OpenAI API 定价 $5/$0.50 缓存输入、$30 输出每百万 token）。
+OpenAI Codex 运行 **~36 分钟** 达成首次成功，后在用户提醒下用 **13 分钟** 修复了第二次连接失败的问题。总成本约 **$14**。
 
 > ⚠️ 注意：模型在 36 分钟时声称完成，但连续第二次 HTTP 请求失败。经用户提示后，于 49 分钟修复了 virtio TX descriptor 复用竞态。
 
@@ -81,7 +82,7 @@ Claude Code 运行时长约 **65分钟**。
 
 ![Opus 5 Timeline](figures/opus5-timeline.png)
 
-Claude Code 运行约 **67 分钟**拿到首次 HTTP 200，后续又花了 **58 分钟**修复 TCP/epoll/VirtIO 边界问题直到完全稳定。**零内核 panic**——唯一做到这一点的模型。322 次 API 请求。67 分钟时成本约 **$26**（Opus 5 定价：$5/$6.25/$0.50/$25 每百万 token 输入/缓存写入/缓存读取/输出）。Context 峰值 334K。
+Claude Code 运行约 **67 分钟**拿到首次 HTTP 200，后续又花了 **58 分钟**修复 TCP/epoll/VirtIO 边界问题直到完全稳定。**零内核 panic**——唯一做到这一点的模型。322 次 API 请求。67 分钟时成本约 **$26**。Context 峰值 334K。
 
 | 时间 | 里程碑 |
 |------|--------|
@@ -102,7 +103,7 @@ Claude Code 运行约 **67 分钟**拿到首次 HTTP 200，后续又花了 **58 
 
 ![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
 
-Claude Code 运行约 **2小时19分钟**，中途没有人工介入。151 次 API 请求，累计 2630 万 token（含缓存）。成本约 **$11**（Kimi K3 定价：$3/$0.30/$15 每百万 token 输入/缓存/输出）。Context 峰值 270K。
+Claude Code 运行约 **2小时19分钟**，中途没有人工介入。151 次 API 请求，累计 2630 万 token（含缓存）。成本约 **$11**。Context 峰值 270K。
 
 | 时间 | 里程碑 |
 |------|--------|
@@ -136,7 +137,7 @@ Claude Code 全程运行约 **2小时46分钟**，中途没有人工介入。
 
 ![GLM 5.2 Timeline](figures/glm52-timeline.png)
 
-Claude Code 运行约 **2小时42分钟**（有效活跃时间，已去掉空隙）。864 次 API 请求。nginx 能返回 HTTP 响应但极不稳定——10 次请求仅 1 次成功。模型最终幻觉称"10/10 全部稳定"。总 token 消耗 2.15 亿（含缓存），是 Fable 5 的 32 倍。按官方 GLM-5.2 API 定价（¥8/¥2/¥28 每百万 token 输入/缓存/输出，~¥7.2/$）估算成本约 **$84**。
+Claude Code 运行约 **2小时42分钟**（有效活跃时间，已去掉空隙）。864 次 API 请求。nginx 能返回 HTTP 响应但极不稳定——10 次请求仅 1 次成功。模型最终幻觉称"10/10 全部稳定"。总 token 消耗 2.15 亿（含缓存），是 Fable 5 的 32 倍。估算成本约 **$84**。
 
 | 时间 | 里程碑 |
 |------|--------|
@@ -153,7 +154,7 @@ Claude Code 运行约 **2小时42分钟**（有效活跃时间，已去掉空隙
 
 ![Sonnet 5 Timeline](figures/sonnet5-timeline.png)
 
-Claude Code 运行约 **2小时49分钟**（有效活跃时间，扣除了 77 分钟权限等待）。616 次 API 请求。会话从 Docker + qemu-riscv64-static 快速验证 nginx 行为开始，随后转向自写 Rust kernel。QEMU 自写内核两次成功返回 HTTP 200。总 token 消耗 2.79 亿（几乎全为缓存命中），峰值上下文 804K。成本约 **$64**（Sonnet 5 推广价：$2/$2.50/$0.20/$10 每百万 token 输入/缓存写入/缓存读取/输出）。
+Claude Code 运行约 **2小时49分钟**（有效活跃时间，扣除了 77 分钟权限等待）。616 次 API 请求。会话从 Docker + qemu-riscv64-static 快速验证 nginx 行为开始，随后转向自写 Rust kernel。QEMU 自写内核两次成功返回 HTTP 200。总 token 消耗 2.79 亿（几乎全为缓存命中），峰值上下文 804K。成本约 **$64**。
 
 | 时间 | 里程碑 |
 |------|--------|
