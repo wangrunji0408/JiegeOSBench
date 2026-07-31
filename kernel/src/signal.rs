@@ -140,20 +140,21 @@ pub fn maybe_deliver(tf: *mut TrapFrame) {
 fn clear_pending(sig: usize) {
     let t = crate::task::current();
     unsafe {
-        t.as_mut().unwrap().sig.pending &= !(1u64 << sig);
+        t.as_mut().unwrap().sig.pending &= !(1u64 << (sig - 1));
     }
 }
 
 /// Set a pending signal on a task and wake it if blocked.
+/// Signal N is stored as bit (N-1), matching Linux sigset_t.
 pub fn send_signal(pid: usize, sig: usize) {
-    if sig > 63 {
+    if sig == 0 || sig > 63 {
         return;
     }
     if let Some(t) = crate::task::task(pid) {
         if t.state == crate::task::TaskState::Zombie || t.state == crate::task::TaskState::Free {
             return;
         }
-        t.sig.pending |= 1u64 << sig;
+        t.sig.pending |= 1u64 << (sig - 1);
         if t.state == crate::task::TaskState::Blocked {
             t.state = crate::task::TaskState::Ready;
             t.wchan = 0;
