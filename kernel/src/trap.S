@@ -54,6 +54,7 @@ trap_entry:
     call trap_handler
     mv sp, a0          # possibly different task's trapframe
 
+trap_restore:
     ld t0, 256(sp)
     csrw sepc, t0
     ld t0, 264(sp)
