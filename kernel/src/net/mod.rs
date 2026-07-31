@@ -298,6 +298,13 @@ fn ip_rx(p: &[u8]) {
     if csum != 0 {
         return;
     }
+    let src = u32::from_be_bytes(p[12..16].try_into().unwrap());
+    crate::kprintln!(
+        "[net] ip_rx src={}.{}.{}.{} dst={}.{}.{}.{} proto={} total={}",
+        src >> 24, (src >> 16) & 0xff, (src >> 8) & 0xff, src & 0xff,
+        dst >> 24, (dst >> 16) & 0xff, (dst >> 8) & 0xff, dst & 0xff,
+        p[9], total
+    );
     let proto = p[9];
     let payload = &p[ihl..total];
     match proto {
