@@ -194,19 +194,19 @@ idle_asm:
     add sp, t0, t1        # sp = top of idle stack
     mv tp, sp
     csrw sscratch, sp     # nested traps during idle use the idle stack
-    csrs sstatus, 1       # SIE = 1 before the first wfi
+    csrsi sstatus, 0x2    # SIE = 1 (bit 1!) before the first wfi
 1:
     wfi
     # The timer trap fires AT the wfi (sepc = wfi); the S-mode trap handler
     # clears SPIE, so the sret returns here with SIE = 0.  Re-enable it
     # AFTER the wfi so the next wfi can trap again.
-    csrs sstatus, 1
+    csrsi sstatus, 0x2    # SIE = 1 (the immediate is a bit mask: 0x2 = bit 1)
     # NOTE: use la+jalr instead of `call`: the CALL_PLT relocation for
     # cross-symbol calls from global_asm! is mis-applied by the linker.
     la t0, ready_nonempty
     jalr ra, t0
     beqz a0, 1b
-    csrc sstatus, 1       # SIE = 0
+    csrci sstatus, 0x2    # SIE = 0
     la t0, IDLE_SAVED_SP
     ld sp, 0(t0)          # back to the worker's kernel stack
     ld ra, 8(t0)
