@@ -317,6 +317,10 @@ pub fn tcp_input(src: u32, sport: u16, dst_port: u16, seg: &[u8]) {
     let seq = u32::from_be_bytes(seg[4..8].try_into().unwrap());
     let ack = u32::from_be_bytes(seg[8..12].try_into().unwrap());
     let flags = seg[13];
+    crate::kprintln!(
+        "[tcp] input src={}.{}.{}.{}:{} -> :{} seq={} ack={} flags={:#x} len={}",
+        src >> 24, (src >> 16) & 0xff, (src >> 8) & 0xff, src & 0xff, sport, dst_port, seq, ack, flags, seg.len()
+    );
     let dataoff = ((seg[12] >> 4) as usize) * 4;
     if dataoff > seg.len() {
         return;
