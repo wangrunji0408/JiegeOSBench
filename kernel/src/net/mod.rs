@@ -436,10 +436,10 @@ pub fn conn_reset(conn_id: usize) {
 pub fn send_rst_to(dport: u16, src: u32, sport: u16, seq: u32) {
     let mut tmp = tcp::TcpConn {
         state: tcp::TcpState::Closed,
-        saddr: src,
-        daddr: OUR_IP,
-        sport,
-        dport,
+        saddr: OUR_IP,
+        daddr: src,
+        sport: dport,
+        dport: sport,
         snd_una: 0,
         snd_nxt: 0,
         rcv_nxt: 0,
