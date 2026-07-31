@@ -98,33 +98,31 @@ pub fn parse(dtb: usize) -> DtbInfo {
                 let nameoff = be32(p.add(4)) as usize;
                 let data = p.add(8);
                 let name = cstr(strings.add(nameoff));
-                if depth == 1 && name == "model" {}
-                match (depth, cur_node.as_str(), name) {
-                    (1, "memory", "reg") => {
+                if depth == 1 {
+                    let node = cur_node.as_str();
+                    if name == "reg" && node.starts_with("memory") {
                         // root cells apply
                         let mut off = 0usize;
                         let mut addr = 0u64;
-                        for i in 0..addr_cells as usize {
-                            addr = (addr << 32) | be32(data.add(off + i * 4)) as u64;
+                        for _ in 0..addr_cells as usize {
+                            addr = (addr << 32) | be32(data.add(off)) as u64;
+                            off += 4;
                         }
-                        off += addr_cells as usize * 4;
                         let mut size = 0u64;
-                        for i in 0..size_cells as usize {
-                            size = (size << 32) | be32(data.add(off + i * 4)) as u64;
+                        for _ in 0..size_cells as usize {
+                            size = (size << 32) | be32(data.add(off)) as u64;
+                            off += 4;
                         }
                         info.ram_base = addr as usize;
                         info.ram_size = size as usize;
                         found_mem = true;
-                    }
-                    (1, "cpus", "timebase-frequency") => {
+                    } else if name == "timebase-frequency" && node == "cpus" {
                         info.timebase = be32(data) as u64;
                         found_cpu = true;
-                    }
-                    (1, "chosen", "bootargs") => {
+                    } else if name == "bootargs" && node == "chosen" {
                         info.bootargs = Some(cstr(data));
                         found_chosen = true;
                     }
-                    _ => {}
                 }
                 p = p.add(8 + ((len + 3) & !3));
             }
