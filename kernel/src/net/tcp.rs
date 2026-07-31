@@ -119,7 +119,7 @@ pub fn conn(id: usize) -> Option<&'static mut TcpConn> {
     }
 }
 
-fn rand_seq() -> u32 {
+pub fn rand_seq() -> u32 {
     // simple PRNG from time + counter
     let t = timer::rdtime() as u32;
     t.wrapping_mul(2654435761).wrapping_add(0x9e3779b9)
@@ -242,7 +242,7 @@ pub fn tcp_output(id: usize) {
     }
 }
 
-pub fn send_ack(c: &TcpConn) {
+pub fn send_ack(c: &mut TcpConn) {
     let seg = TcpSeg {
         seq: c.snd_nxt,
         ack: c.rcv_nxt,
@@ -253,7 +253,7 @@ pub fn send_ack(c: &TcpConn) {
     send_seg(c, &seg);
 }
 
-pub fn send_syn_ack(c: &TcpConn) {
+pub fn send_syn_ack(c: &mut TcpConn) {
     let seg = TcpSeg {
         seq: c.iss,
         ack: c.irs.wrapping_add(1),
@@ -317,10 +317,6 @@ pub fn tcp_input(src: u32, sport: u16, dst_port: u16, seg: &[u8]) {
     let seq = u32::from_be_bytes(seg[4..8].try_into().unwrap());
     let ack = u32::from_be_bytes(seg[8..12].try_into().unwrap());
     let flags = seg[13];
-    crate::kprintln!(
-        "[tcp] input src={}.{}.{}.{}:{} -> :{} seq={} ack={} flags={:#x} len={}",
-        src >> 24, (src >> 16) & 0xff, (src >> 8) & 0xff, src & 0xff, sport, dst_port, seq, ack, flags, seg.len()
-    );
     let dataoff = ((seg[12] >> 4) as usize) * 4;
     if dataoff > seg.len() {
         return;
@@ -350,7 +346,6 @@ pub fn tcp_input(src: u32, sport: u16, dst_port: u16, seg: &[u8]) {
         None => {
             // no such connection: send RST (only if not RST itself)
             if !rst {
-                crate::kprintln!("[tcp] NO CONN for dport={} src={} sport={} syn={} ackf={} -> RST", dst_port, src, sport, syn, ackf);
                 crate::net::send_rst_to(dst_port, src, sport, seq.wrapping_add(payload.len() as u32));
             }
             return;
@@ -361,10 +356,6 @@ pub fn tcp_input(src: u32, sport: u16, dst_port: u16, seg: &[u8]) {
         TcpState::SynReceived => {
             if ackf {
                 let c = conn(id).unwrap();
-                crate::kprintln!(
-                    "[tcp] SynReceived ack={} snd_nxt={} iss={} -> {}",
-                    ack, c.snd_nxt, c.iss, if ack == c.snd_nxt { "ESTABLISH" } else { "mismatch" }
-                );
                 if ack == c.snd_nxt {
                     c.state = TcpState::Established;
                     c.rcv_nxt = seq.wrapping_add(payload.len() as u32);
@@ -460,7 +451,7 @@ pub fn tcp_input(src: u32, sport: u16, dst_port: u16, seg: &[u8]) {
             }
         }
         TcpState::CloseWait | TcpState::LastAck | TcpState::Closing => {
-            if ackf && !crate::tcp::conn(id).unwrap().sent.is_empty() {
+            if ackf && !conn(id).unwrap().sent.is_empty() {
                 // process acks
                 let c = conn(id).unwrap();
                 if ack.wrapping_sub(c.snd_una) > 0 {
@@ -516,16 +507,16 @@ fn handle_data_and_fin(id: usize, seq: u32, payload: &[u8], fin: bool) {
     let mut s = seq;
     // In SynReceived transition we already set rcv_nxt
     if !p.is_empty() {
-        crate::net::sock_rx_push(crate::tcp::conn(id).unwrap().sock, p);
-        crate::tcp::conn(id).unwrap().rcv_nxt = s.wrapping_add(p.len() as u32);
+        crate::net::sock_rx_push(conn(id).unwrap().sock, p);
+        conn(id).unwrap().rcv_nxt = s.wrapping_add(p.len() as u32);
         s = s.wrapping_add(p.len() as u32);
     }
     if fin {
-        crate::tcp::conn(id).unwrap().peer_fin = true;
-        crate::net::sock_peer_fin(crate::tcp::conn(id).unwrap().sock);
-        crate::tcp::conn(id).unwrap().rcv_nxt = crate::tcp::conn(id).unwrap().rcv_nxt.wrapping_add(1);
+        conn(id).unwrap().peer_fin = true;
+        crate::net::sock_peer_fin(conn(id).unwrap().sock);
+        conn(id).unwrap().rcv_nxt = conn(id).unwrap().rcv_nxt.wrapping_add(1);
     }
-    let c = crate::tcp::conn(id).unwrap();
+    let c = conn(id).unwrap();
     send_ack(c);
     if c.peer_fin && c.state == TcpState::Established {
         c.state = TcpState::CloseWait;

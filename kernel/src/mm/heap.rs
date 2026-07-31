@@ -7,7 +7,7 @@ use core::sync::atomic::{AtomicBool, Ordering};
 
 static LOCKED: AtomicBool = AtomicBool::new(false);
 
-pub const HEAP_SIZE: usize = 32 * 1024 * 1024; // 32 MiB
+pub const HEAP_SIZE: usize = 64 * 1024 * 1024; // 64 MiB
 
 static mut FREE_HEAD: *mut Block = core::ptr::null_mut();
 
@@ -38,20 +38,25 @@ pub fn init(start: usize) {
     unlock();
 }
 
+pub fn dbg_head() -> usize {
+    unsafe { FREE_HEAD as usize }
+}
+
 unsafe fn alloc_impl(size: usize, align: usize) -> Option<*mut u8> {
     let mut prev: *mut Block = core::ptr::null_mut();
     let mut cur = FREE_HEAD;
     let mut hops = 0;
     while !cur.is_null() {
-        // integrity check
-        if (cur as usize) < 0x81a70000 || (cur as usize) >= 0x85a70000 || (cur as usize) % 8 != 0 || hops > 100000 {
+        if (cur as usize) % 8 != 0 || hops > 100000 {
             crate::kprintln!("[heap] FREE LIST CORRUPT: cur={:#x} prev={:#x} hops={} size_req={}", cur as usize, prev as usize, hops, size);
             break;
         }
         hops += 1;
         let bsize = (*cur).size & !1;
         let payload = (cur as usize + HEADER + align - 1) & !(align - 1);
-        let used = payload - cur as usize + 8 + size; // 8-byte base word + payload
+        // bytes consumed: header + padding + 8-byte base word + payload;
+        // round up to 8 so the remainder block stays 8-byte aligned
+        let used = (payload - cur as usize + 8 + size + 7) & !7;
         if used <= bsize {
             if bsize - used >= HEADER + 8 {
                 let rem = (cur as usize + used) as *mut Block;

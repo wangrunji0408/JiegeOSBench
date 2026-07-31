@@ -91,6 +91,7 @@ pub const SYS_GETRUSAGE: usize = 165;
 pub const SYS_UMASK: usize = 166;
 pub const SYS_PRCTL: usize = 167;
 pub const SYS_PRlimit64: usize = 168;
+pub const SYS_PERSONALITY: usize = 92;
 pub const SYS_GETTIMEOFDAY: usize = 170;
 pub const SYS_GETPID: usize = 172;
 pub const SYS_GETPPID: usize = 173;
@@ -140,8 +141,16 @@ pub const SYS_CLONE3: usize = 290;
 pub const SYS_CLOSE_RANGE: usize = 291;
 pub const SYS_OPENAT2: usize = 292;
 
+pub static mut LAST_SYSCALL_SP: usize = 0;
+pub static mut LAST_SYSCALL_NUM: usize = 0;
+
 pub fn handle(tf: *mut TrapFrame) {
     let num = unsafe { (*tf).a7() };
+    unsafe {
+        LAST_SYSCALL_SP = (*tf).sp();
+        LAST_SYSCALL_NUM = num;
+    }
+
     let a0 = unsafe { (*tf).a0() };
     let a1 = unsafe { (*tf).a1() };
     let a2 = unsafe { (*tf).a2() };
@@ -150,6 +159,7 @@ pub fn handle(tf: *mut TrapFrame) {
     let a5 = unsafe { (*tf).a5() };
 
     let ret: isize = dispatch(num, a0, a1, a2, a3, a4, a5);
+
     unsafe {
         (*tf).set_a0(ret as usize);
     }
@@ -164,6 +174,7 @@ fn dispatch(
     a4: usize,
     a5: usize,
 ) -> isize {
+
     match num {
         SYS_READ => fs::sys_read(a0, a1, a2),
         SYS_WRITE => fs::sys_write(a0, a1, a2),
@@ -219,6 +230,7 @@ fn dispatch(
         SYS_TKILL => process::sys_kill(a0 as isize, a1),
         SYS_TGKILL => process::sys_kill(a0 as isize, a2),
         SYS_GETUID | SYS_GETEUID | SYS_GETGID | SYS_GETEGID => 0,
+        143 | 144 | 145 | 146 | 147 | 148 | 149 | 150 | 151 | 152 => 0, // setregid/setgid/setreuid/setuid/setresuid/getresuid/setresgid/getresgid/setfsuid/setfsgid
         SYS_GETGROUPS => process::sys_getgroups(a0, a1),
         SYS_SETGROUPS => 0,
         SYS_UNAME => process::sys_uname(a0),
@@ -248,7 +260,6 @@ fn dispatch(
         SYS_RSEQ => -38,
         SYS_SETPGID | SYS_GETPGID | SYS_SETSID => 0,
         SYS_GETCPU => 0,
-        SYS_MEMBARRIER => 0,
 
         SYS_MMAP => mem::sys_mmap(a0, a1, a2, a3, a4, a5),
         SYS_MUNMAP => mem::sys_munmap(a0, a1),
@@ -265,6 +276,7 @@ fn dispatch(
         SYS_RT_SIGRETURN => signal::sys_rt_sigreturn(),
         SYS_SIGALTSTACK => signal::sys_sigaltstack(a0, a1),
         SYS_RT_SIGTIMEDWAIT => -38,
+        SYS_RT_SIGSUSPEND => signal::sys_rt_sigsuspend(a0, a1),
 
         SYS_SOCKET => socket::sys_socket(a0 as i32, a1 as i32, a2 as i32),
         SYS_SOCKETPAIR => socket::sys_socketpair(a0 as i32, a1 as i32, a2 as i32, a3),
@@ -277,18 +289,18 @@ fn dispatch(
         SYS_GETPEERNAME => socket::sys_getpeername(a0, a1, a2),
         SYS_SENDTO => socket::sys_sendto(a0, a1, a2, a3, a4, a5),
         SYS_RECVFROM => socket::sys_recvfrom(a0, a1, a2, a3, a4, a5),
-        SYS_SETSOCKOPT => socket::sys_setsockopt(a0, a1, a2, a3, a4),
-        SYS_GETSOCKOPT => socket::sys_getsockopt(a0, a1, a2, a3, a4),
+        SYS_SETSOCKOPT => socket::sys_setsockopt(a0, a1 as i32, a2 as i32, a3, a4),
+        SYS_GETSOCKOPT => socket::sys_getsockopt(a0, a1 as i32, a2 as i32, a3, a4),
         SYS_SHUTDOWN => socket::sys_shutdown(a0, a1 as i32),
         SYS_SENDMSG => socket::sys_sendmsg(a0, a1, a2),
         SYS_RECVMSG => socket::sys_recvmsg(a0, a1, a2),
 
         SYS_EPOLL_CREATE1 => crate::epoll::sys_epoll_create1(a0),
-        SYS_EPOLL_CTL => crate::epoll::sys_epoll_ctl(a0, a1, a2, a3),
-        SYS_EPOLL_PWAIT => crate::epoll::sys_epoll_pwait(a0, a1, a2, a3, a4),
+        SYS_EPOLL_CTL => crate::epoll::sys_epoll_ctl(a0, a1 as i32, a2, a3),
+        SYS_EPOLL_PWAIT => crate::epoll::sys_epoll_pwait(a0, a1, a2, a3 as isize, a4),
 
         _ => {
-            crate::console::kprintln!(
+            crate::kprintln!(
                 "[sys] pid={} unimplemented syscall {} ({:#x}) args={:#x} {:#x} {:#x} {:#x} {:#x} {:#x}",
                 crate::task::current_pid(),
                 num,
@@ -314,8 +326,19 @@ pub fn read_user(addr: usize, len: usize) -> Result<Vec<u8>, i32> {
         return Err(-14); // EFAULT
     }
     let mut v = alloc::vec![0u8; len];
-    unsafe {
-        core::ptr::copy_nonoverlapping(addr as *const u8, v.as_mut_ptr(), len);
+    // copy page by page via the page table; unbacked pages stay zero.
+    // (the direct VA copy below would kernel-fault on a missing leaf PTE)
+    let mut off = 0usize;
+    while off < len {
+        let page = (addr + off) & !(paging::PAGE_SIZE - 1);
+        let chunk = core::cmp::min(paging::PAGE_SIZE - ((addr + off) - page), len - off);
+        if let Some(phys) = mm.pt.translate(addr + off) {
+            let src = (phys & !(paging::PAGE_SIZE - 1)) as *const u8;
+            unsafe {
+                core::ptr::copy_nonoverlapping(src.add((addr + off) - page), v.as_mut_ptr().add(off), chunk);
+            }
+        }
+        off += chunk;
     }
     Ok(v)
 }
@@ -330,8 +353,18 @@ pub fn write_user(addr: usize, data: &[u8]) -> Result<(), i32> {
     if !mm.check_range(addr, data.len(), true) {
         return Err(-14);
     }
-    unsafe {
-        core::ptr::copy_nonoverlapping(data.as_ptr(), addr as *mut u8, data.len());
+    let len = data.len();
+    let mut off = 0usize;
+    while off < len {
+        let page = (addr + off) & !(paging::PAGE_SIZE - 1);
+        let chunk = core::cmp::min(paging::PAGE_SIZE - ((addr + off) - page), len - off);
+        if let Some(phys) = mm.pt.translate(addr + off) {
+            let dst = (phys & !(paging::PAGE_SIZE - 1)) as *mut u8;
+            unsafe {
+                core::ptr::copy_nonoverlapping(data.as_ptr().add(off), dst.add((addr + off) - page), chunk);
+            }
+        }
+        off += chunk;
     }
     Ok(())
 }
@@ -343,6 +376,10 @@ pub fn read_cstr(addr: usize, max: usize) -> Result<alloc::string::String, i32> 
     let mut len = 0usize;
     while len < max {
         if !mm.check_range(addr + len, 1, false) {
+            crate::kprintln!("[mem] read_cstr EFAULT addr={:#x} len={}", addr, len);
+            for v in &mm.vmas {
+                crate::kprintln!("  vma [{:#x}, {:#x}) prot={:#x} anon={}", v.start, v.end, v.prot, v.anon);
+            }
             return Err(-14);
         }
         let b = unsafe { *(addr as *const u8).add(len) };

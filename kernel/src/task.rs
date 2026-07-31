@@ -1,16 +1,18 @@
 //! Tasks (processes), scheduler, blocking/wakeup, fork/exec/exit/wait.
 
 use alloc::collections::VecDeque;
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
-use crate::console::kprintln;
+use crate::kprintln;
 use crate::mm::frame;
-use crate::mm::paging::{self, PageTable};
+use crate::mm::paging;
 use crate::mm::vma::Mm;
 use crate::fs::FdTable;
 
-pub const TF_SIZE: usize = 272;
+pub const TF_SIZE: usize = 536;
+
+pub const USER_SSTATUS: usize = (1 << 5) | (1 << 18) | (3 << 13); // SPIE | SUM | FS=11
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -18,6 +20,9 @@ pub struct TrapFrame {
     pub regs: [usize; 32], // x0..x31
     pub sepc: usize,
     pub sstatus: usize,
+    pub fp: [u64; 32], // f0..f31
+    pub fcsr: u32,
+    pub pad: u32,
 }
 
 impl TrapFrame {
@@ -77,9 +82,9 @@ pub struct Task {
     pub state: TaskState,
     pub wchan: usize,
     pub kstack_top: usize,
+    pub idle_stack_top: usize,
     pub ctx: usize,
     pub tf: *mut TrapFrame,
-    pub pt: PageTable,
     pub mm: Mm,
     pub fds: FdTable,
     pub cwd: String,
@@ -94,6 +99,9 @@ pub static mut TASKS: Vec<Option<Task>> = Vec::new();
 pub static mut READY: VecDeque<usize> = VecDeque::new();
 pub static mut CURRENT: Option<usize> = None;
 pub static mut NEXT_PID: usize = 1;
+
+pub static mut LAST_TIMER_S0: usize = 0xdead;
+pub static mut LAST_TIMER_SEPC: usize = 0;
 
 pub fn init_tables() {
     unsafe {
@@ -140,10 +148,10 @@ extern "C" {
 }
 
 pub fn first_run_stub_addr() -> usize {
-    unsafe { first_run_stub as usize }
+    first_run_stub as usize
 }
 
-fn switch_to(cur_ctx: *mut usize, next_ctx: *mut usize) {
+fn do_switch(cur_ctx: *mut usize, next_ctx: *mut usize) {
     unsafe { switch_to(cur_ctx, next_ctx) };
 }
 
@@ -159,19 +167,6 @@ pub fn schedule() {
             }
         }
         loop {
-            // diagnostic: show READY internals before popping
-            {
-                let r = &READY as *const VecDeque<usize> as *const usize;
-                let (tail, head, ptr, cap, len) = unsafe {
-                    (*r, *r.add(1), *r.add(2), *r.add(3), READY.len())
-                };
-                if !READY.is_empty() {
-                    crate::kprintln!(
-                        "[task] READY: tail={} head={} cap={} len={} buf={:#x}",
-                        tail, head, cap, len, ptr
-                    );
-                }
-            }
             let next = READY.pop_front();
             match next {
                 Some(pid) => {
@@ -186,7 +181,7 @@ pub fn schedule() {
                         return;
                     }
                     let next_ctx = TASKS[pid].as_ref().unwrap().ctx;
-                    let next_satp = TASKS[pid].as_ref().unwrap().pt.root_ppn();
+                    let next_satp = TASKS[pid].as_ref().unwrap().mm.pt.root_ppn();
                     let next_kstack = TASKS[pid].as_ref().unwrap().kstack_top;
                     TASKS[pid].as_mut().unwrap().state = TaskState::Running;
                     if let Some(c) = cur {
@@ -195,7 +190,7 @@ pub fn schedule() {
                         paging::write_satp(next_satp);
                         set_sscratch(next_kstack);
                         let nctx = next_ctx;
-                        switch_to(cur_ctx, &nctx as *const usize as *mut usize);
+                        do_switch(cur_ctx, &nctx as *const usize as *mut usize);
                         return;
                     } else {
                         // no current (shouldn't happen after boot)
@@ -239,6 +234,12 @@ pub fn read_sp() -> usize {
     v
 }
 
+pub fn set_tp(v: usize) {
+    unsafe {
+        core::arch::asm!("mv tp, {}", in(reg) v, options(nostack));
+    }
+}
+
 fn idle() {
     unsafe {
         // Switch to a dedicated idle stack: nested interrupts taken while
@@ -246,12 +247,9 @@ fn idle() {
         // trapframe or the syscall handler's stack frames.
         // The idle stack is allocated from the frame allocator so it does
         // not sit next to .data/.bss (an overflow would corrupt statics).
-        if IDLE_STACK_TOP == 0 {
-            let f = crate::mm::frame::alloc_frames(4).expect("idle stack");
-            IDLE_STACK_TOP = f + 4 * crate::mm::frame::FRAME_SIZE;
-            crate::kprintln!("[task] idle stack at {:#x}", IDLE_STACK_TOP);
-        }
-        IDLE_WORKER_TOP = TASKS[CURRENT.unwrap()].as_ref().unwrap().kstack_top;
+        let pid = CURRENT.unwrap();
+        IDLE_STACK_TOP = TASKS[pid].as_ref().unwrap().idle_stack_top;
+        IDLE_WORKER_TOP = TASKS[pid].as_ref().unwrap().kstack_top;
         idle_asm();
     }
 }
@@ -309,24 +307,24 @@ pub fn sleep(ms: u64) {
 
 // ---------- task creation ----------
 
-pub const KSTACK_PAGES: usize = 4; // 16 KiB kernel stacks
+pub const KSTACK_PAGES: usize = 32; // 128 KiB kernel stacks
 
 /// Create a task shell (no user image yet).
 pub fn new_task() -> usize {
     let pid = alloc_pid();
     let kstack = frame::alloc_frames(KSTACK_PAGES).expect("kstack");
     let kstack_top = kstack + KSTACK_PAGES * frame::FRAME_SIZE;
-    let mut pt = PageTable::new().expect("pt");
-    crate::mm::map_kernel_into(&mut pt);
+    let idle_frames = frame::alloc_frames(4).expect("idle stack");
+    let idle_stack_top = idle_frames + 4 * frame::FRAME_SIZE;
     let t = Task {
         pid,
         parent: None,
         state: TaskState::Ready,
         wchan: 0,
         kstack_top,
+        idle_stack_top,
         ctx: 0,
         tf: core::ptr::null_mut(),
-        pt,
         mm: Mm::new(),
         fds: FdTable::new(),
         cwd: "/".to_string(),
@@ -373,12 +371,15 @@ extern "C" {
 
 /// Boot path: make pid 1 the current task and enter user mode.
 pub fn enter_first_task(pid: usize) -> ! {
+    crate::kprintln!("[task] enter_first_task pid={}", pid);
     unsafe {
         let t = TASKS[pid].as_mut().unwrap();
         t.state = TaskState::Running;
         CURRENT = Some(pid);
-        paging::write_satp(t.pt.root_ppn());
-        set_sscratch(t.kstack_top);
+        paging::write_satp(t.mm.pt.root_ppn());
+        let ktop = t.kstack_top;
+        set_tp(ktop);
+        set_sscratch(ktop);
         let tf = t.tf;
         enter_user(tf);
     }
@@ -389,11 +390,16 @@ pub fn enter_first_task(pid: usize) -> ! {
 /// Fork the current task. Returns child pid (0 in child).
 pub fn fork() -> isize {
     let cur_pid = current_pid();
-    let parent = current();
-    let child_pid = unsafe {
+    let (child_pid, parent) = unsafe {
+        // NOTE: alloc_pid() may grow TASKS (push(None)), which REALLOCATES the
+        // Vec and frees the old buffer. Any `current()` pointer captured before
+        // this point is dangling afterwards. Always re-fetch AFTER alloc_pid.
         let pid = alloc_pid();
+        let parent = current();
         let kstack = frame::alloc_frames(KSTACK_PAGES).expect("kstack");
         let kstack_top = kstack + KSTACK_PAGES * frame::FRAME_SIZE;
+    let idle_frames = frame::alloc_frames(4).expect("idle stack");
+    let idle_stack_top = idle_frames + 4 * frame::FRAME_SIZE;
         // copy mm
         let mut mm = Mm::new();
         {
@@ -413,9 +419,9 @@ pub fn fork() -> isize {
             state: TaskState::Ready,
             wchan: 0,
             kstack_top,
+            idle_stack_top,
             ctx: 0,
             tf: core::ptr::null_mut(),
-            pt: mm.pt,
             mm,
             fds,
             cwd: parent.as_ref().unwrap().cwd.clone(),
@@ -426,7 +432,7 @@ pub fn fork() -> isize {
             name: parent.as_ref().unwrap().name.clone(),
         };
         TASKS[pid] = Some(t);
-        pid
+        (pid, parent)
     };
     // child trapframe: copy of parent's, a0 = 0
     let child = task(child_pid).unwrap();

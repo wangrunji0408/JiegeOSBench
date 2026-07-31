@@ -57,10 +57,7 @@ pub fn wake_all_epoll() {
 pub fn sys_epoll_create1(flags: usize) -> isize {
     let _ = flags;
     let ep_id = epoll_new();
-    let fds = unsafe { &mut *({
-        let t = task::current();
-        &mut t.as_ref().unwrap().fds as *mut _
-    }) };
+    let fds = unsafe { &mut task::current().as_mut().unwrap().fds };
     let fdnum = match fds.alloc() {
         Some(fd) => fd,
         None => return -24,
@@ -69,7 +66,7 @@ pub fn sys_epoll_create1(flags: usize) -> isize {
         kind: FdKind::Epoll { ep_id },
         flags: 0,
         offset: 0,
-        cloexec: flags & crate::fs::O_CLOEXEC != 0,
+        cloexec: flags & crate::fs::O_CLOEXEC as usize != 0,
         epoll: None,
     });
     fdnum as isize
@@ -96,10 +93,7 @@ fn fd_kind_writable(fd: &Fd) -> bool {
 
 pub fn sys_epoll_ctl(epfd: usize, op: i32, fd: usize, event: usize) -> isize {
     let ep_id = {
-        let fds = unsafe { &*({
-            let t = task::current();
-            &t.as_ref().unwrap().fds as *const _
-        }) };
+        let fds = unsafe { &task::current().as_ref().unwrap().fds };
         match fds.get(epfd) {
             Some(f) => match &f.kind {
                 FdKind::Epoll { ep_id } => *ep_id,
@@ -120,7 +114,7 @@ pub fn sys_epoll_ctl(epfd: usize, op: i32, fd: usize, event: usize) -> isize {
         EPOLL_CTL_ADD => {
             // register interest on the target fd
             let t = task::current();
-            let fds = unsafe { &mut t.as_ref().unwrap().fds };
+            let fds = unsafe { &mut t.as_mut().unwrap().fds };
             let f = match fds.get_mut(fd) {
                 Some(f) => f,
                 None => return -9,
@@ -135,7 +129,7 @@ pub fn sys_epoll_ctl(epfd: usize, op: i32, fd: usize, event: usize) -> isize {
         }
         EPOLL_CTL_DEL => {
             let t = task::current();
-            let fds = unsafe { &mut t.as_ref().unwrap().fds };
+            let fds = unsafe { &mut t.as_mut().unwrap().fds };
             let f = match fds.get_mut(fd) {
                 Some(f) => f,
                 None => return -9,
@@ -147,7 +141,7 @@ pub fn sys_epoll_ctl(epfd: usize, op: i32, fd: usize, event: usize) -> isize {
         }
         EPOLL_CTL_MOD => {
             let t = task::current();
-            let fds = unsafe { &mut t.as_ref().unwrap().fds };
+            let fds = unsafe { &mut t.as_mut().unwrap().fds };
             let f = match fds.get_mut(fd) {
                 Some(f) => f,
                 None => return -9,
@@ -182,10 +176,7 @@ pub fn fd_removed(fd: usize) {
 
 pub fn sys_epoll_pwait(epfd: usize, events: usize, maxevents: usize, timeout_ms: isize, _sigmask: usize) -> isize {
     let ep_id = {
-        let fds = unsafe { &*({
-            let t = task::current();
-            &t.as_ref().unwrap().fds as *const _
-        }) };
+        let fds = unsafe { &task::current().as_ref().unwrap().fds };
         match fds.get(epfd) {
             Some(f) => match &f.kind {
                 FdKind::Epoll { ep_id } => *ep_id,

@@ -1,5 +1,6 @@
 //! File-related syscalls.
 
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
 use crate::fs::{self, Fd, FdKind, FdTable};
@@ -8,7 +9,7 @@ use crate::task;
 
 fn cur_fds() -> *mut FdTable {
     let t = task::current();
-    unsafe { &mut t.as_ref().unwrap().fds as *mut FdTable }
+    unsafe { &mut t.as_mut().unwrap().fds as *mut FdTable }
 }
 
 fn get_fd(fd: usize) -> Option<&'static mut Fd> {
@@ -251,7 +252,8 @@ pub fn sys_lseek(fd: usize, off: i64, whence: usize) -> isize {
     let size = match &f.kind {
         FdKind::File { file_id } => {
             let file = fs::fs().get(*file_id).unwrap();
-            file.borrow().data.len() as i64
+            let len = file.borrow().data.len() as i64;
+            len
         }
         _ => 0,
     };
@@ -292,7 +294,7 @@ pub fn sys_dup3(old: usize, new: usize, flags: usize) -> isize {
         None => return -9,
     };
     let mut f = f;
-    if flags & fs::O_CLOEXEC != 0 {
+    if flags & fs::O_CLOEXEC as usize != 0 {
         f.cloexec = true;
     }
     // close old fd at new position
@@ -349,8 +351,16 @@ pub fn sys_fcntl(fd: usize, cmd: usize, arg: usize) -> isize {
             }
             0
         }
-        5 => {
-            // F_GETOWN
+        5 | 6 | 7 => {
+            // F_GETLK / F_SETLK / F_SETLKW: no-op
+            0
+        }
+        8 => {
+            // F_SETOWN (riscv64 numbering)
+            0
+        }
+        9 => {
+            // F_GETOWN (riscv64 numbering)
             0
         }
         _ => -22,
@@ -373,7 +383,7 @@ pub fn sys_fstat(fd: usize, buf: usize) -> isize {
         Some(f) => f,
         None => return -9,
     };
-    let mut out = [0u8; 136];
+    let mut out = [0u8; 128];
     match fs::fill_stat(f, &mut out) {
         Ok(_) => match write_user(buf, &out) {
             Ok(_) => 0,
@@ -392,7 +402,7 @@ pub fn sys_newfstatat(dirfd: isize, path: usize, buf: usize, flags: usize) -> is
     let resolved = resolve_path_at(dirfd, &path_str);
     let t = task::current();
     let cwd = unsafe { t.as_ref().unwrap().cwd.clone() };
-    let mut out = [0u8; 136];
+    let mut out = [0u8; 128];
     match fs::fill_stat_path(&cwd, &resolved, &mut out) {
         Ok(_) => match write_user(buf, &out) {
             Ok(_) => 0,
@@ -689,19 +699,19 @@ pub fn sys_pipe2(fds_ptr: usize, flags: usize) -> isize {
         Some(f) => f,
         None => return -24,
     };
-    let nonblock = flags & fs::O_NONBLOCK != 0;
+    let nonblock = flags & fs::O_NONBLOCK as usize != 0;
     fds.fds[fa] = Some(Fd {
         kind: FdKind::UnixPair { sock_id: a },
         flags: 0,
         offset: 0,
-        cloexec: flags & fs::O_CLOEXEC != 0,
+        cloexec: flags & fs::O_CLOEXEC as usize != 0,
         epoll: None,
     });
     fds.fds[fb] = Some(Fd {
         kind: FdKind::UnixPair { sock_id: b },
         flags: 0,
         offset: 0,
-        cloexec: flags & fs::O_CLOEXEC != 0,
+        cloexec: flags & fs::O_CLOEXEC as usize != 0,
         epoll: None,
     });
     crate::net::sock(a).unwrap().nonblock = nonblock;
@@ -729,7 +739,7 @@ pub fn sys_eventfd2(init: usize, flags: usize) -> isize {
         },
         flags: 0,
         offset: 0,
-        cloexec: flags & fs::O_CLOEXEC != 0,
+        cloexec: flags & fs::O_CLOEXEC as usize != 0,
         epoll: None,
     });
     fdnum as isize

@@ -31,7 +31,7 @@ pub fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: usize, o
     if flags & MAP_FIXED == 0 {
         // allocate downward from mmap_next
         let t = crate::task::current();
-        let mm = unsafe { &mut t.as_ref().unwrap().mm };
+        let mm = unsafe { &mut t.as_mut().unwrap().mm };
         start = mm.mmap_next - len;
         mm.mmap_next = start;
         // ensure no overlap with stack
@@ -46,13 +46,13 @@ pub fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: usize, o
     }
     let prot = flags_to_prot(prot);
     let t = crate::task::current();
-    let mm = unsafe { &mut t.as_ref().unwrap().mm };
+    let mm = unsafe { &mut t.as_mut().unwrap().mm };
     if flags & MAP_ANONYMOUS != 0 {
         mm.map_anon(start, start + len, prot);
     } else {
         // file-backed: read whole file and map (private semantics)
         let t2 = crate::task::current();
-        let fds = &t2.as_ref().unwrap().fds;
+        let fds = unsafe { &t2.as_ref().unwrap().fds };
         let f = match fds.get(fd) {
             Some(f) => f,
             None => return -9,
@@ -63,7 +63,7 @@ pub fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: usize, o
         };
         let file = crate::fs::fs().get(file_id).ok_or(-9).unwrap();
         let data = file.borrow().data.clone();
-        mm.map_file(start, start + len, prot, &data, offset);
+        mm.map_file(start, start + len, prot, &data, 0, offset, data.len());
     }
     start as isize
 }
@@ -74,7 +74,7 @@ pub fn sys_munmap(addr: usize, len: usize) -> isize {
     }
     let len = (len + paging::PAGE_SIZE - 1) & !(paging::PAGE_SIZE - 1);
     let t = crate::task::current();
-    let mm = unsafe { &mut t.as_ref().unwrap().mm };
+    let mm = unsafe { &mut t.as_mut().unwrap().mm };
     mm.unmap_range(addr, addr + len);
     0
 }
@@ -86,14 +86,14 @@ pub fn sys_mprotect(addr: usize, len: usize, prot: usize) -> isize {
     let len = (len + paging::PAGE_SIZE - 1) & !(paging::PAGE_SIZE - 1);
     let prot = flags_to_prot(prot);
     let t = crate::task::current();
-    let mm = unsafe { &mut t.as_ref().unwrap().mm };
+    let mm = unsafe { &mut t.as_mut().unwrap().mm };
     mm.mprotect_range(addr, addr + len, prot);
     0
 }
 
 pub fn sys_brk(new_brk: usize) -> isize {
     let t = crate::task::current();
-    let mm = unsafe { &mut t.as_ref().unwrap().mm };
+    let mm = unsafe { &mut t.as_mut().unwrap().mm };
     if new_brk == 0 {
         return mm.brk as isize;
     }
@@ -119,7 +119,7 @@ pub fn sys_mremap(addr: usize, old_len: usize, new_len: usize, flags: usize) -> 
     let _ = flags;
     // move the mapping to a new location (MREMAP_MAYMOVE semantics)
     let t = crate::task::current();
-    let mm = unsafe { &mut t.as_ref().unwrap().mm };
+    let mm = unsafe { &mut t.as_mut().unwrap().mm };
     let vma = match mm.find_vma(addr) {
         Some(v) => v.clone(),
         None => return -14,

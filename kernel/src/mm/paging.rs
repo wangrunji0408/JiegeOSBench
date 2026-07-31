@@ -92,7 +92,7 @@ impl PageTable {
             } else {
                 let f = frame::alloc_frame().expect("oom pgtbl");
                 core::ptr::write_bytes(f as *mut u8, 0, PAGE_SIZE);
-                *t2.add(l2) = pte(f >> 12, PTE_R | PTE_W | PTE_A | PTE_D);
+                *t2.add(l2) = pte(f >> 12, 0);
                 f as *mut usize
             };
             let pte1 = *t1.add(l1);
@@ -101,7 +101,7 @@ impl PageTable {
             } else {
                 let f = frame::alloc_frame().expect("oom pgtbl");
                 core::ptr::write_bytes(f as *mut u8, 0, PAGE_SIZE);
-                *t1.add(l1) = pte(f >> 12, PTE_R | PTE_W | PTE_A | PTE_D);
+                *t1.add(l1) = pte(f >> 12, 0);
                 f as *mut usize
             };
             let p = pte(paddr >> 12, flags | PTE_A | PTE_D);
@@ -122,7 +122,7 @@ impl PageTable {
             } else {
                 let f = frame::alloc_frame().expect("oom pgtbl");
                 core::ptr::write_bytes(f as *mut u8, 0, PAGE_SIZE);
-                *t2.add(l2) = pte(f >> 12, PTE_R | PTE_W | PTE_A | PTE_D);
+                *t2.add(l2) = pte(f >> 12, 0);
                 f as *mut usize
             };
             let p = pte(paddr >> 12, flags | PTE_A | PTE_D);

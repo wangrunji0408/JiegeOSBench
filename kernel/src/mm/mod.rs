@@ -8,14 +8,11 @@ use paging::PageTable;
 pub static mut KERNEL_PT: Option<PageTable> = None;
 pub static mut RAM_END: usize = 0;
 
-pub fn init(kernel_end: usize, ram_end: usize, heap_start: usize) {
+pub fn init(kernel_end: usize, ram_end: usize) {
     unsafe {
         RAM_END = ram_end;
     }
-    // 1. Kernel heap is carved out of the kernel image (linker-reserved region).
-    heap::init(heap_start);
-
-    // 2. Everything from kernel_end..ram_end is free frames.
+    // Everything from kernel_end..ram_end is free frames.
     let free_start = paging::PAGE_SIZE * (frame::align_up(kernel_end, paging::PAGE_SIZE) / paging::PAGE_SIZE);
     frame::init(free_start, ram_end);
 
@@ -42,7 +39,7 @@ pub fn map_kernel_into(pt: &mut PageTable) {
         a += paging::PAGE_SIZE;
     }
     let mut a = 0x0C00_0000;
-    while a < 0x0C20_1000 {
+    while a < 0x0C20_2000 {
         pt.map(a, a, paging::PTE_R | paging::PTE_W);
         a += paging::PAGE_SIZE;
     }
@@ -51,5 +48,3 @@ pub fn map_kernel_into(pt: &mut PageTable) {
 pub fn kernel_pt() -> &'static mut PageTable {
     unsafe { KERNEL_PT.as_mut().unwrap() }
 }
-
-/// Copy-on-write-free page copy helper used by fork: copies all user pages.

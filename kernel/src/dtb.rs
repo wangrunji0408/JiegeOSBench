@@ -1,7 +1,8 @@
 //! Minimal Flattened Device Tree parser (big-endian), used to find RAM size,
 //! timer frequency and kernel bootargs on QEMU virt.
 
-use crate::console::kprintln;
+use crate::kprintln;
+use alloc::string::{String, ToString};
 
 const FDT_MAGIC: u32 = 0xd00d_feed;
 const FDT_BEGIN_NODE: u32 = 1;
@@ -60,14 +61,15 @@ pub fn parse(dtb: usize) -> DtbInfo {
         kprintln!("[dtb] invalid magic {:#x}, using defaults", magic);
         return info;
     }
-    let totalsize = be32(base.add(4)) as usize;
-    let off_struct = be32(base.add(8)) as usize;
-    let off_strings = be32(base.add(12)) as usize;
-    let size_strings = be32(base.add(20)) as usize;
-    let strings = base.add(off_strings);
-    let mut p = base.add(off_struct);
-    let end = base.add(off_struct + totalsize - off_struct);
-    let _ = end;
+    let (totalsize, off_struct, off_strings, size_strings, strings, mut p) = unsafe {
+        let totalsize = be32(base.add(4)) as usize;
+        let off_struct = be32(base.add(8)) as usize;
+        let off_strings = be32(base.add(12)) as usize;
+        let size_strings = be32(base.add(20)) as usize;
+        let strings = base.add(off_strings);
+        let p = base.add(off_struct);
+        (totalsize, off_struct, off_strings, size_strings, strings, p)
+    };
 
     // root address/size cells
     let mut addr_cells = 2u32;

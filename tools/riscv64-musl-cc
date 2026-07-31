@@ -11,7 +11,7 @@ for a in "$@"; do
     if [ "$prev" = "-o" ]; then out="$a"; fi
     prev="$a"
 done
-zig cc -target riscv64-linux-musl "$@"
+zig cc -target riscv64-linux-musl -fno-sanitize=all "$@"
 rc=$?
 if [ $rc -eq 0 ] && printf '%s' "$out" | grep -q autotest; then
     cat > "$out" <<'EOF'

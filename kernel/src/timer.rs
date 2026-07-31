@@ -22,7 +22,7 @@ pub fn init(timebase: u64) {
         TIMEBASE = timebase;
     }
     let now = rdtime();
-    sbi::set_timer(now + ms_to_ticks(TICK_MS));
+    sbi::set_timer(now + ms_to_ticks(unsafe { TICK_MS }));
 }
 
 pub fn ms_to_ticks(ms: u64) -> u64 {
@@ -42,7 +42,8 @@ pub fn on_timer_interrupt() {
     unsafe {
         TICKS += TICK_MS;
     }
+    crate::virtio::poll_rx();
     crate::timer_wheel::on_tick();
     let now = rdtime();
-    sbi::set_timer(now + ms_to_ticks(TICK_MS));
+    sbi::set_timer(now + ms_to_ticks(unsafe { TICK_MS }));
 }

@@ -5,13 +5,26 @@ trap_entry:
     # sscratch = current task kernel stack top (invariant, set by scheduler)
     # swap tp with sscratch: tp = kernel stack top, sscratch = old tp (preserved)
     csrrw tp, sscratch, tp
-    # save the interrupted sp into tf slot regs[2]
-    #   (U-mode: user sp
- S-mode: kernel sp at entry)
+    # SPP tells us where we came from: 1 = S-mode (kernel trap), 0 = U-mode
+    csrr t6, sstatus
+    srli t6, t6, 8
+    andi t6, t6, 1
+    bnez t6, 1f
+    # U-mode trap: use the fixed trapframe slot at the kernel stack top.
+    #   save the user sp into tf slot regs[2]
     sd sp, -536+16(tp)
     # switch to the kernel stack (sp = trapframe base)
     addi sp, tp, -536
+    j 2f
+1:
+    # S-mode (kernel) trap: push the trapframe on the current kernel stack so
+    #   nested interrupts (e.g. timer while the scheduler idles) do NOT
+    #   clobber an outer trapframe stored at the fixed slot.
+    addi sp, sp, -536
+    sd sp, 16(sp)         # regs[2] = interrupted kernel sp
+2:
     sd x1, 8(sp)          # ra
+    sd x3, 24(sp)         # gp
     sd x5, 40(sp)         # user t0 (before we clobber it)
     csrr t0, sscratch     # t0 = old tp (user's tp for U traps, kernel tp for S traps)
     sd t0, 32(sp)         # regs[4] = tp

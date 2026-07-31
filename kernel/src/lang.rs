@@ -6,8 +6,8 @@ use core::panic::PanicInfo;
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    crate::console::kprintln!("[PANIC] {}", info);
-    crate::console::kprintln!("[PANIC] halting");
+    crate::kprintln!("[PANIC] {}", info);
+    crate::kprintln!("[PANIC] halting");
     loop {
         unsafe { core::arch::asm!("wfi", options(nomem, nostack)) };
     }
@@ -15,7 +15,7 @@ fn panic(info: &PanicInfo) -> ! {
 
 #[alloc_error_handler]
 fn alloc_error_handler(layout: core::alloc::Layout) -> ! {
-    crate::console::kprintln!("[PANIC] kernel heap allocation failure: {:?}", layout);
+    crate::kprintln!("[PANIC] kernel heap allocation failure: {:?}", layout);
     loop {
         unsafe { core::arch::asm!("wfi", options(nomem, nostack)) };
     }

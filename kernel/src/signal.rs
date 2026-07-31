@@ -86,7 +86,7 @@ pub fn maybe_deliver(tf: *mut TrapFrame) {
             // terminate (all remaining signals terminate by default)
             let t = crate::task::current();
             let t = unsafe { t.as_ref().unwrap() };
-            crate::console::kprintln!("[sig] pid={} killed by SIG{}", t.pid, sig);
+            crate::kprintln!("[sig] pid={} killed by SIG{}", t.pid, sig);
             crate::task::exit(128 + sig as i32);
         }
         // custom handler: build sigframe on user stack
@@ -113,17 +113,17 @@ pub fn maybe_deliver(tf: *mut TrapFrame) {
             *f.add(33) = tf.sstatus;
             *f.add(34) = {
                 let t = crate::task::current();
-                t.as_ref().unwrap().sig.mask
+                t.as_ref().unwrap().sig.mask as usize
             };
             *f.add(35) = 0; // pad
             // set up handler call
             tf.regs[10] = sig; // a0
             tf.regs[1] = TRAMPOLINE; // ra
-            tf.regs[2] = frame_addr + 288; // sp (16-aligned since 288%16==0)
+            tf.regs[2] = frame_addr + 560; // sp
             tf.sepc = handler;
             // mask
             let t = crate::task::current();
-            let s = &mut t.as_ref().unwrap().sig;
+            let s = &mut t.as_mut().unwrap().sig;
             if flags & SA_NODEFER == 0 {
                 s.mask |= (1u64 << (sig - 1)) | ((flags & SA_SIGINFO != 0) as u64 * 0);
             }
@@ -178,7 +178,12 @@ pub fn sigreturn(tf: *mut TrapFrame) {
         out.sepc = *f.add(32);
         out.sstatus = *f.add(33);
         let mask = *f.add(34);
-        t.as_mut().unwrap().sig.mask = mask;
+        t.as_mut().unwrap().sig.mask = mask as u64;
+        let fp = (sp + 288) as *const u64;
+        for i in 0..32 {
+            out.fp[i] = *fp.add(i);
+        }
+        out.fcsr = *((sp + 544) as *const u32);
     }
 }
 

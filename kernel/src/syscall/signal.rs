@@ -12,7 +12,7 @@ pub fn sys_rt_sigaction(sig: usize, act: usize, oldact: usize, _sigsetsize: usiz
         return -22;
     }
     let t = task::current();
-    let s = unsafe { &mut t.as_ref().unwrap().sig };
+    let s = unsafe { &mut t.as_mut().unwrap().sig };
     if oldact != 0 {
         let mut out = [0u8; SIGACTION_SIZE];
         out[..8].copy_from_slice(&(s.handlers[sig] as u64).to_le_bytes());
@@ -49,7 +49,7 @@ pub fn sys_rt_sigaction(sig: usize, act: usize, oldact: usize, _sigsetsize: usiz
 
 pub fn sys_rt_sigprocmask(how: usize, set: usize, oldset: usize, _sigsetsize: usize) -> isize {
     let t = task::current();
-    let s = unsafe { &mut t.as_ref().unwrap().sig };
+    let s = unsafe { &mut t.as_mut().unwrap().sig };
     if oldset != 0 {
         let _ = write_user(oldset, &s.mask.to_le_bytes());
     }
@@ -78,6 +78,28 @@ pub fn sys_rt_sigpending(set: usize, _sigsetsize: usize) -> isize {
     0
 }
 
+pub fn sys_rt_sigsuspend(mask: usize, _sigsetsize: usize) -> isize {
+    let t = crate::task::current();
+    let s = unsafe { &mut t.as_mut().unwrap().sig };
+    let old = s.mask;
+    if mask != 0 {
+        let data = match read_user(mask, 8) {
+            Ok(d) => d,
+            Err(e) => return e as isize,
+        };
+        let new_mask = u64::from_le_bytes(data[..8].try_into().unwrap());
+        s.mask = new_mask & !((1u64 << 9) | (1u64 << 19));
+    }
+    // block until a signal arrives (send_signal wakes blocked tasks)
+    let wchan = crate::task::current_pid() + 0x1000;
+    crate::task::block_on(wchan);
+    // restore mask and return EINTR so delivery happens
+    let t = crate::task::current();
+    let s = unsafe { &mut t.as_mut().unwrap().sig };
+    s.mask = old;
+    -4 // EINTR
+}
+
 pub fn sys_rt_sigreturn() -> isize {
     // restore from the sigframe; the trapframe is rewritten, return value unused
     let pid = task::current_pid();
@@ -92,7 +114,7 @@ pub fn sys_rt_sigreturn() -> isize {
 
 pub fn sys_sigaltstack(ss: usize, old_ss: usize) -> isize {
     let t = task::current();
-    let s = unsafe { &mut t.as_ref().unwrap().sig };
+    let s = unsafe { &mut t.as_mut().unwrap().sig };
     if old_ss != 0 {
         // struct stack_t { sp, flags, size }
         let mut out = [0u8; 24];

@@ -13,7 +13,7 @@ const SOCK_CLOEXEC: i32 = 0o2000000;
 
 fn get_fd(fd: usize) -> Option<&'static mut Fd> {
     let t = task::current();
-    unsafe { (&mut t.as_ref().unwrap().fds).get_mut(fd) }
+    unsafe { (&mut t.as_mut().unwrap().fds).get_mut(fd) }
 }
 
 fn sock_id_of(fd: &Fd) -> Option<usize> {
@@ -39,10 +39,7 @@ pub fn sys_socket(domain: i32, sock_type: i32, protocol: i32) -> isize {
         Err(e) => return e as isize,
     };
     crate::net::sock(id).unwrap().nonblock = nonblock;
-    let fds = unsafe { &mut *({
-        let t = task::current();
-        &mut t.as_ref().unwrap().fds as *mut _
-    }) };
+    let fds = unsafe { &mut task::current().as_mut().unwrap().fds };
     let fdnum = match fds.alloc() {
         Some(fd) => fd,
         None => return -24,
@@ -142,10 +139,7 @@ pub fn sys_accept(fd: usize, addr: usize, addrlen: usize, flags: usize) -> isize
                 let _ = write_user(addr, &sa);
             }
             // create fd
-            let fds = unsafe { &mut *({
-                let t = task::current();
-                &mut t.as_ref().unwrap().fds as *mut _
-            }) };
+            let fds = unsafe { &mut task::current().as_mut().unwrap().fds };
             let fdnum = match fds.alloc() {
                 Some(fd) => fd,
                 None => return -24,
@@ -398,10 +392,7 @@ pub fn sys_socketpair(domain: i32, sock_type: i32, protocol: i32, sv: usize) -> 
     };
     crate::net::sock(a).unwrap().nonblock = nonblock;
     crate::net::sock(b).unwrap().nonblock = nonblock;
-    let fds = unsafe { &mut *({
-        let t = task::current();
-        &mut t.as_ref().unwrap().fds as *mut _
-    }) };
+    let fds = unsafe { &mut task::current().as_mut().unwrap().fds };
     let fa = match fds.alloc() {
         Some(f) => f,
         None => return -24,

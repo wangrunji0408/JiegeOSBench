@@ -1,6 +1,7 @@
 //! Per-process user memory management: VMA list + page mapping helpers.
 
 use crate::mm::frame;
+use alloc::vec::Vec;
 use crate::mm::paging::{self, PageTable};
 
 pub const USER_STACK_TOP: usize = 0x0000_003f_0000_0000; // below Sv39 user limit 2^38
@@ -47,7 +48,8 @@ pub struct Mm {
 
 impl Mm {
     pub fn new() -> Mm {
-        let pt = PageTable::new().expect("oom mm pt");
+        let mut pt = PageTable::new().expect("oom mm pt");
+        crate::mm::map_kernel_into(&mut pt);
         Mm {
             pt,
             vmas: Vec::new(),
@@ -108,22 +110,32 @@ impl Mm {
         self.merge_vmas();
     }
 
-    /// Map file-backed region by copying data (private mapping semantics).
-    pub fn map_file(&mut self, start: usize, end: usize, prot: usize, data: &[u8], offset: usize) {
+    /// Map a file-backed segment by copying data (private mapping semantics).
+    /// The segment covers vaddrs [seg_vaddr, seg_vaddr + seg_filesz) mapped from
+    /// file bytes [seg_file_off, seg_file_off + seg_filesz); everything else in
+    /// the mapping is zeroed (bss). `start`/`end` are page-aligned bounds.
+    pub fn map_file(&mut self, start: usize, end: usize, prot: usize, data: &[u8], seg_vaddr: usize, seg_file_off: usize, seg_filesz: usize) {
+        let seg_end_vaddr = seg_vaddr + seg_filesz;
         for a in (start..end).step_by(paging::PAGE_SIZE) {
             let f = frame::alloc_frame().expect("oom file");
             unsafe {
                 core::ptr::write_bytes(f as *mut u8, 0, paging::PAGE_SIZE);
             }
-            let src = offset + (a - start);
-            if src < data.len() {
-                let n = core::cmp::min(paging::PAGE_SIZE, data.len() - src);
-                unsafe {
-                    core::ptr::copy_nonoverlapping(
-                        data.as_ptr().add(src),
-                        f as *mut u8,
-                        n,
-                    );
+            // page vaddr range [a, a+PAGE) ∩ segment vaddr range
+            let lo = core::cmp::max(a, seg_vaddr);
+            let hi = core::cmp::min(a + paging::PAGE_SIZE, seg_end_vaddr);
+            if lo < hi {
+                let src = seg_file_off + (lo - seg_vaddr);
+                let n = hi - lo;
+                if src < data.len() {
+                    let n = core::cmp::min(n, data.len() - src);
+                    unsafe {
+                        core::ptr::copy_nonoverlapping(
+                            data.as_ptr().add(src),
+                            (f + (lo - a)) as *mut u8,
+                            n,
+                        );
+                    }
                 }
             }
             self.pt.map(a, f, prot_to_pte(prot));
@@ -148,7 +160,21 @@ impl Mm {
             self.pt.unmap(a);
             a += paging::PAGE_SIZE;
         }
-        self.vmas.retain(|v| v.end <= start || v.start >= end);
+        // split vmas: keep parts outside [start, end)
+        let mut new_vmas = Vec::new();
+        for v in self.vmas.drain(..) {
+            if v.end <= start || v.start >= end {
+                new_vmas.push(v);
+            } else {
+                if v.start < start {
+                    new_vmas.push(Vma { start: v.start, end: start, ..v });
+                }
+                if v.end > end {
+                    new_vmas.push(Vma { start: end, end: v.end, ..v });
+                }
+            }
+        }
+        self.vmas = new_vmas;
     }
 
     pub fn mprotect_range(&mut self, start: usize, end: usize, prot: usize) {

@@ -64,6 +64,7 @@ pub fn alloc_frames(n: usize) -> Option<usize> {
     let r = unsafe {
         let mut prev = 0usize;
         let mut cur = FREE_HEAD;
+        let mut result = None;
         while cur != 0 {
             let next = *(cur as *const usize);
             // count contiguous run starting at cur
@@ -84,12 +85,13 @@ pub fn alloc_frames(n: usize) -> Option<usize> {
                 } else {
                     *(prev as *mut usize) = q;
                 }
-                return Some(cur);
+                result = Some(cur);
+                break;
             }
             prev = cur;
             cur = next;
         }
-        None
+        result
     };
     unlock();
     r

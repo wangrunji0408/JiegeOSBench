@@ -3,11 +3,11 @@
 
 use alloc::collections::BTreeMap;
 use alloc::rc::Rc;
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::cell::RefCell;
 
-use crate::console::kprintln;
+use crate::kprintln;
 
 pub const O_RDONLY: u32 = 0;
 pub const O_WRONLY: u32 = 1;
@@ -167,8 +167,8 @@ pub fn mkdir_at(cwd: &str, path: &str, mode: u32) -> Result<usize, i32> {
     if exists {
         return Err(-17);
     }
-    let id = insert_file(pid, &name, SharedFile::new_dir(mode & 0o7777));
-    Ok(id)
+    insert_file(pid, &name, SharedFile::new_dir(mode & 0o7777))
+        .ok_or(-13) // EACCES
 }
 
 pub fn split_parent(cwd: &str, path: &str) -> (String, String) {
@@ -358,19 +358,19 @@ pub fn dup_fd(fd: &Fd) -> Fd {
     fd.clone()
 }
 
-/// Fill a Linux `struct stat` (riscv64 layout, 136 bytes).
+/// Fill a Linux `struct stat` (riscv64 layout, exactly 128 bytes).
 pub fn fill_stat(fd: &Fd, out: &mut [u8]) -> Result<(), i32> {
-    if out.len() < 136 {
+    if out.len() < 128 {
         return Err(-22);
     }
-    let mut stat = [0u8; 136];
+    let mut stat = [0u8; 128];
     let (dev, ino, mode, nlink, size, blksize, blocks) = match &fd.kind {
         FdKind::File { file_id } => {
             let f = fs().get(*file_id).ok_or(-9)?;
             let file = f.borrow();
             (
                 0x8000u64,
-                new_ino(), // ino not tracked per file; use id+1
+                new_ino(),
                 file.mode as u64,
                 file.nlink as u64,
                 file.data.len() as u64,
@@ -386,51 +386,54 @@ pub fn fill_stat(fd: &Fd, out: &mut [u8]) -> Result<(), i32> {
         FdKind::Epoll { .. } => (0, 6, S_IFREG as u64 | 0o600, 1, 0, 4096, 0),
         FdKind::Eventfd { .. } => (0, 7, S_IFREG as u64 | 0o600, 1, 8, 4096, 0),
     };
-    let put = |off: usize, v: u64| {
+    let mut put = |off: usize, v: u64| {
         stat[off..off + 8].copy_from_slice(&v.to_le_bytes());
     };
     put(0, dev);
     put(8, ino);
-    put(16, mode);
-    put(24, nlink);
-    put(28, 0); // uid
-    put(32, 0); // gid
-    put(40, 0); // rdev
-    put(48, 0); // __pad1
-    put(56, size);
-    put(64, blksize);
-    put(72, blocks);
-    put(80, 0); // atime
-    put(96, 0); // mtime
-    put(112, 0); // ctime
-    // rest stays zero
-    out[..136].copy_from_slice(&stat);
+    put(16, mode); // st_mode (4 bytes used)
+    put(20, nlink);
+    put(24, 0); // uid
+    put(28, 0); // gid
+    put(32, 0); // rdev
+    put(40, 0); // __pad1
+    put(48, size);
+    put(56, blksize);
+    put(64, blocks);
+    put(72, 0); // atime
+    put(80, 0); // atime_nsec
+    put(88, 0); // mtime
+    put(96, 0); // mtime_nsec
+    put(104, 0); // ctime
+    put(112, 0); // ctime_nsec
+    // 120..128: __unused4, __unused5 (zero)
+    out[..128].copy_from_slice(&stat);
     Ok(())
 }
 
-/// Fill a `struct stat` from a path (for newfstatat).
+/// Fill a `struct stat` from a path (for newfstatat). Exactly 128 bytes.
 pub fn fill_stat_path(cwd: &str, path: &str, out: &mut [u8]) -> Result<(), i32> {
     let id = resolve(cwd, path).ok_or(-2)?;
     let f = fs().get(id).ok_or(-9)?;
     let file = f.borrow();
-    if out.len() < 136 {
+    if out.len() < 128 {
         return Err(-22);
     }
-    let mut stat = [0u8; 136];
+    let mut stat = [0u8; 128];
     let mode = file.mode as u64;
     let size = file.data.len() as u64;
     let blocks = (size + 511) / 512;
-    let put = |off: usize, v: u64| {
+    let mut put = |off: usize, v: u64| {
         stat[off..off + 8].copy_from_slice(&v.to_le_bytes());
     };
     put(0, 0x8000);
     put(8, id as u64 + 1);
     put(16, mode);
-    put(24, file.nlink as u64);
-    put(56, size);
-    put(64, 4096);
-    put(72, blocks);
-    out[..136].copy_from_slice(&stat);
+    put(20, file.nlink as u64);
+    put(48, size);
+    put(56, 4096);
+    put(64, blocks);
+    out[..128].copy_from_slice(&stat);
     Ok(())
 }
 
@@ -481,9 +484,9 @@ pub fn getdents(fd: &mut Fd, buf: &mut [u8]) -> Result<usize, i32> {
 // ---------- initramfs (cpio newc) unpacking ----------
 
 pub fn unpack_cpio(data: &[u8]) {
-    let fs = fs();
+    let fsm = fs();
     // root
-    let root_id = fs.add(SharedFile::new_dir(0o755));
+    let root_id = fsm.add(SharedFile::new_dir(0o755));
     debug_assert_eq!(root_id, 0);
     let mut p = 0usize;
     while p + 110 <= data.len() {

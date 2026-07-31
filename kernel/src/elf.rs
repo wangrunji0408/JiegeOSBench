@@ -7,7 +7,7 @@ use alloc::vec::Vec;
 use crate::mm::paging;
 use crate::mm::vma::{Mm, USER_STACK_TOP, PROT_READ, PROT_WRITE, PROT_EXEC};
 
-pub const STACK_PAGES: usize = 128; // 512 KiB stack
+pub const STACK_PAGES: usize = 256; // 1 MiB stack + guard
 
 pub struct LoadResult {
     pub entry: usize,
@@ -68,6 +68,7 @@ pub fn load_elf(
         let p_filesz = rd64(data, off + 32) as usize;
         let p_memsz = rd64(data, off + 40) as usize;
         let _p_align = rd64(data, off + 48) as usize;
+        crate::kprintln!("[elf] phdr[{}] type={} flags={:#x} vaddr={:#x} offset={:#x} filesz={:#x} memsz={:#x}", i, p_type, p_flags, p_vaddr, p_offset, p_filesz, p_memsz);
         match p_type {
             1 => {
                 // PT_LOAD
@@ -85,10 +86,9 @@ pub fn load_elf(
                 }
                 let page_start = start & !(paging::PAGE_SIZE - 1);
                 let page_end = (end + paging::PAGE_SIZE - 1) & !(paging::PAGE_SIZE - 1);
-                let file_off_at_page_start = p_offset.wrapping_sub(start - page_start);
-                mm.map_file(page_start, page_end, prot, data, file_off_at_page_start);
+                mm.map_file(page_start, page_end, prot, data, p_vaddr, p_offset, p_filesz);
             }
-            3 => {
+            6 => {
                 // PT_PHDR
                 phdr_addr = base + p_vaddr;
             }
@@ -97,14 +97,14 @@ pub fn load_elf(
     }
     // bss beyond file end is zeroed by map_file.
 
-    // user stack
+    // user stack (with an unmapped guard page below)
     let stack_top = USER_STACK_TOP;
     let stack_bottom = stack_top - STACK_PAGES * paging::PAGE_SIZE;
-    mm.map_anon(stack_bottom, stack_top, PROT_READ | PROT_WRITE);
+    mm.map_anon(stack_bottom + paging::PAGE_SIZE, stack_top, PROT_READ | PROT_WRITE);
     mm.stack_top = stack_top;
 
-    // build the stack image
-    let sp = build_stack(argv, envp, execfn, stack_top, base + e_entry, phdr_addr, e_phnum, e_phentsize);
+    // build the stack image (write through the new page table)
+    let sp = build_stack(mm, argv, envp, execfn, stack_top, base + e_entry, phdr_addr, e_phnum, e_phentsize);
 
     Ok(LoadResult {
         entry: base + e_entry,
@@ -120,6 +120,7 @@ fn push_u64(stack: &mut Vec<u8>, v: u64) {
 }
 
 fn build_stack(
+    mm: &mut Mm,
     argv: &[String],
     envp: &[String],
     execfn: &str,
@@ -221,9 +222,16 @@ fn build_stack(
     // strings + random
     stack.extend_from_slice(&strings);
     debug_assert_eq!(stack.len(), total);
-    // write to user memory
-    unsafe {
-        core::ptr::copy_nonoverlapping(stack.as_ptr(), sp as *mut u8, stack.len());
+    // write to user memory through the new page table (satp not switched yet)
+    let mut offset = 0usize;
+    while offset < stack.len() {
+        let va = sp + offset;
+        let phys = mm.pt.translate(va).expect("stack page mapped");
+        let n = core::cmp::min(paging::PAGE_SIZE - (va & 0xfff), stack.len() - offset);
+        unsafe {
+            core::ptr::copy_nonoverlapping(stack.as_ptr().add(offset), phys as *mut u8, n);
+        }
+        offset += n;
     }
     sp
 }

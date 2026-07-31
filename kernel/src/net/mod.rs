@@ -7,7 +7,7 @@ use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use crate::console::kprintln;
+use crate::kprintln;
 use crate::timer;
 
 pub const OUR_IP: u32 = 0x0a00_020f; // 10.0.2.15
@@ -140,7 +140,8 @@ pub fn arp_request(ip: u32) {
         ARP_LAST_REQ = timer::now_ms();
         let mut pkt = Vec::with_capacity(42);
         pkt.extend_from_slice(&[0xff; 6]);
-        pkt.extend_from_slice(&OUR_MAC);
+        let our_mac = unsafe { OUR_MAC };
+        pkt.extend_from_slice(&our_mac);
         pkt.extend_from_slice(&[0x08, 0x06]);
         // arp header
         pkt.extend_from_slice(&[0x00, 0x01]); // htype ethernet
@@ -148,7 +149,8 @@ pub fn arp_request(ip: u32) {
         pkt.push(6);
         pkt.push(4);
         pkt.extend_from_slice(&[0x00, 0x01]); // request
-        pkt.extend_from_slice(&OUR_MAC);
+        let our_mac = unsafe { OUR_MAC };
+        pkt.extend_from_slice(&our_mac);
         pkt.extend_from_slice(&OUR_IP.to_be_bytes());
         pkt.extend_from_slice(&[0x00; 6]);
         pkt.extend_from_slice(&ip.to_be_bytes());
@@ -168,14 +170,16 @@ fn arp_rx(p: &[u8]) {
         // reply
         let mut pkt = Vec::with_capacity(42);
         pkt.extend_from_slice(&sha);
-        pkt.extend_from_slice(&OUR_MAC);
+        let our_mac = unsafe { OUR_MAC };
+        pkt.extend_from_slice(&our_mac);
         pkt.extend_from_slice(&[0x08, 0x06]);
         pkt.extend_from_slice(&[0x00, 0x01]);
         pkt.extend_from_slice(&[0x08, 0x00]);
         pkt.push(6);
         pkt.push(4);
         pkt.extend_from_slice(&[0x00, 0x02]); // reply
-        pkt.extend_from_slice(&OUR_MAC);
+        let our_mac = unsafe { OUR_MAC };
+        pkt.extend_from_slice(&our_mac);
         pkt.extend_from_slice(&OUR_IP.to_be_bytes());
         pkt.extend_from_slice(&sha);
         pkt.extend_from_slice(&spa.to_be_bytes());
@@ -253,7 +257,8 @@ pub fn ip_tx(proto: u8, dst: u32, payload: &[u8]) {
     };
     let mut frame = Vec::with_capacity(14 + 20 + payload.len());
     frame.extend_from_slice(&mac);
-    frame.extend_from_slice(&OUR_MAC);
+    let our_mac = unsafe { OUR_MAC };
+    frame.extend_from_slice(&our_mac);
     frame.extend_from_slice(&[0x08, 0x00]);
     frame.extend_from_slice(&[0x45, 0x00]);
     let total = (20 + payload.len()) as u16;
@@ -299,12 +304,6 @@ fn ip_rx(p: &[u8]) {
         return;
     }
     let src = u32::from_be_bytes(p[12..16].try_into().unwrap());
-    crate::kprintln!(
-        "[net] ip_rx src={}.{}.{}.{} dst={}.{}.{}.{} proto={} total={}",
-        src >> 24, (src >> 16) & 0xff, (src >> 8) & 0xff, src & 0xff,
-        dst >> 24, (dst >> 16) & 0xff, (dst >> 8) & 0xff, dst & 0xff,
-        p[9], total
-    );
     let proto = p[9];
     let payload = &p[ihl..total];
     match proto {
@@ -358,12 +357,12 @@ pub fn listener_on_syn(dport: u16, src: u32, sport: u16, seq: u32) -> Option<usi
     {
         let c = tcp::conn(conn_id).unwrap();
         c.state = tcp::TcpState::SynReceived;
-        c.saddr = src;
-        c.daddr = OUR_IP;
-        c.sport = sport;
-        c.dport = dport;
+        c.saddr = OUR_IP;
+        c.daddr = src;
+        c.sport = dport;
+        c.dport = sport;
         c.irs = seq;
-        c.iss = crate::tcp::rand_seq();
+        c.iss = tcp::rand_seq();
         c.snd_una = c.iss;
         c.snd_nxt = c.iss;
         c.rcv_nxt = seq.wrapping_add(1);
@@ -479,7 +478,7 @@ pub fn sock_rx_push(sock_id: usize, data: &[u8]) {
         // drop excess (flow control is crude)
         return;
     }
-    s.rx.extend_from_slice(data);
+    s.rx.extend(data.iter().copied());
     s.last_activity = timer::now_ms();
     drop(s);
     sock_state_changed(sock_id);
@@ -569,10 +568,11 @@ pub fn sock_accept(id: usize, nonblock: bool) -> Result<(usize, u32, u16), i32> 
                 s.nonblock = nonblock;
             }
             // clear listener readability hint (level-triggered scan handles it)
-            return Ok((new_sock, {
+            let (peer_ip, peer_port) = {
                 let s = sock(new_sock).unwrap();
                 (s.peer_ip, s.peer_port)
-            }));
+            };
+            return Ok((new_sock, peer_ip, peer_port));
         }
         let s = sock(id).unwrap();
         if s.error != 0 {
@@ -646,7 +646,7 @@ pub fn sock_write(id: usize, buf: &[u8]) -> Result<usize, i32> {
                 crate::task::block_on(id);
                 continue;
             }
-            s.rx.extend_from_slice(buf);
+            s.rx.extend(buf.iter().copied());
             drop(s);
             sock_state_changed(peer_id);
             wake_sock(peer_id);
@@ -683,7 +683,7 @@ pub fn sock_write(id: usize, buf: &[u8]) -> Result<usize, i32> {
         }
         {
             let c = tcp::conn(conn_id).unwrap();
-            c.outbox.extend_from_slice(buf);
+            c.outbox.extend(buf.iter().copied());
         }
         tcp::tcp_output(conn_id);
         return Ok(buf.len());

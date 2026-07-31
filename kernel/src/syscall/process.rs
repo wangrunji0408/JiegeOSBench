@@ -1,9 +1,9 @@
 //! Process-related syscalls and init task bootstrap.
 
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
-use crate::console::kprintln;
+use crate::kprintln;
 use crate::task;
 use crate::task::TrapFrame;
 
@@ -56,31 +56,36 @@ pub fn sys_execve(path: usize, argv: usize, envp: usize) -> isize {
 }
 
 pub fn exec_into_current(path: &str, argv: &[String], envp: &[String]) -> isize {
+    exec_into(task::current_pid(), path, argv, envp)
+}
+
+pub fn exec_into(pid: usize, path: &str, argv: &[String], envp: &[String]) -> isize {
     // read file
-    let t = task::current();
-    let cwd = unsafe { t.as_ref().unwrap().cwd.clone() };
+    let t = task::task(pid).unwrap();
+    let cwd = t.cwd.clone();
     let file_id = match crate::fs::resolve(&cwd, path) {
         Some(id) => id,
         None => return -2, // ENOENT
     };
-    let f = match crate::fs::fs().get(file_id) {
-        Some(f) => f,
-        None => return -2,
-    };
-    let data = f.borrow().data.clone();
     let execfn = argv.first().cloned().unwrap_or_else(|| path.to_string());
 
-    // load into a fresh mm
+    // load into a fresh mm (borrow the file data without cloning)
     let mut new_mm = crate::mm::vma::Mm::new();
-    let res = match crate::elf::load_elf(&mut new_mm, &data, argv, envp, &execfn) {
-        Ok(r) => r,
-        Err(e) => return e as isize,
+    let res = {
+        let f = match crate::fs::fs().get(file_id) {
+            Some(f) => f,
+            None => return -2,
+        };
+        let data = f.borrow();
+            match crate::elf::load_elf(&mut new_mm, &data.data, argv, envp, &execfn) {
+            Ok(r) => r,
+            Err(e) => return e as isize,
+        }
     };
     // trampoline
     crate::signal::install_trampoline(&mut new_mm);
 
-    // swap mm in the current task
-    let pid = task::current_pid();
+    // swap mm in the task
     let old_mm = {
         let t = task::task(pid).unwrap();
         let old = core::mem::replace(&mut t.mm, new_mm);
@@ -110,7 +115,7 @@ pub fn exec_into_current(path: &str, argv: &[String], envp: &[String]) -> isize 
         let tf = tf_addr as *mut TrapFrame;
         (*tf).regs[2] = res.sp;
         (*tf).sepc = res.entry;
-        (*tf).sstatus = (1 << 5) | (1 << 18);
+        (*tf).sstatus = crate::task::USER_SSTATUS;
         t.tf = tf;
         let ctx = ctx_addr as *mut usize;
         *ctx.add(0) = task::first_run_stub_addr();
@@ -124,7 +129,9 @@ pub fn exec_into_current(path: &str, argv: &[String], envp: &[String]) -> isize 
 
 /// Boot: create and start the init task (pid 1) running `path`.
 pub fn start_init(path: &str) -> ! {
+    crate::kprintln!("[init] creating task");
     let pid = task::new_task();
+    crate::kprintln!("[init] task {} created", pid);
     // stdio = console
     {
         let t = task::task(pid).unwrap();
@@ -142,13 +149,16 @@ pub fn start_init(path: &str) -> ! {
         }
         t.fds = fds;
     }
+    crate::kprintln!("[init] stdio ok");
     let argv = vec![path.to_string()];
+    crate::kprintln!("[init] argv ok");
     let envp: Vec<String> = Vec::new();
-    let r = exec_into_current(path, &argv, &envp);
+    let r = exec_into(pid, path, &argv, &envp);
     if r != 0 {
         kprintln!("[init] failed to exec {}: {}", path, -r);
         crate::sbi::shutdown();
     }
+    crate::kprintln!("[init] entering first task");
     task::enter_first_task(pid)
 }
 
@@ -278,7 +288,7 @@ pub fn sys_getrusage(who: usize, usage: usize) -> isize {
 pub fn sys_umask(mask: usize) -> isize {
     let t = task::current();
     let old = unsafe {
-        let um = &mut t.as_ref().unwrap().sig;
+        let um = &mut t.as_mut().unwrap().sig;
         let _ = um;
         0o22
     };
@@ -301,7 +311,7 @@ pub fn sys_prctl(option: usize, a1: usize, a2: usize) -> isize {
             // PR_GET_NAME
             let t = task::current();
             let name = unsafe { t.as_ref().unwrap().name.clone() };
-            crate::syscall::write_user(a1, name.as_bytes()).unwrap_or(0) as isize
+            match crate::syscall::write_user(a1, name.as_bytes()) { Ok(_) => 0, Err(e) => e as isize }
         }
         4 | 8 | 38 => 0, // PR_SET_DUMPABLE, PR_SET_KEEPCAPS, PR_SET_NO_NEW_PRIVS
         _ => {
