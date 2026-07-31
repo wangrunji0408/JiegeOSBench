@@ -533,13 +533,15 @@ fn handle_data_and_fin(id: usize, seq: u32, payload: &[u8], fin: bool) {
 }
 
 fn find_conn(dport: u16, src: u32, sport: u16) -> Option<usize> {
+    // dport/src/sport describe the incoming packet: our port, peer IP, peer port.
+    // A connection stores: sport = our port, daddr = peer IP, dport = peer port.
     unsafe {
         for (i, c) in CONNS.iter().enumerate() {
             if let Some(c) = c {
                 // include SynReceived so the handshake-completing ACK matches;
                 // a retransmitted SYN hitting a SynReceived conn is ignored in
                 // the state machine (no ACK flag), so this is safe.
-                if c.dport == dport && c.saddr == src && c.sport == sport && c.state != TcpState::Closed && c.state != TcpState::Listen && c.state != TcpState::TimeWait {
+                if c.sport == dport && c.daddr == src && c.dport == sport && c.state != TcpState::Closed && c.state != TcpState::Listen && c.state != TcpState::TimeWait {
                     return Some(i);
                 }
             }
