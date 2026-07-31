@@ -78,6 +78,7 @@ pub fn parse(dtb: usize) -> DtbInfo {
     let mut found_cpu = false;
     let mut found_chosen = false;
 
+    unsafe {
     loop {
         let tok = be32(p);
         p = p.add(4);
