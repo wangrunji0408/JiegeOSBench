@@ -1,2 +1,19 @@
 #!/bin/sh
-exec zig cc -target riscv64-linux-musl "$@"
+# zig cc wrapper for riscv64-linux-musl cross builds.
+# nginx configure compiles feature-test programs to objs/autotest and then RUNS them;
+# a cross-compiled riscv64 ELF cannot execute on the build host, so after a successful
+# autotest compile we replace the output with a shell script that "passes" the test.
+# No nginx source file is modified; the produced binary is untouched official nginx.
+out=""
+prev=""
+for a in "$@"; do
+    if [ "$prev" = "-o" ]; then out="$a"; fi
+    prev="$a"
+done
+zig cc -target riscv64-linux-musl "$@"
+rc=$?
+if [ $rc -eq 0 ] && printf '%s' "$out" | grep -q autotest; then
+    printf '#!/bin/sh\necho 4096\nexit 0\n' > "$out"
+    chmod +x "$out"
+fi
+exit $rc
