@@ -30,6 +30,12 @@ SECTIONS
     . = ALIGN(16);
     _ebss = .;
 
+    /* kernel heap: reserved in the address space (not loaded from file) */
+    . = ALIGN(4K);
+    _kernel_heap_start = .;
+    . += 32M;
+    _kernel_heap_end = .;
+
     . = ALIGN(4K);
     _kernel_end = .;
 }
