@@ -222,46 +222,38 @@ fn give_rx_buf(i: usize) {
 
 /// Called from interrupt handler: process used buffers on both queues.
 pub fn irq_handler() {
-    let mut acked = false;
     unsafe {
         let status = reg32(INTERRUPT_STATUS);
         if status & 1 != 0 {
-            acked = true;
-            // RX
+            // RX: process all newly used buffers
             if let Some(vq) = RX_QUEUE.as_ref() {
                 let used = vq.used;
                 let idx = ((used + 2) as *const u16).read_volatile() as usize;
-                let last = ((used + 4) as *const u16).read_volatile() as usize;
-                let mut processed = 0;
-                while last != idx && processed < QUEUE_SIZE {
-                    processed += 1;
+                let mut last = ((used + 4) as *const u16).read_volatile() as usize;
+                let mut n = 0;
+                while last != idx && n < QUEUE_SIZE {
+                    n += 1;
                     let entry = (used + 6 + (last % QUEUE_SIZE) * 8) as *const u32;
                     let desc_id = entry.read_volatile() as usize;
                     let len = entry.add(1).read_volatile() as usize;
                     let buf = RX_BUFS[desc_id];
-                    // virtio_net_hdr (10 bytes) precedes the frame
                     if len > VIRTIO_NET_HDR {
-                        let frame = core::slice::from_raw_parts((buf + VIRTIO_NET_HDR) as *const u8, len - VIRTIO_NET_HDR);
+                        let frame = core::slice::from_raw_parts(
+                            (buf + VIRTIO_NET_HDR) as *const u8,
+                            len - VIRTIO_NET_HDR,
+                        );
                         crate::net::net_rx_frame(frame);
                     }
-                    // hand buffer back
                     give_rx_buf(desc_id);
-                    ((used + 4) as *mut u16).write_volatile((last + 1) as u16);
-                    // update last
-                    let _ = last;
-                    // recompute last? we keep local counter
-                    let _ = idx;
-                    // break out of loop by updating stored last: store into used ring last slot
-                    // We process one at a time: re-read
-                    // To keep simple: process all entries up to idx by looping:
-                    break;
+                    last += 1;
                 }
+                ((used + 4) as *mut u16).write_volatile(last as u16);
             }
-            // TX: reclaim
+            // TX: reclaim used descriptors and buffers
             if let Some(vq) = TX_QUEUE.as_mut() {
                 let used = vq.used;
                 let idx = ((used + 2) as *const u16).read_volatile() as usize;
-                let last = ((used + 4) as *const u16).read_volatile() as usize;
+                let mut last = ((used + 4) as *const u16).read_volatile() as usize;
                 let mut n = 0;
                 while last != idx && n < QUEUE_SIZE {
                     n += 1;
@@ -273,15 +265,18 @@ pub fn irq_handler() {
                         TX_BUFS[desc_id] = 0;
                         vq.free.push(desc_id);
                     }
-                    ((used + 4) as *mut u16).write_volatile((last + 1) as u16);
+                    last += 1;
                 }
+                ((used + 4) as *mut u16).write_volatile(last as u16);
             }
-            // ACK the interrupt
-            wreg32(INTERRUPT_ACK, 3);
+            // ACK the used-ring interrupt
+            wreg32(INTERRUPT_ACK, 1);
+        }
+        if status & 2 != 0 {
+            // config change
+            wreg32(INTERRUPT_ACK, 2);
         }
     }
-    let _ = acked;
-    let _ = READY;
 }
 
 /// Transmit one ethernet frame.
