@@ -119,6 +119,9 @@ unsafe impl GlobalAlloc for HeapAllocator {
         let size = layout.size();
         let align = layout.align().max(8);
         let r = alloc_impl(size, align);
+        if let Some(p) = r {
+            dbg_add(p as usize, size);
+        }
         unlock();
         r.unwrap_or(core::ptr::null_mut())
     }
@@ -127,6 +130,7 @@ unsafe impl GlobalAlloc for HeapAllocator {
             return;
         }
         lock();
+        dbg_remove(ptr as usize, _layout.size());
         free_impl(ptr);
         unlock();
     }
