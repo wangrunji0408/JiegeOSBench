@@ -470,7 +470,7 @@ pub fn exit_task(pid: usize, code: i32) {
             // notify parent: SIGCHLD pending
             if let Some(pt) = TASKS.get_mut(p) {
                 if let Some(pt) = pt.as_mut() {
-                    pt.sig.pending |= 1 << 17; // SIGCHLD = 17
+                    pt.sig.pending |= 1 << 16; // SIGCHLD = 17 -> bit 16
                     if pt.state == TaskState::Blocked {
                         pt.state = TaskState::Ready;
                         pt.wchan = 0;
