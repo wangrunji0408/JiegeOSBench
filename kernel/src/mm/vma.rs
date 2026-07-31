@@ -227,6 +227,10 @@ impl Mm {
         crate::mm::map_kernel_into(&mut self.pt);
     }
 
+    pub fn destroy_raw(mut mm: Mm) {
+        mm.destroy();
+    }
+
     /// Free all user memory.
     pub fn destroy(&mut self) {
         for v in self.vmas.clone() {
