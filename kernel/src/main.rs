@@ -35,6 +35,7 @@ pub const INITRAMFS: &[u8] = include_bytes!(concat!(
 
 extern "C" {
     static _kernel_end: u8;
+    static _kernel_heap_start: u8;
     static __bss_start: u8;
     static __bss_end: u8;
     fn trap_entry();
