@@ -211,11 +211,12 @@ pub fn set_sscratch(v: usize) {
 }
 
 fn idle() {
-    crate::kprintln!("[task] idle enter ticks={}", unsafe { crate::timer::now_ms() });
     unsafe {
-        // enable interrupts and wait
-        core::arch::asm!("csrs sstatus, {}", in(reg) (1 << 1), options(nostack));
+        // wait for an interrupt; re-enable SIE before EVERY wfi because the
+        // trap handler clears SPIE on S-mode traps, so after a nested timer
+        // interrupt returns, SIE is 0 again.
         loop {
+            core::arch::asm!("csrs sstatus, {}", in(reg) (1 << 1), options(nostack));
             core::arch::asm!("wfi", options(nostack));
             if !READY.is_empty() {
                 break;
@@ -223,7 +224,6 @@ fn idle() {
         }
         core::arch::asm!("csrc sstatus, {}", in(reg) (1 << 1), options(nostack));
     }
-    crate::kprintln!("[task] idle exit ticks={}", unsafe { crate::timer::now_ms() });
 }
 
 /// Block current task on a wait channel.
