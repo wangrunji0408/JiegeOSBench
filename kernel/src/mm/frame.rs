@@ -56,42 +56,33 @@ pub fn alloc_frame() -> Option<usize> {
 }
 
 pub fn alloc_frames(n: usize) -> Option<usize> {
-    // try to allocate n contiguous frames (best effort: from head)
+    // try to allocate n contiguous frames
     if n == 1 {
         return alloc_frame();
     }
     lock();
     let r = unsafe {
-        let mut base = 0usize;
-        // scan free list for n contiguous frames
         let mut prev = 0usize;
         let mut cur = FREE_HEAD;
         while cur != 0 {
             let next = *(cur as *const usize);
-            // check contiguity
-            if base != 0 && cur == base + FRAME_SIZE {
-                // extend run
-            } else {
-                base = cur;
-            }
+            // count contiguous run starting at cur
             let mut run = 1;
             let mut p = cur;
-            while run < n && p != 0 && *(p as *const usize) == p + FRAME_SIZE {
+            while p != 0 && *(p as *const usize) == p + FRAME_SIZE {
                 p = *(p as *const usize);
                 run += 1;
             }
             if run >= n {
-                // remove first n frames starting at cur
-                let mut p = cur;
+                // unlink first n frames of the run
+                let mut q = cur;
                 for _ in 0..n {
-                    let nx = *(p as *const usize);
-                    p = nx;
+                    q = *(q as *const usize);
                 }
-                let tail = p;
                 if prev == 0 {
-                    FREE_HEAD = tail;
+                    FREE_HEAD = q;
                 } else {
-                    *(prev as *mut usize) = tail;
+                    *(prev as *mut usize) = q;
                 }
                 return Some(cur);
             }
