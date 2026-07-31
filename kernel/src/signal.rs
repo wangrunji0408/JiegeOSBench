@@ -130,7 +130,7 @@ pub fn maybe_deliver(tf: *mut TrapFrame) {
             if flags & SA_RESETHAND != 0 {
                 s.handlers[sig] = SIG_DFL;
             }
-            s.pending &= !(1u64 << sig);
+            s.pending &= !(1u64 << (sig - 1));
             let _ = use_alt;
         }
         return;
