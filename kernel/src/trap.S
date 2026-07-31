@@ -201,7 +201,10 @@ idle_asm:
     # clears SPIE, so the sret returns here with SIE = 0.  Re-enable it
     # AFTER the wfi so the next wfi can trap again.
     csrs sstatus, 1
-    call ready_nonempty
+    # NOTE: use la+jalr instead of `call`: the CALL_PLT relocation for
+    # cross-symbol calls from global_asm! is mis-applied by the linker.
+    la t0, ready_nonempty
+    jalr ra, t0
     beqz a0, 1b
     csrc sstatus, 1       # SIE = 0
     la t0, IDLE_SAVED_SP
