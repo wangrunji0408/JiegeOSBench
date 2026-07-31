@@ -360,6 +360,10 @@ pub fn tcp_input(src: u32, sport: u16, dst_port: u16, seg: &[u8]) {
         TcpState::SynReceived => {
             if ackf {
                 let c = conn(id).unwrap();
+                crate::kprintln!(
+                    "[tcp] SynReceived ack={} snd_nxt={} iss={} -> {}",
+                    ack, c.snd_nxt, c.iss, if ack == c.snd_nxt { "ESTABLISH" } else { "mismatch" }
+                );
                 if ack == c.snd_nxt {
                     c.state = TcpState::Established;
                     c.rcv_nxt = seq.wrapping_add(payload.len() as u32);
