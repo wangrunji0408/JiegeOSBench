@@ -408,7 +408,7 @@ pub fn conn_established(conn_id: usize) {
         let c = tcp::conn(conn_id).unwrap();
         let sock_id = c.sock;
         // find listener by local port
-        let listener = find_listener(c.dport).unwrap();
+        let listener = find_listener(c.sport).unwrap();
         (sock_id, listener)
     };
     {
