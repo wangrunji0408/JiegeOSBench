@@ -159,6 +159,25 @@ pub fn schedule() {
             }
         }
         loop {
+            // diagnostic: show READY internals before popping
+            {
+                let (tail, head, ptr, cap, len) = unsafe {
+                    (
+                        READY.as_slices().0.len(),
+                        READY.len(),
+                        READY.as_slices().1.len(),
+                        READY.capacity(),
+                        READY.len(),
+                    )
+                };
+                if !READY.is_empty() {
+                    crate::kprintln!(
+                        "[task] READY: tail={} head={} cap={} len={} (buf 0x{:x})",
+                        tail, head, cap, len,
+                        READY.as_ptr() as usize
+                    );
+                }
+            }
             let next = READY.pop_front();
             match next {
                 Some(pid) => {
