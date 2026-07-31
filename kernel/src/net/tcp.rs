@@ -240,7 +240,6 @@ pub fn tcp_output(id: usize) {
             c.rto_deadline = timer::now_ms() + c.rto;
         }
     }
-    let _ = room;
 }
 
 pub fn send_ack(c: &TcpConn) {
