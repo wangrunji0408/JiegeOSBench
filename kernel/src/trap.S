@@ -181,10 +181,39 @@ enter_user:
 first_run_stub:
     j trap_restore
 
+# Idle loop: runs on a dedicated idle stack so nested interrupts do not
+# clobber the blocked task's trapframe or stack frames.
+.global idle_asm
+.align 2
+idle_asm:
+    la t0, IDLE_SAVED_SP
+    sd sp, 0(t0)          # save caller sp (on the worker's kernel stack)
+    sd ra, 8(t0)          # save caller ra
+    la t0, IDLE_STACK
+    li t1, 16384
+    add sp, t0, t1        # sp = top of idle stack
+    mv tp, sp
+    csrw sscratch, sp     # nested traps during idle use the idle stack
+1:
+    csrs sstatus, 1       # SIE = 1 (must re-enable after every nested trap)
+    wfi
+    call ready_nonempty
+    beqz a0, 1b
+    csrc sstatus, 1       # SIE = 0
+    la t0, IDLE_SAVED_SP
+    ld sp, 0(t0)          # back to the worker's kernel stack
+    ld ra, 8(t0)
+    la t0, IDLE_WORKER_TOP
+    ld t1, 0(t0)
+    csrw sscratch, t1     # restore invariant for the worker
+    mv tp, t1
+    ret
+
 # context switch: switch_to(&mut current_ctx: *mut usize, &next_ctx: *mut usize)
 .global switch_to
 .align 2
 switch_to:
+    addi sp, sp, -13*8
     sd ra, 0*8(sp)
     sd s0, 1*8(sp)
     sd s1, 2*8(sp)
