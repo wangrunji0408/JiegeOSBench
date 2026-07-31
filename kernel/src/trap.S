@@ -194,9 +194,13 @@ idle_asm:
     add sp, t0, t1        # sp = top of idle stack
     mv tp, sp
     csrw sscratch, sp     # nested traps during idle use the idle stack
+    csrs sstatus, 1       # SIE = 1 before the first wfi
 1:
-    csrs sstatus, 1       # SIE = 1 (must re-enable after every nested trap)
     wfi
+    # The timer trap fires AT the wfi (sepc = wfi); the S-mode trap handler
+    # clears SPIE, so the sret returns here with SIE = 0.  Re-enable it
+    # AFTER the wfi so the next wfi can trap again.
+    csrs sstatus, 1
     call ready_nonempty
     beqz a0, 1b
     csrc sstatus, 1       # SIE = 0
