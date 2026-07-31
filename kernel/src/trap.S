@@ -100,6 +100,18 @@ trap_entry:
 2:
     sret
 
+# Enter user mode with a prepared trapframe (sp = tf address after pop).
+# Used at boot to start the first task.
+.global enter_user
+enter_user:
+    mv sp, a0
+    j trap_restore
+
+# First-run stub: after switch_to's epilogue, sp points at the task's trapframe.
+.global first_run_stub
+first_run_stub:
+    j trap_restore
+
 # context switch: switch_to(&mut current_ctx: *mut usize, &next_ctx: *mut usize)
 # saves callee-saved regs of current task on its kernel stack, restores next's.
 .global switch_to
