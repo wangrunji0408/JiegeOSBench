@@ -203,16 +203,15 @@ pub fn tcp_output(id: usize) {
     };
     let _ = (saddr, daddr, sport, dport);
     loop {
-        let (seq, ack, room) = {
+        let (seq, ack) = {
             let c = conn(id).unwrap();
             if c.outbox.is_empty() {
                 break;
             }
-            let win = window.min(MAX_WINDOW);
-            if c.snd_nxt.wrapping_sub(c.snd_una) >= win {
+            if c.snd_nxt.wrapping_sub(c.snd_una) >= window {
                 break;
             }
-            (c.snd_nxt, c.rcv_nxt, win)
+            (c.snd_nxt, c.rcv_nxt)
         };
         let n = {
             let c = conn(id).unwrap();
