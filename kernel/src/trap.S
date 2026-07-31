@@ -189,9 +189,9 @@ idle_asm:
     la t0, IDLE_SAVED_SP
     sd sp, 0(t0)          # save caller sp (on the worker's kernel stack)
     sd ra, 8(t0)          # save caller ra
-    la t0, IDLE_STACK
-    li t1, 16384
-    add sp, t0, t1        # sp = top of idle stack
+    la t0, IDLE_STACK_TOP
+    ld t0, 0(t0)          # t0 = top of the frame-allocated idle stack
+    mv sp, t0
     mv tp, sp
     csrw sscratch, sp     # nested traps during idle use the idle stack
     csrsi sstatus, 0x2    # SIE = 1 (bit 1!) before the first wfi
