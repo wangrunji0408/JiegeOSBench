@@ -262,11 +262,8 @@ pub fn new_task() -> usize {
     let pid = alloc_pid();
     let kstack = frame::alloc_frames(KSTACK_PAGES).expect("kstack");
     let kstack_top = kstack + KSTACK_PAGES * frame::FRAME_SIZE;
-    let pt = PageTable::new().expect("pt");
-    crate::mm::map_kernel_into(&mut {
-        let mut p = pt;
-        &mut p
-    });
+    let mut pt = PageTable::new().expect("pt");
+    crate::mm::map_kernel_into(&mut pt);
     let t = Task {
         pid,
         parent: None,
