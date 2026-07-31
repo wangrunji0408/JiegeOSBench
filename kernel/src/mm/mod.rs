@@ -8,18 +8,16 @@ use paging::PageTable;
 pub static mut KERNEL_PT: Option<PageTable> = None;
 pub static mut RAM_END: usize = 0;
 
-pub fn init(kernel_end: usize, ram_end: usize) {
+pub fn init(kernel_end: usize, ram_end: usize, heap_start: usize) {
     unsafe {
         RAM_END = ram_end;
     }
-    // 1. Reserve the kernel image region; everything from kernel_end..ram_end is free frames.
+    // 1. Kernel heap is carved out of the kernel image (linker-reserved region).
+    heap::init(heap_start);
+
+    // 2. Everything from kernel_end..ram_end is free frames.
     let free_start = paging::PAGE_SIZE * (frame::align_up(kernel_end, paging::PAGE_SIZE) / paging::PAGE_SIZE);
     frame::init(free_start, ram_end);
-
-    // 2. Kernel heap: 32 MiB from free frames.
-    let heap_start = frame::alloc_frames(heap::HEAP_SIZE / frame::FRAME_SIZE)
-        .expect("cannot reserve kernel heap");
-    heap::init(heap_start);
 
     // 3. Build the kernel page table: identity map RAM + MMIO.
     let mut pt = PageTable::new().expect("oom root pt");
