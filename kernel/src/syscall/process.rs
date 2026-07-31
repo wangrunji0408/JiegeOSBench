@@ -141,8 +141,6 @@ pub fn start_init(path: &str) -> ! {
             });
         }
         t.fds = fds;
-        // preload vmas for trampoline
-        crate::signal::install_trampoline(&mut t.mm);
     }
     let argv = vec![path.to_string()];
     let envp: Vec<String> = Vec::new();
