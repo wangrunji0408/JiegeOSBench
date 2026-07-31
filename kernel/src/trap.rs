@@ -29,7 +29,7 @@ pub extern "C" fn trap_handler(
             9 => {
                 // supervisor external interrupt (PLIC)
                 let irq = crate::plic::claim();
-                if irq == 1 {
+                if irq == crate::virtio::device_irq() {
                     // virtio-net
                     crate::virtio::irq_handler();
                     crate::plic::complete(irq);
