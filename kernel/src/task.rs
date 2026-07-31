@@ -211,6 +211,7 @@ pub fn set_sscratch(v: usize) {
 }
 
 fn idle() {
+    crate::kprintln!("[task] idle enter ticks={}", unsafe { crate::timer::now_ms() });
     unsafe {
         // enable interrupts and wait
         core::arch::asm!("csrs sstatus, {}", in(reg) (1 << 1), options(nostack));
@@ -222,6 +223,7 @@ fn idle() {
         }
         core::arch::asm!("csrc sstatus, {}", in(reg) (1 << 1), options(nostack));
     }
+    crate::kprintln!("[task] idle exit ticks={}", unsafe { crate::timer::now_ms() });
 }
 
 /// Block current task on a wait channel.
