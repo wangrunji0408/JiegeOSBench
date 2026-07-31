@@ -185,7 +185,6 @@ first_run_stub:
 .global switch_to
 .align 2
 switch_to:
-    addi sp, sp, -13*8
     sd ra, 0*8(sp)
     sd s0, 1*8(sp)
     sd s1, 2*8(sp)
