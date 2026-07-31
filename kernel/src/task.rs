@@ -225,12 +225,11 @@ fn idle() {
         // trapframe or the syscall handler's stack frames.
         IDLE_WORKER_TOP = TASKS[CURRENT.unwrap()].as_ref().unwrap().kstack_top;
         let sstatus: usize;
-        let mstatus: usize;
         core::arch::asm!("csrr {}, sstatus", out(reg) sstatus, options(nostack));
-        core::arch::asm!("csrr {}, mstatus", out(reg) mstatus, options(nostack));
         crate::kprintln!(
-            "[task] idle enter sstatus={:#x} mstatus={:#x}",
-            sstatus, mstatus
+            "[task] idle enter sstatus={:#x} sp={:#x}",
+            sstatus,
+            crate::task::read_sp()
         );
         idle_asm();
     }
