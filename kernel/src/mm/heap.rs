@@ -41,7 +41,14 @@ pub fn init(start: usize) {
 unsafe fn alloc_impl(size: usize, align: usize) -> Option<*mut u8> {
     let mut prev: *mut Block = core::ptr::null_mut();
     let mut cur = FREE_HEAD;
+    let mut hops = 0;
     while !cur.is_null() {
+        // integrity check
+        if (cur as usize) < 0x81a70000 || (cur as usize) >= 0x85a70000 || (cur as usize) % 8 != 0 || hops > 100000 {
+            crate::kprintln!("[heap] FREE LIST CORRUPT: cur={:#x} prev={:#x} hops={} size_req={}", cur as usize, prev as usize, hops, size);
+            break;
+        }
+        hops += 1;
         let bsize = (*cur).size & !1;
         let payload = (cur as usize + HEADER + align - 1) & !(align - 1);
         let used = payload - cur as usize + 8 + size; // 8-byte base word + payload
