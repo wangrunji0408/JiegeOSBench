@@ -210,6 +210,14 @@ pub fn set_sscratch(v: usize) {
     }
 }
 
+pub fn get_sscratch() -> usize {
+    let v: usize;
+    unsafe {
+        core::arch::asm!("csrr {}, sscratch", out(reg) v, options(nostack));
+    }
+    v
+}
+
 fn idle() {
     unsafe {
         // Switch to a dedicated idle stack: nested interrupts taken while
