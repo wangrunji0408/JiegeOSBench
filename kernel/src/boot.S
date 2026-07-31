@@ -4,13 +4,17 @@ _start:
     # a0 = hartid, a1 = dtb pointer
     la sp, boot_stack_top
     # clear bss
-    la t0, _ebss          # linker provides? we defined _ebss; but rust may not expose; use symbols from link.ld
-    # bss range: use link symbols __bss_start/_ebss — simpler: rely on Rust zeroing via static init; skip explicit clear
-    # jump to Rust
+    la t0, __bss_start
+    la t1, __bss_end
+1:  bgeu t0, t1, 2f
+    sd zero, 0(t0)
+    addi t0, t0, 8
+    j 1b
+2:  # jump to Rust
     call rust_main
     # never returns
-1:  wfi
-    j 1b
+3:  wfi
+    j 3b
 
 .section .bss
 .align 12
