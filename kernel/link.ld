@@ -20,10 +20,12 @@ SECTIONS
         *(.data .data.*)
     }
 
+    __bss_start = .;
     .bss : {
         *(.bss .bss.*)
         *(COMMON)
     }
+    __bss_end = .;
 
     . = ALIGN(16);
     _ebss = .;
