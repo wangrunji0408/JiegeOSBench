@@ -531,7 +531,10 @@ fn find_conn(dport: u16, src: u32, sport: u16) -> Option<usize> {
     unsafe {
         for (i, c) in CONNS.iter().enumerate() {
             if let Some(c) = c {
-                if c.dport == dport && c.saddr == src && c.sport == sport && c.state != TcpState::Closed && c.state != TcpState::Listen && c.state != TcpState::TimeWait && c.state != TcpState::SynReceived {
+                // include SynReceived so the handshake-completing ACK matches;
+                // a retransmitted SYN hitting a SynReceived conn is ignored in
+                // the state machine (no ACK flag), so this is safe.
+                if c.dport == dport && c.saddr == src && c.sport == sport && c.state != TcpState::Closed && c.state != TcpState::Listen && c.state != TcpState::TimeWait {
                     return Some(i);
                 }
             }
