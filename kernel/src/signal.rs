@@ -125,7 +125,7 @@ pub fn maybe_deliver(tf: *mut TrapFrame) {
             let t = crate::task::current();
             let s = &mut t.as_ref().unwrap().sig;
             if flags & SA_NODEFER == 0 {
-                s.mask |= (1u64 << sig) | ((flags & SA_SIGINFO != 0) as u64 * 0);
+                s.mask |= (1u64 << (sig - 1)) | ((flags & SA_SIGINFO != 0) as u64 * 0);
             }
             if flags & SA_RESETHAND != 0 {
                 s.handlers[sig] = SIG_DFL;
