@@ -1,0 +1,10 @@
+[build]
+target = "riscv64gc-unknown-none-elf"
+
+[target.riscv64gc-unknown-none-elf]
+rustflags = [
+    "-C", "link-arg=-T",
+    "-C", "link-arg=link.ld",
+    "-C", "code-model=medium",
+    "-C", "force-frame-pointers=yes",
+]
