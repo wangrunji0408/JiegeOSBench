@@ -218,6 +218,14 @@ pub fn get_sscratch() -> usize {
     v
 }
 
+pub fn read_sp() -> usize {
+    let v: usize;
+    unsafe {
+        core::arch::asm!("mv {}, sp", out(reg) v, options(nostack));
+    }
+    v
+}
+
 fn idle() {
     unsafe {
         // Switch to a dedicated idle stack: nested interrupts taken while
