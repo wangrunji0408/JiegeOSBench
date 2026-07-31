@@ -98,7 +98,13 @@ pub fn parse(dtb: usize) -> DtbInfo {
                 let nameoff = be32(p.add(4)) as usize;
                 let data = p.add(8);
                 let name = cstr(strings.add(nameoff));
-                if depth == 1 {
+                if depth == 0 {
+                    if name == "#address-cells" {
+                        addr_cells = be32(data);
+                    } else if name == "#size-cells" {
+                        size_cells = be32(data);
+                    }
+                } else if depth == 1 {
                     let node = cur_node.as_str();
                     if name == "reg" && node.starts_with("memory") {
                         // root cells apply
