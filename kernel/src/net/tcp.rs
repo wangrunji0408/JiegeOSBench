@@ -346,32 +346,7 @@ pub fn tcp_input(src: u32, sport: u16, dst_port: u16, seg: &[u8]) {
         None => {
             // no such connection: send RST (only if not RST itself)
             if !rst {
-                if let Some(l) = crate::net::find_listener(dst_port) {
-                    let c = conn(l);
-                    // build minimal reset with matching ports
-                    let mut tmp = TcpConn {
-                        state: TcpState::Closed,
-                        saddr: c.saddr,
-                        daddr: src,
-                        sport: dst_port,
-                        dport: sport,
-                        snd_una: 0,
-                        snd_nxt: 0,
-                        rcv_nxt: 0,
-                        iss: 0,
-                        irs: 0,
-                        outbox: VecDeque::new(),
-                        sent: Vec::new(),
-                        rto: 0,
-                        rto_deadline: 0,
-                        sock: 0,
-                        fin_sent: false,
-                        fin_acked: false,
-                        peer_fin: false,
-                        timewait_until: 0,
-                    };
-                    send_rst(&mut tmp, seq.wrapping_add(payload.len() as u32));
-                }
+                crate::net::send_rst_to(dst_port, src, sport, seq.wrapping_add(payload.len() as u32));
             }
             return;
         }
