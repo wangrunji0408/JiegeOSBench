@@ -415,18 +415,11 @@ pub fn tcp_input(src: u32, sport: u16, dst_port: u16, seg: &[u8]) {
                 }
                 if ack.wrapping_sub(c.snd_una) > 0 {
                     c.snd_una = ack;
-                    c.sent.retain(|(s, _)| s.wrapping_sub(ack) >= 0x8000_0000 || *s == ack && false || s.wrapping_sub(ack) > 0);
-                    // remove fully acked: seq + len <= ack
+                    // remove fully-acked segments (keep those with end > ack)
                     let a = ack;
                     c.sent.retain(|(s, d)| {
                         let end = s.wrapping_add(d.len() as u32);
-                        // keep if not fully acked
-                        !(end.wrapping_sub(a) <= 0x8000_0000 && a.wrapping_sub(end) < 0x8000_0000) || a.wrapping_sub(end) > 0
-                    });
-                    // simpler: remove segments with end <= ack
-                    c.sent.retain(|(s, d)| {
-                        let end = s.wrapping_add(d.len() as u32);
-                        a.wrapping_sub(end) > 0x8000_0000 // keep only if end > ack (not fully acked)
+                        a.wrapping_sub(end) > 0x8000_0000
                     });
                     if c.sent.is_empty() {
                         c.rto_deadline = 0;
