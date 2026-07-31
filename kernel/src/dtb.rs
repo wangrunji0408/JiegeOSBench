@@ -144,5 +144,6 @@ pub fn parse(dtb: usize) -> DtbInfo {
             break;
         }
     }
+    }
     info
 }
