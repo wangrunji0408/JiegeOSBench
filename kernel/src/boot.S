@@ -20,6 +20,6 @@ _start:
 .align 12
 .global boot_stack_bottom
 boot_stack_bottom:
-    .skip 16384
+    .skip 131072
 .global boot_stack_top
 boot_stack_top:
