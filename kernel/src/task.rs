@@ -139,6 +139,10 @@ extern "C" {
     fn first_run_stub();
 }
 
+pub fn first_run_stub_addr() -> usize {
+    unsafe { first_run_stub as usize }
+}
+
 fn switch_to(cur_ctx: *mut usize, next_ctx: *mut usize) {
     unsafe { switch_to(cur_ctx, next_ctx) };
 }
