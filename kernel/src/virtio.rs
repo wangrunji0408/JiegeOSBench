@@ -54,11 +54,8 @@ const L_CONFIG: usize = 0x070;
 
 static mut DEV_BASE: usize = 0;
 static mut LEGACY: bool = false;
-static mut NOTIFY_OFF: usize = 0;
 
 struct Vq {
-    // legacy: base phys addr of queue pages; modern: separate areas
-    base: usize, // queue region base
     desc: usize,
     avail: usize,
     used: usize,
@@ -100,6 +97,7 @@ fn find_device() -> usize {
         if devid == 1 {
             return base;
         }
+        crate::kprintln!("[virtio] slot {:#x}: magic ok version={} device={}", base, version, devid);
     }
     0
 }
@@ -128,14 +126,13 @@ pub fn init() -> bool {
     wreg32(M_STATUS, STATUS_ACK | STATUS_DRIVER);
 
     // negotiate features: CSUM | MAC | STATUS (and VERSION_1 if modern)
-    let features = if unsafe { LEGACY } {
-        wreg32(M_DRIVER_FEATURES_SEL, 0);
+    if unsafe { LEGACY } {
         let host = reg32(M_DEVICE_FEATURES);
         crate::kprintln!("[virtio] host features {:#x}", host);
         let want = F_CSUM | F_MAC | F_STATUS;
         let offer = host & want;
         wreg32(M_DRIVER_FEATURES, offer);
-        offer
+        crate::kprintln!("[virtio] offered features {:#x}", offer);
     } else {
         wreg32(M_DEVICE_FEATURES_SEL, 1);
         let hi = reg32(M_DEVICE_FEATURES);
@@ -153,8 +150,7 @@ pub fn init() -> bool {
             crate::kprintln!("[virtio] FEATURES_OK failed");
             return false;
         }
-        offer_lo | (offer_hi << 32)
-    };
+    }
 
     // read MAC
     let cfg_off = if unsafe { LEGACY } { L_CONFIG } else { M_CONFIG };
@@ -176,7 +172,7 @@ pub fn init() -> bool {
     }
 
     wreg32(M_STATUS, STATUS_ACK | STATUS_DRIVER | STATUS_DRIVER_OK);
-    if unsafe { !LEGACY } {
+    if !unsafe { LEGACY } {
         wreg32(M_STATUS, STATUS_ACK | STATUS_DRIVER | STATUS_FEATURES_OK | STATUS_DRIVER_OK);
     }
 
@@ -189,16 +185,14 @@ pub fn init() -> bool {
     unsafe {
         READY = true;
     }
-    let _ = features;
     crate::kprintln!("[virtio] net ready");
     true
 }
 
 fn setup_queue(qidx: usize) -> Option<Vq> {
     wreg32(M_QUEUE_SEL, qidx as u32);
-    let legacy = unsafe { LEGACY };
-    if legacy {
-        // legacy: queue is 3 contiguous pages: desc @0, avail @0x800, used @0x1000
+    if unsafe { LEGACY } {
+        // legacy: queue is 2 contiguous pages: desc @0, avail @0x800, used @0x1000
         let pages = frame::alloc_frames(2)?;
         unsafe {
             core::ptr::write_bytes(pages as *mut u8, 0, 2 * 4096);
@@ -206,13 +200,8 @@ fn setup_queue(qidx: usize) -> Option<Vq> {
         wreg32(L_QUEUE_NUM, QUEUE_SIZE as u32);
         wreg32(L_QUEUE_PFN, (pages >> 12) as u32);
         wreg32(0x038, 4096); // QueueAlign
-        let notify_off = reg32(L_QUEUE_NOTIFY) as usize;
-        unsafe {
-            NOTIFY_OFF = notify_off;
-        }
-        crate::kprintln!("[virtio] queue {} legacy at {:#x} notify_off={:#x}", qidx, pages, notify_off);
+        crate::kprintln!("[virtio] queue {} legacy at {:#x}", qidx, pages);
         Some(Vq {
-            base: pages,
             desc: pages,
             avail: pages + 0x800,
             used: pages + 0x1000,
@@ -241,7 +230,6 @@ fn setup_queue(qidx: usize) -> Option<Vq> {
         wreg64(M_QUEUE_DEVICE_HIGH, 0);
         wreg32(M_QUEUE_READY, 1);
         Some(Vq {
-            base: 0,
             desc,
             avail,
             used,
@@ -252,15 +240,7 @@ fn setup_queue(qidx: usize) -> Option<Vq> {
 
 fn notify(qidx: usize) {
     if unsafe { LEGACY } {
-        // write queue index to the notify register (works on QEMU legacy mmio)
         wreg32(L_QUEUE_NOTIFY, qidx as u32);
-        // also spec-style: write to queue region offset (harmless on QEMU)
-        let off = unsafe { NOTIFY_OFF };
-        if off != 0 {
-            if let Some(vq) = unsafe { RX_QUEUE.as_ref() } {
-                let _ = vq;
-            }
-        }
     } else {
         wreg32(M_QUEUE_NOTIFY, qidx as u32);
     }
@@ -374,7 +354,13 @@ pub fn net_tx(frame: &[u8]) {
         core::ptr::copy_nonoverlapping(frame.as_ptr(), p.add(VIRTIO_NET_HDR), frame.len());
     }
     let total = VIRTIO_NET_HDR + frame.len();
-    set_desc(&Vq { base: 0, desc, avail, used: 0, free: Vec::new() }, desc_id, buf as u64, total as u32, 0, 0);
+    let vq = Vq {
+        desc,
+        avail,
+        used: 0,
+        free: Vec::new(),
+    };
+    set_desc(&vq, desc_id, buf as u64, total as u32, 0, 0);
     unsafe {
         let idx_ptr = (avail + 2) as *mut u16;
         let idx = idx_ptr.read_volatile() as usize;
