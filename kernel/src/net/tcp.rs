@@ -350,6 +350,7 @@ pub fn tcp_input(src: u32, sport: u16, dst_port: u16, seg: &[u8]) {
         None => {
             // no such connection: send RST (only if not RST itself)
             if !rst {
+                crate::kprintln!("[tcp] NO CONN for dport={} src={} sport={} syn={} ackf={} -> RST", dst_port, src, sport, syn, ackf);
                 crate::net::send_rst_to(dst_port, src, sport, seq.wrapping_add(payload.len() as u32));
             }
             return;
