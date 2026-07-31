@@ -244,20 +244,20 @@ fn idle() {
         // Switch to a dedicated idle stack: nested interrupts taken while
         // waiting (timer/external) must NOT clobber the blocked task's
         // trapframe or the syscall handler's stack frames.
+        // The idle stack is allocated from the frame allocator so it does
+        // not sit next to .data/.bss (an overflow would corrupt statics).
+        if IDLE_STACK_TOP == 0 {
+            let f = crate::mm::frame::alloc_frames(4).expect("idle stack");
+            IDLE_STACK_TOP = f + 4 * crate::mm::frame::FRAME_SIZE;
+            crate::kprintln!("[task] idle stack at {:#x}", IDLE_STACK_TOP);
+        }
         IDLE_WORKER_TOP = TASKS[CURRENT.unwrap()].as_ref().unwrap().kstack_top;
-        let sstatus: usize;
-        core::arch::asm!("csrr {}, sstatus", out(reg) sstatus, options(nostack));
-        crate::kprintln!(
-            "[task] idle enter sstatus={:#x} sp={:#x}",
-            sstatus,
-            crate::task::read_sp()
-        );
         idle_asm();
     }
 }
 
 #[no_mangle]
-pub static mut IDLE_STACK: [u8; 16384] = [0; 16384];
+pub static mut IDLE_STACK_TOP: usize = 0;
 #[no_mangle]
 pub static mut IDLE_SAVED_SP: usize = 0;
 #[no_mangle]
