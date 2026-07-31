@@ -8,6 +8,7 @@ pub mod socket;
 
 use alloc::vec::Vec;
 
+use crate::mm::paging;
 use crate::task::TrapFrame;
 
 // riscv64 syscall numbers
