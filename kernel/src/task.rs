@@ -212,18 +212,30 @@ pub fn set_sscratch(v: usize) {
 
 fn idle() {
     unsafe {
-        // wait for an interrupt; re-enable SIE before EVERY wfi because the
-        // trap handler clears SPIE on S-mode traps, so after a nested timer
-        // interrupt returns, SIE is 0 again.
-        loop {
-            core::arch::asm!("csrs sstatus, {}", in(reg) (1 << 1), options(nostack));
-            core::arch::asm!("wfi", options(nostack));
-            if !READY.is_empty() {
-                break;
-            }
-        }
-        core::arch::asm!("csrc sstatus, {}", in(reg) (1 << 1), options(nostack));
+        // Switch to a dedicated idle stack: nested interrupts taken while
+        // waiting (timer/external) must NOT clobber the blocked task's
+        // trapframe or the syscall handler's stack frames.
+        IDLE_WORKER_TOP = TASKS[CURRENT.unwrap()].as_ref().unwrap().kstack_top;
+        idle_asm();
     }
+}
+
+#[no_mangle]
+pub static mut IDLE_STACK: [u8; 16384] = [0; 16384];
+#[no_mangle]
+pub static mut IDLE_SAVED_SP: usize = 0;
+#[no_mangle]
+pub static mut IDLE_SAVED_RA: usize = 0;
+#[no_mangle]
+pub static mut IDLE_WORKER_TOP: usize = 0;
+
+extern "C" {
+    fn idle_asm();
+}
+
+#[no_mangle]
+pub extern "C" fn ready_nonempty() -> bool {
+    unsafe { !READY.is_empty() }
 }
 
 /// Block current task on a wait channel.
