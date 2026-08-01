@@ -16,12 +16,15 @@
 | 6 | Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
 | 7 | GLM 5.2 | 智能杰哥 | ~2小时42分 | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
 | 8 | Claude Sonnet 5 | 智能杰哥 | ~2小时49分 | ~804K | ~$64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| 9 | Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
-| 10 | DeepSeek V4 Pro | 损坏杰哥 | >16小时 未完成 | — | — | — |
+| 9 | DeepSeek V4 Flash | 机器杰哥 | ~6小时35分³ | ~792K | ~$1.60 | — |
+| 10 | Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
+| 11 | DeepSeek V4 Pro 预览版 | 损坏杰哥 | >16小时 未完成 | — | — | — |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
 
 ² 67 分钟首次 HTTP 200（零内核 panic）；后续持续修复 TCP/epoll/VirtIO 边界问题，125 分钟完全稳定。
+
+³ 6小时30分首次 HTTP 200；期间经历 31 次内核 panic 和 2 次上下文压缩。最终完成于 6小时35分。
 
 ## Fable 5 — 38分钟
 
@@ -183,7 +186,27 @@ Claude Code 全程运行共 16 小时，中途没有人工介入。总成本约 
 | 10:00 | curl 首次收到响应（Connection reset） |
 | 16:00 | nginx 成功返回 HTTP 200，欢迎页完整响应 🎉 |
 
-### DeepSeek V4 Pro — >16h ❌
+### DeepSeek V4 Flash — 6小时35分
+
+![DeepSeek V4 Flash Timeline](figures/flash-timeline.png)
+
+全程运行约 **6小时35分钟**，中途没有人工介入。6小时30分首次拿到 HTTP 200。共 1,088 次工具调用（898 次 bash），累计 3.885 亿 token（99.1% 缓存命中），上下文峰值 792K。成本约 **$1.60**——凭借 DeepSeek 极低的缓存定价，成为目前最便宜的成功方案。过程相当曲折：经历 31 次内核 panic 和 2 次上下文压缩后才最终跑通。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:03 | 项目骨架 + 下载 nginx 1.30.4 源码 + zig 交叉编译包装 |
+| 00:28 | 首次 cargo build |
+| 00:34 | 首次 QEMU 启动（OpenSBI 输出） |
+| 00:39–00:49 | 早期 PANIC 调试（trap/页错误） |
+| 02:23 | nginx worker 进程启动 |
+| 02:33 | 首次 curl 尝试（失败） |
+| 03:27 | 第一次上下文压缩 |
+| 04:15–04:59 | VirtIO/堆调试 panic 集中爆发 |
+| 05:34 | 第二次上下文压缩 |
+| 06:29 | 首次 HTTP 200 OK 🎉 |
+| 06:35 | 最终验证 + 目标完成 |
+
+### DeepSeek V4 Pro 预览版 — >16h ❌
 
 运行超过 16 小时但始终未能跑通。陷入依赖地狱和架构死胡同。
 

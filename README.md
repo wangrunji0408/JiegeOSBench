@@ -23,12 +23,15 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | 6 | Claude Opus 4.6 | Smart Jiege | ~2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
 | 7 | GLM 5.2 | Smart Jiege | ~2h 42min | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
 | 8 | Claude Sonnet 5 | Smart Jiege | ~2h 49min | ~804K | ~$64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| 9 | Claude Sonnet 4.6 | Machine Jiege | ~16 hours | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
-| 10 | DeepSeek V4 Pro | Broken Jiege | >16h ❌ | — | — | — |
+| 9 | DeepSeek V4 Flash | Machine Jiege | ~6h 35min³ | ~792K | ~$1.60 | — |
+| 10 | Claude Sonnet 4.6 | Machine Jiege | ~16 hours | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
+| 11 | DeepSeek V4 Pro Preview | Broken Jiege | >16h ❌ | — | — | — |
 
 ¹ First success at 36min; second connection fix completed at 49min.
 
 ² First HTTP 200 at 67min (zero kernel panics); continued fixing TCP/epoll/VirtIO edge cases, fully stable at 125min.
+
+³ First HTTP 200 at 6h30min; 31 kernel panics and 2 context compactions along the way. Goal completed at 6h35min.
 
 ## Fable 5 — 38min
 
@@ -190,7 +193,27 @@ Claude Code ran for **16 hours** with no human intervention. The total cost was 
 | 10:00 | curl first receives response (connection reset) |
 | 16:00 | nginx returns HTTP 200 with complete welcome page 🎉 |
 
-### DeepSeek V4 Pro — >16h ❌
+### DeepSeek V4 Flash — 6h 35min
+
+![DeepSeek V4 Flash Timeline](figures/flash-timeline.png)
+
+Ran for **~6h 35min** with no human intervention. First HTTP 200 at 6h30min. 1,088 tool calls (898 bash), 388.5M tokens total (99.1% cache hit), peak context 792K. Cost approximately **$1.60** — the cheapest successful run by far, thanks to DeepSeek's ultra-low cache pricing. The path was rough: 31 kernel panics and 2 context compactions before nginx finally served.
+
+| Time | Milestone |
+|------|-----------|
+| 00:03 | Project skeleton + nginx 1.30.4 source downloaded + zig cross-compile wrapper |
+| 00:28 | First cargo build |
+| 00:34 | First QEMU boot (OpenSBI output) |
+| 00:39–00:49 | Early PANIC debugging (trap/page faults) |
+| 02:23 | nginx worker processes start |
+| 02:33 | First curl attempt (fails) |
+| 03:27 | Context compact #1 |
+| 04:15–04:59 | VirtIO/heap debugging panic cluster |
+| 05:34 | Context compact #2 |
+| 06:29 | First HTTP 200 OK 🎉 |
+| 06:35 | Final validation + goal complete |
+
+### DeepSeek V4 Pro Preview — >16h ❌
 
 Ran for over 16 hours but never reached a working state. Got stuck in dependency hell and architecture dead ends.
 
