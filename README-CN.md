@@ -8,16 +8,16 @@
 
 | # | 模型 | 段位 | 耗时 | 上下文 | 成本 | 分支 |
 |---|------|------|------|---------|------|------|
-| 🏅 | Claude Fable 5 | 杰哥 | ~38分钟 | ~155K | ~$21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
-| 🥈 | GPT 5.6 Sol | 快速杰哥 | ~36分钟¹ | ~222K | ~$14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
-| 🥉 | Claude Opus 5 | 智能杰哥 | ~67分钟² | ~334K | ~$26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
+| 🏅 | Claude Fable 5 | 杰哥 | ~38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
+| 🥈 | GPT 5.6 Sol | 快速杰哥 | ~36分钟¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
+| 🥉 | Claude Opus 5 | 智能杰哥 | ~67分钟² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
 | 4 | Claude Opus 4.7 | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
-| 5 | Kimi K3 | 智能杰哥 | ~2小时19分 | ~270K | ~$11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
+| 5 | Kimi K3 | 智能杰哥 | ~2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
 | 6 | Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
-| 7 | GLM 5.2 | 智能杰哥 | ~2小时42分 | ~392K | ~$84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
-| 8 | Claude Sonnet 5 | 智能杰哥 | ~2小时49分 | ~804K | ~$64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| 9 | DeepSeek V4 Flash | 机器杰哥 | ~6小时35分³ | ~792K | ~$1.60 | — |
-| 10 | Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | ~$60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
+| 7 | GLM 5.2 | 智能杰哥 | ~2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
+| 8 | Claude Sonnet 5 | 智能杰哥 | ~2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
+| 9 | DeepSeek V4 Flash | 机器杰哥 | ~6小时35分³ | 792K | $1.60 | — |
+| 10 | Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
 | 11 | DeepSeek V4 Pro 预览版 | 损坏杰哥 | >16小时 未完成 | — | — | — |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
