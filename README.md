@@ -113,7 +113,7 @@ Claude Code ran for **~67 minutes** to first HTTP 200, then spent another **58 m
 
 ![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
 
-Claude Code ran for **~2h 19min** with no human intervention. 151 API requests, 26.3M tokens total (including cache). Cost approximately **$11**. Peak context 270K.
+Claude Code ran for **~2h 19min**. 151 API requests, 26.3M tokens total (including cache). Cost approximately **$11**. Peak context 270K.
 
 | Time | Milestone |
 |------|-----------|
@@ -179,7 +179,7 @@ Claude Code ran for **~2h 49min** (active time, 77min permission gap excluded). 
 
 ### Sonnet 4.6 — 16 hours
 
-Claude Code ran for **16 hours** with no human intervention. The total cost was approximately $60.
+Claude Code ran for **16 hours**. The total cost was approximately $60.
 
 | Time  | Milestone |
 |-------|-----------|
@@ -197,7 +197,7 @@ Claude Code ran for **16 hours** with no human intervention. The total cost was 
 
 ![DeepSeek V4 Flash Timeline](figures/flash-timeline.png)
 
-Ran for **~6h 35min** with no human intervention. First HTTP 200 at 6h30min. 1,088 tool calls (898 bash), 388.5M tokens total (99.1% cache hit), peak context 792K. Cost approximately **$1.60** — the cheapest successful run by far, thanks to DeepSeek's ultra-low cache pricing. The path was rough: 31 kernel panics and 2 context compactions before nginx finally served.
+Ran for **~6h 35min**. First HTTP 200 at 6h30min. 1,088 tool calls (898 bash), 388.5M tokens total (99.1% cache hit), peak context 792K. Cost approximately **$1.60** — the cheapest successful run by far, thanks to DeepSeek's ultra-low cache pricing. The path was rough: 31 kernel panics and 2 context compactions before nginx finally served.
 
 | Time | Milestone |
 |------|-----------|
