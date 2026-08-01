@@ -23,7 +23,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | 6 | Claude Opus 4.6 | Smart Jiege | ~2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
 | 7 | GLM 5.2 | Smart Jiege | ~2h 42min | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
 | 8 | Claude Sonnet 5 | Smart Jiege | ~2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| 9 | DeepSeek V4 Flash | Machine Jiege | ~6h 35min³ | 792K | $1.60 | — |
+| 9 | DeepSeek V4 Flash | Machine Jiege | ~6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) |
 | 10 | Claude Sonnet 4.6 | Machine Jiege | ~16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
 | 11 | DeepSeek V4 Pro Preview | Broken Jiege | >16h ❌ | — | — | — |
 

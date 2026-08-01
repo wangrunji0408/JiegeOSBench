@@ -16,7 +16,7 @@
 | 6 | Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
 | 7 | GLM 5.2 | 智能杰哥 | ~2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
 | 8 | Claude Sonnet 5 | 智能杰哥 | ~2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| 9 | DeepSeek V4 Flash | 机器杰哥 | ~6小时35分³ | 792K | $1.60 | — |
+| 9 | DeepSeek V4 Flash | 机器杰哥 | ~6小时35分³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) |
 | 10 | Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
 | 11 | DeepSeek V4 Pro 预览版 | 损坏杰哥 | >16小时 未完成 | — | — | — |
 
