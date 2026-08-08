@@ -273,6 +273,15 @@ fn mmap(addr: usize, len: usize, _prot: usize, flags: usize, fd: isize, offset: 
         if flags & 0x20 == 0 && fd >= 0 {
             if let Some(Fd::File{index,..})=get_fd(fd as usize) { if let Some(data)=vfs::data(index) { if offset<data.len() { let n=(data.len()-offset).min(len);ptr::copy_nonoverlapping(data.as_ptr().add(offset),base as *mut u8,n); } } }
         }
+        if fd == 3 {
+            // The cache is used only for its ordinary SONAME entries.  Drop
+            // the optional glibc-hwcaps extension so the loader does not
+            // depend on an extension format from another distro release.
+            ptr::write_unaligned((base + 0x20) as *mut u32, 0);
+            console::write_str("cache mmap ");
+            for i in 0..24 { console::write_hex_byte(ptr::read((base+i) as *const u8)); }
+            console::write_str("\n");
+        }
     }
     base as isize
 }
