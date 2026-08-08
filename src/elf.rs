@@ -5,6 +5,7 @@ use crate::{arch, console, vfs};
 const PT_LOAD: u32 = 1;
 const PT_PHDR: u32 = 6;
 const ET_DYN: u16 = 3;
+static HTTP_DATE: &[u8; 30] = b"Thu, 01 Jan 1970 00:00:00 GMT\0";
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -108,9 +109,16 @@ pub fn start_nginx() -> ! {
     let loader = vfs::data(vfs::LOADER).unwrap();
     let main = load(nginx, 0x8100_0000).expect("invalid nginx ELF");
     let interp = load(loader, 0x8300_0000).expect("invalid dynamic loader ELF");
-    // Temporary diagnostic: allow nginx's early error logger to run before
-    // ngx_time_init has populated ngx_cached_err_log_time.
-    unsafe { ptr::write((0x8100_0000usize + 0x145798) as *mut usize, 0); }
+    // Seed nginx's cached HTTP/error date strings.  This is the same object
+    // layout as ngx_str_t: { len, data }.  The official binary expects the
+    // pointers to be valid before the first response is formatted.
+    unsafe {
+        let date = HTTP_DATE.as_ptr() as usize;
+        ptr::write((0x8100_0000usize + 0x145788) as *mut usize, 29);
+        ptr::write((0x8100_0000usize + 0x145790) as *mut usize, date);
+        ptr::write((0x8100_0000usize + 0x145798) as *mut usize, 29);
+        ptr::write((0x8100_0000usize + 0x1457a0) as *mut usize, date);
+    }
     debug_needed(nginx);
     let mut sp = arch::USER_STACK_TOP;
     let random = [0x4c, 0x75, 0x6e, 0x61, 0x2d, 0x52, 0x49, 0x53, 0x43, 0x2d, 0x36, 0x34, 0x00, 0x01, 0x02, 0x03];
