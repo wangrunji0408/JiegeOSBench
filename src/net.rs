@@ -109,6 +109,9 @@ pub fn init() -> bool {
             console::write_str("Luna: virtio-net not found\n");
             return false;
         }
+        console::write_str("virtio base="); console::write_hex(VIRTIO);
+        console::write_str(" version="); console::write_hex(mmio_read32(0x004) as usize);
+        console::write_str(" status="); console::write_hex(mmio_read32(0x070) as usize); console::write_str("\n");
         for i in 0..6 { MAC[i] = ptr::read_volatile((VIRTIO + 0x100 + i) as *const u8); }
         mmio_write32(0x070, 0);
         mmio_write32(0x070, 1);
@@ -129,6 +132,9 @@ pub fn init() -> bool {
         // Tell the device that the initially posted RX buffers are available.
         core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
         mmio_write32(0x050, 0);
+        console::write_str("virtio status="); console::write_hex(mmio_read32(0x070) as usize);
+        console::write_str(" rxready="); console::write_hex(mmio_read32(0x044) as usize);
+        console::write_str(" txready="); console::write_hex(mmio_read32(0x044) as usize); console::write_str("\n");
         INITIALIZED = true;
         console::write_str("Luna: virtio-net MAC ");
         for i in 0..6 { console::write_hex_byte(MAC[i]); if i != 5 { console::write_str(":"); } }
