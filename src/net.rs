@@ -300,7 +300,10 @@ fn tcp_input(frame: &[u8], ip: &[u8]) {
     if frame.len() < 54 { return; }
     let ihl = ((ip[0] & 0x0f) as usize) * 4;
     if frame.len() < 14 + ihl + 20 { return; }
-    let tcp = &frame[14 + ihl..];
+    let ip_total = u16::from_be_bytes([ip[2], ip[3]]) as usize;
+    let tcp_end = (14 + ip_total).min(frame.len());
+    if tcp_end < 14 + ihl + 20 { return; }
+    let tcp = &frame[14 + ihl..tcp_end];
     let dst_port = u16::from_be_bytes([tcp[2], tcp[3]]);
     let src_port = u16::from_be_bytes([tcp[0], tcp[1]]);
     let seq = u32::from_be_bytes([tcp[4], tcp[5], tcp[6], tcp[7]]);
