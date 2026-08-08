@@ -95,6 +95,14 @@ pub extern "C" fn trap_handler(tf: &mut TrapFrame) {
     console::write_hex(tf.stval);
     console::write_str(" sepc=");
     console::write_hex(tf.sepc);
+    console::write_str(" ra=");
+    console::write_hex(tf.regs[1]);
+    console::write_str(" a0=");
+    console::write_hex(tf.regs[10]);
+    console::write_str(" a1=");
+    console::write_hex(tf.regs[11]);
+    console::write_str(" a2=");
+    console::write_hex(tf.regs[12]);
     console::write_str("\n");
     tf.sepc = user_halt as usize;
 }

@@ -95,6 +95,7 @@ fn open_path(path: &str, _flags: usize) -> isize {
     console::write_str("open "); console::write_str(path); console::write_str("\n");
     if path == "/dev/null" { return alloc_fd(Fd::File { index: usize::MAX, pos: 0 }); }
     if path == "/dev/zero" { return alloc_fd(Fd::File { index: usize::MAX - 1, pos: 0 }); }
+    if path == "/dev/stderr" || path == "/dev/stdout" { return alloc_fd(Fd::Stdout); }
     if let Some(index) = vfs::lookup(path) { return alloc_fd(Fd::File { index, pos: 0 }); }
     ENOENT
 }
@@ -117,6 +118,16 @@ fn read_file(fd: usize, out: &mut [u8]) -> isize {
             _ => EBADF,
         }
     }
+}
+
+fn read_file_at(index: usize, offset: usize, out: &mut [u8]) -> isize {
+    if index == usize::MAX { return out.len() as isize; }
+    if index == usize::MAX - 1 { out.fill(0); return out.len() as isize; }
+    let data = match vfs::data(index) { Some(d) => d, None => return EBADF };
+    if offset >= data.len() { return 0; }
+    let n = out.len().min(data.len() - offset);
+    out[..n].copy_from_slice(&data[offset..offset + n]);
+    n as isize
 }
 
 fn write_fd(fd: usize, data: &[u8]) -> isize {
@@ -177,7 +188,7 @@ fn syscall_name(nr: usize) -> &'static str {
 pub fn dispatch(tf: &mut arch::TrapFrame) {
     let nr = tf.regs[17];
     unsafe {
-        if CALL_COUNT < 180 {
+        if CALL_COUNT < 260 {
             console::write_str("syscall "); console::write_dec(CALL_COUNT); console::write_str(" nr="); console::write_dec(nr);
             console::write_str(" a0="); console::write_hex(tf.regs[10]); console::write_str(" a1="); console::write_hex(tf.regs[11]); console::write_str("\n");
             CALL_COUNT += 1;
@@ -210,6 +221,7 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         57 => { unsafe { if let Some(v)=get_fd(a(0)) { if let Fd::Socket{handle}=v {net::close(handle);} set_fd(a(0),Fd::Empty);0 } else {EBADF} } }
         62 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,..})=>{if let Some(d)=vfs::data(index){let p=if a(1)==0{0}else{a(1)};let _=set_fd(a(0),Fd::File{index,pos:p});p as isize}else{EBADF}}, _=>EBADF } } }
         63 => { unsafe { let out=user_bytes_mut(a(1),a(2)); match get_fd(a(0)) { Some(Fd::Socket{handle})=>net::recv(handle,out), _=>read_file(a(0),out) } } }
+        67 => { unsafe { let out=user_bytes_mut(a(1),a(2)); match get_fd(a(0)) { Some(Fd::File{index,..})=>read_file_at(index,a(3),out), _=>EBADF } } }
         64 => { unsafe { write_fd(a(0),user_bytes(a(1),a(2))) } }
         65 => { // readv
             let mut total = 0isize;
@@ -226,12 +238,15 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         80 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,..})=>stat_file(a(1),vfs::data(index).map_or(0,|d|d.len()),0o100644,(index as u64)+1),Some(Fd::Socket{handle})=>stat_file(a(1),0,0o140777,0x10000+(handle as u64)),_=>EBADF } } }
         93 | 94 => { tf.sepc = crate::arch::user_halt as usize - 4; 0 }
         98 => { 0 }
+        96 => 1, // set_tid_address
+        99 => 0, // set_robust_list
         101 => 0,
+        123 => { unsafe { if a(2) != 0 && a(1) != 0 { user_bytes_mut(a(2),a(1).min(128)).fill(0); user_bytes_mut(a(2),a(1).min(1))[0] = 1; } } 0 }, // sched_getaffinity
         113 => { unsafe { let p=user_bytes_mut(a(1),16);p[..8].copy_from_slice(&0u64.to_ne_bytes());p[8..16].copy_from_slice(&(arch::time()*100).to_ne_bytes());0 } }
         134 | 135 | 136 | 139 | 132 | 133 => 0,
-        160 => { unsafe { let p=user_bytes_mut(a(0),390);p.fill(0);p[0..5].copy_from_slice(b"Luna");p[65..70].copy_from_slice(b"riscv");0 } }
+        160 => { unsafe { let p=user_bytes_mut(a(0),390);p.fill(0);p[0..4].copy_from_slice(b"Luna");p[65..70].copy_from_slice(b"riscv");0 } }
         169 => 0, // gettimeofday-ish compatibility
-        172 | 178 | 180 | 174 | 175 | 176 | 177 => 1,
+        172 | 178 | 180 | 174 | 175 | 176 | 177 | 173 => 1,
         198 => { let domain=a(0);let ty=a(1)&0xf;if domain!=2||ty!=1 { -97 } else { let handle=net::new_socket(); if handle==usize::MAX { ENOMEM } else { alloc_fd(Fd::Socket{handle}) } } }
         200 => { unsafe { let b=user_bytes(a(1),16); let port=u16::from_be_bytes([b[2],b[3]]); match get_fd(a(0)){Some(Fd::Socket{handle})=>net::bind(handle,port),_=>ENOTSOCK} } }
         201 => { unsafe { match get_fd(a(0)){Some(Fd::Socket{handle})=>net::listen(handle,a(1)),_=>ENOTSOCK} } }
@@ -276,7 +291,7 @@ fn mmap(addr: usize, len: usize, _prot: usize, flags: usize, fd: isize, offset: 
         return ENOMEM;
     }
     unsafe {
-        if CALL_COUNT < 80 {
+        if CALL_COUNT < 260 {
             console::write_str("mmap addr="); console::write_hex(addr);
             console::write_str(" len="); console::write_hex(len);
             console::write_str(" flags="); console::write_hex(flags);
