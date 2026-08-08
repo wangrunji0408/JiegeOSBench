@@ -103,6 +103,24 @@ pub extern "C" fn trap_handler(tf: &mut TrapFrame) {
     console::write_hex(tf.regs[11]);
     console::write_str(" a2=");
     console::write_hex(tf.regs[12]);
+    console::write_str(" sp=");
+    console::write_hex(tf.regs[2]);
+    console::write_str("\n");
+    console::write_str("regs:");
+    for i in 0..32 {
+        console::write_str(" x");
+        console::write_dec(i);
+        console::write_str("=");
+        console::write_hex(tf.regs[i]);
+    }
+    console::write_str("\nuser stack:");
+    let sp = tf.regs[2];
+    if sp >= 0x8000_0000 && sp < 0x9f00_0000 {
+        for i in 0..24 {
+            console::write_str(" ");
+            console::write_hex(unsafe { core::ptr::read((sp + i * 8) as *const usize) });
+        }
+    }
     console::write_str("\n");
     tf.sepc = user_halt as usize;
 }
