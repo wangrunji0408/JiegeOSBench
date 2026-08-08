@@ -1,0 +1,7 @@
+[build]
+target = "riscv64gc-unknown-none-elf"
+
+[target.riscv64gc-unknown-none-elf]
+linker = "rust-lld"
+rustflags = ["-C", "link-arg=-Tkernel.ld", "-C", "relocation-model=static"]
+

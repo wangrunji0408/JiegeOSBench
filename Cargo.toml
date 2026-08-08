@@ -1,0 +1,18 @@
+[package]
+name = "ijiege-luna"
+version = "0.1.0"
+edition = "2024"
+authors = ["智能杰哥"]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+debug = true
+
+[[bin]]
+name = "luna"
+path = "src/main.rs"
+
