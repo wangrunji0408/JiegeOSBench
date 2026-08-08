@@ -73,12 +73,12 @@ unsafe fn user_cstr(ptr_value: usize) -> Option<&'static str> {
     str::from_utf8(user_bytes(ptr_value, len)).ok()
 }
 
-fn stat_file(out: usize, size: usize, mode: u32) -> isize {
+fn stat_file(out: usize, size: usize, mode: u32, inode: u64) -> isize {
     unsafe {
         let s = user_bytes_mut(out, 128);
         s.fill(0);
         s[0..8].copy_from_slice(&1u64.to_ne_bytes());
-        s[8..16].copy_from_slice(&1u64.to_ne_bytes());
+        s[8..16].copy_from_slice(&inode.to_ne_bytes());
         s[16..20].copy_from_slice(&mode.to_ne_bytes());
         s[20..24].copy_from_slice(&1u32.to_ne_bytes());
         s[48..56].copy_from_slice(&(size as i64).to_ne_bytes());
@@ -222,8 +222,8 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         78 => { // readlinkat
             unsafe { match user_cstr(a(1)) { Some("/proc/self/exe")=>{let b=b"/usr/sbin/nginx";let n=b.len().min(a(3));user_bytes_mut(a(2),n)[..n].copy_from_slice(&b[..n]);n as isize}, _=>ENOENT } }
         }
-        79 => { unsafe { match user_cstr(a(1)) { Some(p)=>match vfs::lookup(p) { Some(idx)=>stat_file(a(2),vfs::data(idx).unwrap().len(),0o100644),None=>ENOENT },None=>ENOENT } } }
-        80 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,..})=>stat_file(a(1),vfs::data(index).map_or(0,|d|d.len()),0o100644),Some(Fd::Socket{..})=>stat_file(a(1),0,0o140777),_=>EBADF } } }
+        79 => { unsafe { match user_cstr(a(1)) { Some(p)=>match vfs::lookup(p) { Some(idx)=>stat_file(a(2),vfs::data(idx).unwrap().len(),0o100644,(idx as u64)+1),None=>ENOENT },None=>ENOENT } } }
+        80 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,..})=>stat_file(a(1),vfs::data(index).map_or(0,|d|d.len()),0o100644,(index as u64)+1),Some(Fd::Socket{handle})=>stat_file(a(1),0,0o140777,0x10000+(handle as u64)),_=>EBADF } } }
         93 | 94 => { tf.sepc = crate::arch::user_halt as usize - 4; 0 }
         98 => { 0 }
         101 => 0,
