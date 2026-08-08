@@ -1,5 +1,6 @@
 pub const NGINX: usize = 0;
 pub const LOADER: usize = 1;
+pub const CACHE: usize = 12;
 
 pub struct EmbeddedFile {
     pub path: &'static str,
@@ -8,16 +9,21 @@ pub struct EmbeddedFile {
 
 // Minimal valid TZif v2 file for UTC.  glibc accepts this as /etc/localtime
 // without needing the rest of the zoneinfo database.
-static UTC_TZ: &[u8] = &[
-    0x54,0x5a,0x69,0x66,0x32,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x04,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x55,0x54,0x43,0x00,
-    0x54,0x5a,0x69,0x66,0x32,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x04,0x00,0x00,
-    0x00,0x00,0x00,0x00,0x55,0x54,0x43,0x00,0x0a,0x55,0x54,0x43,0x30,0x0a,
-];
+const fn utc_tz() -> [u8; 114] {
+    let mut b = [0u8; 114];
+    b[0] = b'T'; b[1] = b'Z'; b[2] = b'i'; b[3] = b'f'; b[4] = b'2';
+    b[36] = 0; b[37] = 0; b[38] = 0; b[39] = 1;
+    b[40] = 0; b[41] = 0; b[42] = 0; b[43] = 4;
+    b[50] = b'U'; b[51] = b'T'; b[52] = b'C'; b[53] = 0;
+    b[54] = b'T'; b[55] = b'Z'; b[56] = b'i'; b[57] = b'f'; b[58] = b'2';
+    b[90] = 0; b[91] = 0; b[92] = 0; b[93] = 1;
+    b[94] = 0; b[95] = 0; b[96] = 0; b[97] = 4;
+    b[104] = b'U'; b[105] = b'T'; b[106] = b'C'; b[107] = 0;
+    b[108] = b'\n'; b[109] = b'U'; b[110] = b'T'; b[111] = b'C'; b[112] = b'0'; b[113] = b'\n';
+    b
+}
+
+static UTC_TZ: [u8; 114] = utc_tz();
 
 static FILES: &[EmbeddedFile] = &[
     EmbeddedFile { path: "/usr/sbin/nginx", data: include_bytes!("../assets/deb-extracted/usr/sbin/nginx") },
@@ -37,7 +43,7 @@ static FILES: &[EmbeddedFile] = &[
     EmbeddedFile { path: "/etc/ssl/openssl.cnf", data: include_bytes!("../assets/openssl.cnf") },
     EmbeddedFile { path: "/sys/devices/system/cpu/online", data: include_bytes!("../assets/cpu-online") },
     EmbeddedFile { path: "/proc/stat", data: include_bytes!("../assets/proc-stat") },
-    EmbeddedFile { path: "/etc/localtime", data: UTC_TZ },
+    EmbeddedFile { path: "/etc/localtime", data: &UTC_TZ },
     EmbeddedFile { path: "/etc/passwd", data: include_bytes!("../assets/passwd") },
     EmbeddedFile { path: "/etc/group", data: include_bytes!("../assets/group") },
     EmbeddedFile { path: "/etc/nsswitch.conf", data: include_bytes!("../assets/nsswitch.conf") },

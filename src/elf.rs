@@ -121,7 +121,7 @@ pub fn start_nginx() -> ! {
     let env0 = cstring(&mut sp, b"PATH=/usr/sbin:/usr/bin\0");
     let env1 = cstring(&mut sp, b"HOME=/\0");
     let env2 = cstring(&mut sp, b"LANG=C\0");
-    let env3 = cstring(&mut sp, b"LD_DEBUG=libs\0");
+    let _env3 = cstring(&mut sp, b"LD_DEBUG=libs\0");
     sp &= !15;
     // The stack grows down.  Push auxv values before their types so the
     // final low-to-high layout is the Linux ABI's (type, value) sequence.
@@ -136,7 +136,7 @@ pub fn start_nginx() -> ! {
     put_word(&mut sp, main.phent); put_word(&mut sp, 4); // AT_PHENT
     put_word(&mut sp, main.phdr); put_word(&mut sp, 3); // AT_PHDR
     put_word(&mut sp, 0); // envp NULL
-    put_word(&mut sp, env3); put_word(&mut sp, env2); put_word(&mut sp, env1); put_word(&mut sp, env0);
+    put_word(&mut sp, env2); put_word(&mut sp, env1); put_word(&mut sp, env0);
     put_word(&mut sp, 0); // argv NULL
     put_word(&mut sp, arg4); put_word(&mut sp, arg3); put_word(&mut sp, arg2); put_word(&mut sp, arg1); put_word(&mut sp, arg0); put_word(&mut sp, 5); // argc
     debug_stack(sp);

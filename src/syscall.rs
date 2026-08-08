@@ -221,7 +221,7 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         57 => { unsafe { if let Some(v)=get_fd(a(0)) { if let Fd::Socket{handle}=v {net::close(handle);} set_fd(a(0),Fd::Empty);0 } else {EBADF} } }
         62 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,..})=>{if let Some(d)=vfs::data(index){let p=if a(1)==0{0}else{a(1)};let _=set_fd(a(0),Fd::File{index,pos:p});p as isize}else{EBADF}}, _=>EBADF } } }
         63 => { unsafe { let out=user_bytes_mut(a(1),a(2)); match get_fd(a(0)) { Some(Fd::Socket{handle})=>net::recv(handle,out), _=>read_file(a(0),out) } } }
-        67 => { unsafe { let out=user_bytes_mut(a(1),a(2)); let n=match get_fd(a(0)) { Some(Fd::File{index,..})=>read_file_at(index,a(3),out), _=>EBADF }; console::write_str("pread fd=");console::write_dec(a(0));console::write_str(" len=");console::write_dec(a(2));console::write_str(" off=");console::write_hex(a(3));console::write_str(" -> ");console::write_dec(n as usize);console::write_str("\n"); n } }
+        67 => { unsafe { let out=user_bytes_mut(a(1),a(2)); let n=match get_fd(a(0)) { Some(Fd::File{index,..})=>read_file_at(index,a(3),out), _=>EBADF }; console::write_str("pread fd=");console::write_dec(a(0));console::write_str(" buf=");console::write_hex(a(1));console::write_str(" len=");console::write_dec(a(2));console::write_str(" off=");console::write_hex(a(3));console::write_str(" -> ");console::write_dec(n as usize);console::write_str(" bytes=");for x in out.iter().take(12){console::write_hex_byte(*x);}console::write_str("\n"); n } }
         64 => { unsafe { write_fd(a(0),user_bytes(a(1),a(2))) } }
         65 => { // readv
             let mut total = 0isize;
@@ -307,7 +307,7 @@ fn mmap(addr: usize, len: usize, _prot: usize, flags: usize, fd: isize, offset: 
         if flags & 0x20 == 0 && fd >= 0 {
             if let Some(Fd::File{index,..})=get_fd(fd as usize) { if let Some(data)=vfs::data(index) { if offset<data.len() { let n=(data.len()-offset).min(len);ptr::copy_nonoverlapping(data.as_ptr().add(offset),base as *mut u8,n); } } }
         }
-        if fd == 3 && offset == 0 {
+        if fd >= 0 && offset == 0 && matches!(get_fd(fd as usize), Some(Fd::File { index, .. }) if index == vfs::CACHE) {
             // The cache is used only for its ordinary SONAME entries.  Drop
             // the optional glibc-hwcaps extension so the loader does not
             // depend on an extension format from another distro release.
