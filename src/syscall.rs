@@ -92,7 +92,7 @@ fn stat_file(out: usize, size: usize, mode: u32) -> isize {
 }
 
 fn open_path(path: &str, _flags: usize) -> isize {
-    unsafe { if CALL_COUNT < 12 { console::write_str("open "); console::write_str(path); console::write_str("\n"); } }
+    console::write_str("open "); console::write_str(path); console::write_str("\n");
     if path == "/dev/null" { return alloc_fd(Fd::File { index: usize::MAX, pos: 0 }); }
     if path == "/dev/zero" { return alloc_fd(Fd::File { index: usize::MAX - 1, pos: 0 }); }
     if let Some(index) = vfs::lookup(path) { return alloc_fd(Fd::File { index, pos: 0 }); }
@@ -177,7 +177,7 @@ fn syscall_name(nr: usize) -> &'static str {
 pub fn dispatch(tf: &mut arch::TrapFrame) {
     let nr = tf.regs[17];
     unsafe {
-        if CALL_COUNT < 32 {
+        if CALL_COUNT < 180 {
             console::write_str("syscall "); console::write_dec(CALL_COUNT); console::write_str(" nr="); console::write_dec(nr);
             console::write_str(" a0="); console::write_hex(tf.regs[10]); console::write_str(" a1="); console::write_hex(tf.regs[11]); console::write_str("\n");
             CALL_COUNT += 1;
@@ -267,13 +267,30 @@ fn mmap(addr: usize, len: usize, _prot: usize, flags: usize, fd: isize, offset: 
     let base = unsafe {
         if flags & 0x10 != 0 { addr & !4095 } else { let b=NEXT_MAP; NEXT_MAP=NEXT_MAP.saturating_add(size + 4096); b }
     };
-    if base < 0x8040_0000 || base.saturating_add(size) > 0x9f00_0000 { return ENOMEM; }
+    if base < 0x8040_0000 || base.saturating_add(size) > 0x9f00_0000 {
+        console::write_str("mmap rejected addr="); console::write_hex(addr);
+        console::write_str(" len="); console::write_hex(len);
+        console::write_str(" flags="); console::write_hex(flags);
+        console::write_str(" -> "); console::write_hex(base);
+        console::write_str("\n");
+        return ENOMEM;
+    }
     unsafe {
+        if CALL_COUNT < 80 {
+            console::write_str("mmap addr="); console::write_hex(addr);
+            console::write_str(" len="); console::write_hex(len);
+            console::write_str(" flags="); console::write_hex(flags);
+            console::write_str(" fd="); console::write_hex(fd as usize);
+            console::write_str(" off="); console::write_hex(offset);
+            if fd >= 0 { console::write_str(" idx="); if let Some(Fd::File { index, .. }) = get_fd(fd as usize) { console::write_hex(index); } }
+            console::write_str(" -> "); console::write_hex(base);
+            console::write_str("\n");
+        }
         ptr::write_bytes(base as *mut u8, 0, size);
         if flags & 0x20 == 0 && fd >= 0 {
             if let Some(Fd::File{index,..})=get_fd(fd as usize) { if let Some(data)=vfs::data(index) { if offset<data.len() { let n=(data.len()-offset).min(len);ptr::copy_nonoverlapping(data.as_ptr().add(offset),base as *mut u8,n); } } }
         }
-        if fd == 3 {
+        if fd == 3 && offset == 0 {
             // The cache is used only for its ordinary SONAME entries.  Drop
             // the optional glibc-hwcaps extension so the loader does not
             // depend on an extension format from another distro release.

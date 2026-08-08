@@ -138,8 +138,7 @@ pub fn start_nginx() -> ! {
     put_word(&mut sp, 0); // envp NULL
     put_word(&mut sp, env3); put_word(&mut sp, env2); put_word(&mut sp, env1); put_word(&mut sp, env0);
     put_word(&mut sp, 0); // argv NULL
-    put_word(&mut sp, arg4); put_word(&mut sp, arg3); put_word(&mut sp, arg2); put_word(&mut sp, arg1); put_word(&mut sp, arg0); put_word(&mut sp, 5); // argv
-    put_word(&mut sp, 5);
+    put_word(&mut sp, arg4); put_word(&mut sp, arg3); put_word(&mut sp, arg2); put_word(&mut sp, arg1); put_word(&mut sp, arg0); put_word(&mut sp, 5); // argc
     debug_stack(sp);
     console::write_str("Luna: entering official nginx ELF via ld.so\n");
     arch::enter_user(interp.entry, sp);
