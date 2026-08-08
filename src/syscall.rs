@@ -210,6 +210,18 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
             }
         }
         22 => epoll_wait(a(0), a(1), a(2), a(3) as isize),
+        23 => { // dup
+            unsafe { match get_fd(a(0)) { Some(v) => alloc_fd(v), None => EBADF } }
+        }
+        24 => { // dup3
+            if a(0) == a(1) { EINVAL } else {
+                unsafe { match get_fd(a(0)) {
+                    Some(v) if set_fd(a(1), v) => a(1) as isize,
+                    Some(_) => EBADF,
+                    None => EBADF,
+                } }
+            }
+        }
         25 => 0, // fcntl: accept CLOEXEC and status queries
         29 => { // ioctl: nginx uses FIONBIO on listening sockets
             if a(1) == 0x5421 { 0 } else { ENOTTY }
