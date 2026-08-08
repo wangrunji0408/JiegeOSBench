@@ -13,18 +13,21 @@
 | 🥉 | Claude Opus 5 | 智能杰哥 | ~67分钟² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
 | 4 | Claude Opus 4.7 | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
 | 5 | Kimi K3 | 智能杰哥 | ~2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
-| 6 | Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
-| 7 | GLM 5.2 | 智能杰哥 | ~2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
-| 8 | Claude Sonnet 5 | 智能杰哥 | ~2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| 9 | DeepSeek V4 Flash | 机器杰哥 | ~6小时35分³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) |
-| 10 | Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
-| 11 | DeepSeek V4 Pro 预览版 | 损坏杰哥 | >16小时 未完成 | — | — | — |
+| 6 | GPT 5.6 Luna | 智能杰哥 | ~2小时45分⁴ | 227K | — | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) |
+| 7 | Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
+| 8 | GLM 5.2 | 智能杰哥 | ~2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
+| 9 | Claude Sonnet 5 | 智能杰哥 | ~2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
+| 10 | DeepSeek V4 Flash | 机器杰哥 | ~6小时35分³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) |
+| 11 | Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
+| 12 | DeepSeek V4 Pro 预览版 | 损坏杰哥 | >16小时 未完成 | — | — | — |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
 
 ² 67 分钟首次 HTTP 200（零内核 panic）；后续持续修复 TCP/epoll/VirtIO 边界问题，125 分钟完全稳定。
 
 ³ 6小时30分首次 HTTP 200；期间经历 31 次内核 panic 和 2 次上下文压缩。最终完成于 6小时35分。
+
+⁴ 有效时间 2小时45分（墙钟 3小时19分；已剔除 34.6 分钟 API 断线重试等待）。经历 3 次上下文压缩；动态链接成功后 nginx 一次绑定成功。
 
 ## Fable 5 — 38分钟
 
@@ -120,6 +123,27 @@ Claude Code 运行约 **2小时19分钟**。151 次 API 请求，累计 2630 万
 | 01:49–02:07 | 多轮 PANIC 修复（virtio, task scheduler 共 7 个 bug） |
 | 02:15 | nginx 恢复稳定 |
 | 02:19 | 最终验证：SHA256 校验 + 100 并发全部 200 ✅ |
+
+### GPT 5.6 Luna — 有效 2小时45分（墙钟 3小时19分）
+
+![GPT 5.6 Luna Timeline](figures/gpt56-luna-timeline.png)
+
+OpenAI Codex（桌面版）有效运行 **~2小时45分**（墙钟 3小时19分，已剔除前 40 分钟内的 34.6 分钟 API 断线重试等待）。**唯一走完整 glibc 动态链接路线**并成功运行官方 Debian nginx 1.30.1 binary 的模型。早期阶段最艰难：glibc 加载器拒绝解析共享库，直到逐个修复一串 ABI 错误（auxv 顺序、argc 重复、fstat st_dev/st_ino 相同）才打通。动态链接在 ~1 小时处成功后，nginx 一次就绑定 `0.0.0.0:80`，收尾干净：3 次上下文压缩、峰值 context 227K、总消耗 116M tokens（input 60.1M + 缓存 55.6M）。
+
+| 时间（有效） | 里程碑 |
+|---------------|-----------|
+| 00:00 | 任务开始——最小内核骨架规划 |
+| 01:29 | 最小内核在 QEMU 中启动（串口输出）|
+| 24:34 | 用户态执行链 + syscall 层 + virtio-net 骨架编译通过 |
+| 42:32 | 动态加载器进入 Linux ABI；ld.so.cache 问题 |
+| 49:07 | 上下文压缩 #1 |
+| 51:04 | auxv 顺序错误修复（glibc 丢失 AT_PHDR/AT_BASE）|
+| 53:42 | argc 重复错误修复（argv[0] 变成整数）|
+| 61:44 | 动态链接成功——所有依赖库完成 ELF 映射 |
+| 93:47 | 上下文压缩 #2 |
+| 113:17 | 上下文压缩 #3；nginx 绑定 0.0.0.0:80 |
+| 164:07 | nginx 从宿主返回 200 OK 🎉 |
+| 164:50 | 最终验证 + 目标完成 |
 
 ### Opus 4.6 — 2小时46分
 
