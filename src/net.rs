@@ -5,6 +5,7 @@ use crate::console;
 static mut VIRTIO: usize = 0x1000_1000;
 const Q: usize = 8;
 const BUF: usize = 2048;
+const PAGE: usize = 4096;
 const GUEST_IP: [u8; 4] = [10, 0, 2, 15];
 const TCP_MSS: usize = 1400;
 
@@ -29,6 +30,7 @@ struct Used { flags: u16, idx: u16, ring: [UsedElem; Q], avail_event: u16 }
 struct Queue {
     desc: [Desc; Q],
     avail: Avail,
+    _legacy_padding: [u8; PAGE - core::mem::size_of::<[Desc; Q]>() - core::mem::size_of::<Avail>()],
     used: Used,
     buffers: [[u8; BUF]; Q],
 }
@@ -38,12 +40,14 @@ const EMPTY_USED: UsedElem = UsedElem { id: 0, len: 0 };
 static mut RX: Queue = Queue {
     desc: [EMPTY_DESC; Q],
     avail: Avail { flags: 0, idx: 0, ring: [0; Q], used_event: 0 },
+    _legacy_padding: [0; PAGE - core::mem::size_of::<[Desc; Q]>() - core::mem::size_of::<Avail>()],
     used: Used { flags: 0, idx: 0, ring: [EMPTY_USED; Q], avail_event: 0 },
     buffers: [[0; BUF]; Q],
 };
 static mut TX: Queue = Queue {
     desc: [EMPTY_DESC; Q],
     avail: Avail { flags: 0, idx: 0, ring: [0; Q], used_event: 0 },
+    _legacy_padding: [0; PAGE - core::mem::size_of::<[Desc; Q]>() - core::mem::size_of::<Avail>()],
     used: Used { flags: 0, idx: 0, ring: [EMPTY_USED; Q], avail_event: 0 },
     buffers: [[0; BUF]; Q],
 };
@@ -51,6 +55,7 @@ static mut RX_LAST_USED: u16 = 0;
 static mut TX_LAST_USED: u16 = 0;
 static mut TX_SLOT: usize = 0;
 static mut INITIALIZED: bool = false;
+static mut LEGACY: bool = false;
 static mut MAC: [u8; 6] = [0; 6];
 
 #[derive(Clone, Copy, PartialEq)]
@@ -109,6 +114,7 @@ pub fn init() -> bool {
             console::write_str("Luna: virtio-net not found\n");
             return false;
         }
+        LEGACY = mmio_read32(0x004) == 1;
         console::write_str("virtio base="); console::write_hex(VIRTIO);
         console::write_str(" version="); console::write_hex(mmio_read32(0x004) as usize);
         console::write_str(" status="); console::write_hex(mmio_read32(0x070) as usize); console::write_str("\n");
@@ -126,15 +132,14 @@ pub fn init() -> bool {
         mmio_write32(0x024, 1); mmio_write32(0x020, (wanted >> 32) as u32);
         mmio_write32(0x070, 11);
         if mmio_read32(0x070) & 8 == 0 { console::write_str("Luna: virtio feature negotiation failed\n"); return false; }
-        setup_queue(0, &raw mut RX);
-        setup_queue(1, &raw mut TX);
+        if LEGACY { mmio_write32(0x028, PAGE as u32); }
+        setup_queue(0, &raw mut RX, LEGACY);
+        setup_queue(1, &raw mut TX, LEGACY);
         mmio_write32(0x070, 15);
         // Tell the device that the initially posted RX buffers are available.
         core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
         mmio_write32(0x050, 0);
-        console::write_str("virtio status="); console::write_hex(mmio_read32(0x070) as usize);
-        console::write_str(" rxready="); console::write_hex(mmio_read32(0x044) as usize);
-        console::write_str(" txready="); console::write_hex(mmio_read32(0x044) as usize); console::write_str("\n");
+        console::write_str("virtio status="); console::write_hex(mmio_read32(0x070) as usize); console::write_str("\n");
         INITIALIZED = true;
         console::write_str("Luna: virtio-net MAC ");
         for i in 0..6 { console::write_hex_byte(MAC[i]); if i != 5 { console::write_str(":"); } }
@@ -143,14 +148,11 @@ pub fn init() -> bool {
     }
 }
 
-unsafe fn setup_queue(index: u32, q: *mut Queue) {
+unsafe fn setup_queue(index: u32, q: *mut Queue, legacy: bool) {
     mmio_write32(0x030, index);
     let max = mmio_read32(0x034) as usize;
     if max < Q { console::write_str("Luna: virtqueue too small\n"); return; }
     mmio_write32(0x038, Q as u32);
-    set_addr(0x080, 0x084, (&raw mut (*q).desc) as *mut _ as usize);
-    set_addr(0x090, 0x094, (&raw mut (*q).avail) as *mut _ as usize);
-    set_addr(0x0a0, 0x0a4, (&raw mut (*q).used) as *mut _ as usize);
     if index == 0 {
         for i in 0..Q {
             (*q).desc[i] = Desc { addr: (&raw mut (*q).buffers[i]) as *mut _ as usize as u64, len: BUF as u32, flags: DESC_WRITE, next: 0 };
@@ -158,7 +160,15 @@ unsafe fn setup_queue(index: u32, q: *mut Queue) {
         }
         (*q).avail.idx = Q as u16;
     }
-    mmio_write32(0x044, 1);
+    if legacy {
+        mmio_write32(0x03c, PAGE as u32);
+        mmio_write32(0x040, ((&raw mut (*q).desc) as *mut _ as usize / PAGE) as u32);
+    } else {
+        set_addr(0x080, 0x084, (&raw mut (*q).desc) as *mut _ as usize);
+        set_addr(0x090, 0x094, (&raw mut (*q).avail) as *mut _ as usize);
+        set_addr(0x0a0, 0x0a4, (&raw mut (*q).used) as *mut _ as usize);
+        mmio_write32(0x044, 1);
+    }
 }
 
 fn checksum(data: &[u8]) -> u16 {
