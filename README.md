@@ -13,20 +13,20 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 > the web, but must work in the current directory. Keep working until the goal
 > is achieved.
 
-| # | Model | Tier | Duration | Context | Cost | Branch |
-|---|-------|-------|----------|---------|------|--------|
-| 🏅 | Claude Fable 5 | Jiege | ~38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
-| 🥈 | GPT 5.6 Sol | Fast Jiege | ~36min¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
-| 🥉 | Claude Opus 5 | Smart Jiege | ~67min² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
-| 4 | Claude Opus 4.7 | Smart Jiege | ~65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
-| 5 | Kimi K3 | Smart Jiege | ~2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
-| 6 | GPT 5.6 Luna | Smart Jiege | ~2h 45min⁴ | 227K | — | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) |
-| 7 | Claude Opus 4.6 | Smart Jiege | ~2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
-| 8 | GLM 5.2 | Smart Jiege | ~2h 42min | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
-| 9 | Claude Sonnet 5 | Smart Jiege | ~2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| 10 | DeepSeek V4 Flash | Machine Jiege | ~6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) |
-| 11 | Claude Sonnet 4.6 | Machine Jiege | ~16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
-| 12 | DeepSeek V4 Pro Preview | Broken Jiege | >16h ❌ | — | — | — |
+| # | Model | Effort | Tier | Duration | Context | Cost | Branch |
+|---|-------|----------|-------|----------|---------|------|--------|
+| 🏅 | Claude Fable 5 | high | Jiege | ~38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
+| 🥈 | GPT 5.6 Sol | high | Fast Jiege | ~36min¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
+| 🥉 | Claude Opus 5 | high | Smart Jiege | ~67min² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
+| 4 | Claude Opus 4.7 | — | Smart Jiege | ~65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
+| 5 | Kimi K3 | high | Smart Jiege | ~2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
+| 6 | GPT 5.6 Luna | xhigh | Smart Jiege | ~2h 45min⁴ | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) |
+| 7 | Claude Opus 4.6 | — | Smart Jiege | ~2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
+| 8 | GLM 5.2 | — | Smart Jiege | ~2h 42min | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
+| 9 | Claude Sonnet 5 | xhigh | Smart Jiege | ~2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
+| 10 | DeepSeek V4 Flash | high | Machine Jiege | ~6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) |
+| 11 | Claude Sonnet 4.6 | — | Machine Jiege | ~16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
+| 12 | DeepSeek V4 Pro Preview | max | Broken Jiege | >16h ❌ | — | — | — |
 
 ¹ First success at 36min; second connection fix completed at 49min.
 
@@ -34,7 +34,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 
 ³ First HTTP 200 at 6h30min; 31 kernel panics and 2 context compactions along the way. Goal completed at 6h35min.
 
-⁴ Active time 2h45min (wall-clock 3h 19min; 34.6min of API connection-retry gaps excluded). 3 context compactions; nginx bound on the first try after dynamic linking.
+⁴ Active time 2h45min (wall-clock 3h 19min; 34.6min of API connection-retry gaps excluded). 3 context compactions; nginx bound on the first try after dynamic linking. Context = sum of pre-compaction peaks, 243K + 243K + 243K + 243K = 972K. Cost at post-2026-07-30 pricing ($0.20/$1.20 per M in/out, cache read $0.02): new input 4.5M×$0.20 + cache read 55.6M×$0.02 + output 0.23M×$1.20 ≈ $2.3.
 
 ## Fable 5 — 38min
 
@@ -135,7 +135,7 @@ Claude Code ran for **~2h 19min**. 151 API requests, 26.3M tokens total (includi
 
 ![GPT 5.6 Luna Timeline](figures/gpt56-luna-timeline.png)
 
-OpenAI Codex (desktop) ran for **~2h 45min** of active time (3h 19min wall-clock; 34.6min of API connection-retry gaps in the first 40 minutes excluded). The only model to take the full **glibc dynamic-linking route** against the official Debian nginx 1.30.1 binary — and succeed. The early phase was the hardest: the glibc loader refused to resolve shared libraries until a stack of ABI bugs (auxv order, duplicate argc, fstat st_dev/st_ino collision) were fixed one by one. After dynamic linking succeeded at ~1h, nginx bound `0.0.0.0:80` on the first try and the finish was clean: 3 context compactions, peak context 227K, 116M tokens total (input 60.1M + cache 55.6M).
+OpenAI Codex (desktop) ran for **~2h 45min** of active time (3h 19min wall-clock; 34.6min of API connection-retry gaps in the first 40 minutes excluded). The only model to take the full **glibc dynamic-linking route** against the official Debian nginx 1.30.1 binary — and succeed. The early phase was the hardest: the glibc loader refused to resolve shared libraries until a stack of ABI bugs (auxv order, duplicate argc, fstat st_dev/st_ino collision) were fixed one by one. After dynamic linking succeeded at ~1h, nginx bound `0.0.0.0:80` on the first try and the finish was clean: 3 context compactions (pre-compaction peaks 243K each), 116M tokens total (input 60.1M + cache 55.6M), cost ~$2.3.
 
 | Time (active) | Milestone |
 |---------------|-----------|

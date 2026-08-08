@@ -6,20 +6,20 @@
 
 > 提示词：你是智能杰哥。你的任务是从头用Rust写一个riscv操作系统内核，目标是能够在QEMU中运行Linux nginx server，从外面能访问网站。必须运行nginx官方binary，不能自行修改目标。请自行设计实现，不要问我任何问题，我不会给你答复或提供帮助。你拥有所有权限，包括上网查资料，但必须在当前目录下工作。你需要一直干活直到目标实现为止。
 
-| # | 模型 | 段位 | 耗时 | 上下文 | 成本 | 分支 |
-|---|------|------|------|---------|------|------|
-| 🏅 | Claude Fable 5 | 杰哥 | ~38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
-| 🥈 | GPT 5.6 Sol | 快速杰哥 | ~36分钟¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
-| 🥉 | Claude Opus 5 | 智能杰哥 | ~67分钟² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
-| 4 | Claude Opus 4.7 | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
-| 5 | Kimi K3 | 智能杰哥 | ~2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
-| 6 | GPT 5.6 Luna | 智能杰哥 | ~2小时45分⁴ | 227K | — | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) |
-| 7 | Claude Opus 4.6 | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
-| 8 | GLM 5.2 | 智能杰哥 | ~2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
-| 9 | Claude Sonnet 5 | 智能杰哥 | ~2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| 10 | DeepSeek V4 Flash | 机器杰哥 | ~6小时35分³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) |
-| 11 | Claude Sonnet 4.6 | 机器杰哥 | ~16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
-| 12 | DeepSeek V4 Pro 预览版 | 损坏杰哥 | >16小时 未完成 | — | — | — |
+| # | 模型 | Effort | 段位 | 耗时 | 上下文 | 成本 | 分支 |
+|:--|:------|:--------|:----|:------|:----|:------|:------|
+| 🏅 | Claude Fable 5 | high | 杰哥 | ~38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
+| 🥈 | GPT 5.6 Sol | high | 快速杰哥 | ~36分钟¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
+| 🥉 | Claude Opus 5 | high | 智能杰哥 | ~67分钟² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
+| 4 | Claude Opus 4.7 | — | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
+| 5 | Kimi K3 | high | 智能杰哥 | ~2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
+| 6 | GPT 5.6 Luna | xhigh | 智能杰哥 | ~2小时45分⁴ | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) |
+| 7 | Claude Opus 4.6 | — | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
+| 8 | GLM 5.2 | — | 智能杰哥 | ~2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
+| 9 | Claude Sonnet 5 | xhigh | 智能杰哥 | ~2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
+| 10 | DeepSeek V4 Flash | high | 机器杰哥 | ~6小时35分³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) |
+| 11 | Claude Sonnet 4.6 | — | 机器杰哥 | ~16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
+| 12 | DeepSeek V4 Pro 预览版 | max | 损坏杰哥 | >16小时 未完成 | — | — | — |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
 
@@ -27,7 +27,7 @@
 
 ³ 6小时30分首次 HTTP 200；期间经历 31 次内核 panic 和 2 次上下文压缩。最终完成于 6小时35分。
 
-⁴ 有效时间 2小时45分（墙钟 3小时19分；已剔除 34.6 分钟 API 断线重试等待）。经历 3 次上下文压缩；动态链接成功后 nginx 一次绑定成功。
+⁴ 有效时间 2小时45分（墙钟 3小时19分；已剔除 34.6 分钟 API 断线重试等待）。经历 3 次上下文压缩；动态链接成功后 nginx 一次绑定成功。Context = 各窗口压缩前峰值求和，243K + 243K + 243K + 243K = 972K。成本按 2026-07-30 后官方价（输入/输出 $0.20/$1.20 每 M，缓存读取 $0.02）：新输入 4.5M×$0.20 + 缓存读取 55.6M×$0.02 + 输出 0.23M×$1.20 ≈ $2.3。
 
 ## Fable 5 — 38分钟
 
@@ -128,7 +128,7 @@ Claude Code 运行约 **2小时19分钟**。151 次 API 请求，累计 2630 万
 
 ![GPT 5.6 Luna Timeline](figures/gpt56-luna-timeline.png)
 
-OpenAI Codex（桌面版）有效运行 **~2小时45分**（墙钟 3小时19分，已剔除前 40 分钟内的 34.6 分钟 API 断线重试等待）。**唯一走完整 glibc 动态链接路线**并成功运行官方 Debian nginx 1.30.1 binary 的模型。早期阶段最艰难：glibc 加载器拒绝解析共享库，直到逐个修复一串 ABI 错误（auxv 顺序、argc 重复、fstat st_dev/st_ino 相同）才打通。动态链接在 ~1 小时处成功后，nginx 一次就绑定 `0.0.0.0:80`，收尾干净：3 次上下文压缩、峰值 context 227K、总消耗 116M tokens（input 60.1M + 缓存 55.6M）。
+OpenAI Codex（桌面版）有效运行 **~2小时45分**（墙钟 3小时19分，已剔除前 40 分钟内的 34.6 分钟 API 断线重试等待）。**唯一走完整 glibc 动态链接路线**并成功运行官方 Debian nginx 1.30.1 binary 的模型。早期阶段最艰难：glibc 加载器拒绝解析共享库，直到逐个修复一串 ABI 错误（auxv 顺序、argc 重复、fstat st_dev/st_ino 相同）才打通。动态链接在 ~1 小时处成功后，nginx 一次就绑定 `0.0.0.0:80`，收尾干净：3 次上下文压缩（4 个窗口峰值各 243K）、总消耗 116M tokens（input 60.1M + 缓存 55.6M）、成本约 $2.3。
 
 | 时间（有效） | 里程碑 |
 |---------------|-----------|
