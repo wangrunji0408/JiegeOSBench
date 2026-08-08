@@ -115,9 +115,6 @@ pub fn init() -> bool {
             return false;
         }
         LEGACY = mmio_read32(0x004) == 1;
-        console::write_str("virtio base="); console::write_hex(VIRTIO);
-        console::write_str(" version="); console::write_hex(mmio_read32(0x004) as usize);
-        console::write_str(" status="); console::write_hex(mmio_read32(0x070) as usize); console::write_str("\n");
         for i in 0..6 { MAC[i] = ptr::read_volatile((VIRTIO + 0x100 + i) as *const u8); }
         mmio_write32(0x070, 0);
         mmio_write32(0x070, 1);
@@ -141,7 +138,6 @@ pub fn init() -> bool {
         // Tell the device that the initially posted RX buffers are available.
         core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
         mmio_write32(0x050, 0);
-        console::write_str("virtio status="); console::write_hex(mmio_read32(0x070) as usize); console::write_str("\n");
         INITIALIZED = true;
         console::write_str("Luna: virtio-net MAC ");
         for i in 0..6 { console::write_hex_byte(MAC[i]); if i != 5 { console::write_str(":"); } }
@@ -200,7 +196,6 @@ fn send_frame(frame: &[u8]) {
         reclaim_tx();
         let slot = TX_SLOT;
         TX_SLOT = (TX_SLOT + 1) % Q;
-        console::write_str("net tx len="); console::write_dec(frame.len()); console::write_str(" slot="); console::write_dec(slot); console::write_str("\n");
         let b = &mut TX.buffers[slot];
         for x in &mut b[..10] { *x = 0; }
         b[10..10 + frame.len()].copy_from_slice(frame);
@@ -229,7 +224,6 @@ pub fn poll() {
             RX_LAST_USED = RX_LAST_USED.wrapping_add(1);
             let id = e.id as usize;
             let len = (e.len as usize).min(BUF);
-            console::write_str("net rx len="); console::write_dec(len); console::write_str("\n");
             if len > 10 { handle_packet(&RX.buffers[id][10..len]); }
             let a = RX.avail.idx as usize % Q;
             RX.avail.ring[a] = id as u16;
@@ -241,10 +235,6 @@ pub fn poll() {
 
 fn arp_reply(frame: &[u8]) {
     if frame.len() < 42 { return; }
-    console::write_str("arp op="); console::write_hex(u16::from_be_bytes([frame[20], frame[21]]) as usize);
-    console::write_str("arp tpa=");
-    for x in &frame[38..42] { console::write_dec(*x as usize); console::write_str("."); }
-    console::write_str("\n");
     if frame[20] != 0 || frame[21] != 1 { return; }
     if frame[38..42] != GUEST_IP { return; }
     let mut out = [0u8; 42];
@@ -311,12 +301,6 @@ fn tcp_input(frame: &[u8], ip: &[u8]) {
     let flags = tcp[13];
     let hdr = ((tcp[12] >> 4) as usize) * 4;
     let payload = if hdr <= tcp.len() { &tcp[hdr..] } else { &[] };
-    console::write_str("tcp in sport="); console::write_dec(src_port as usize);
-    console::write_str(" dport="); console::write_dec(dst_port as usize);
-    console::write_str(" flags="); console::write_hex(flags as usize);
-    console::write_str(" seq="); console::write_hex(seq as usize);
-    console::write_str(" ack="); console::write_hex(ack as usize);
-    console::write_str(" payload="); console::write_dec(payload.len()); console::write_str("\n");
     unsafe {
         let mut found = None;
         for i in 0..CONNS.len() {
@@ -353,7 +337,6 @@ fn tcp_input(frame: &[u8], ip: &[u8]) {
 
 fn handle_packet(frame: &[u8]) {
     if frame.len() < 14 { return; }
-    console::write_str("eth type="); console::write_hex(u16::from_be_bytes([frame[12], frame[13]]) as usize); console::write_str("\n");
     match u16::from_be_bytes([frame[12], frame[13]]) {
         0x0806 => arp_reply(frame),
         0x0800 if frame.len() >= 34 => {

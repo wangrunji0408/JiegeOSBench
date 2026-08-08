@@ -30,8 +30,6 @@ const EMPTY_ITEM: EpollItem = EpollItem { fd: -1, events: 0, data: 0 };
 static mut FDS: [Fd; 128] = [Fd::Empty; 128];
 static mut NEXT_MAP: usize = 0x9000_0000;
 static mut CURRENT_BRK: usize = 0x8e00_0000;
-static mut LAST_UNKNOWN: usize = usize::MAX;
-static mut CALL_COUNT: usize = 0;
 
 pub fn init() {
     unsafe { FDS[0] = Fd::Stdin; FDS[1] = Fd::Stdout; FDS[2] = Fd::Stdout; }
@@ -103,7 +101,6 @@ fn fill_sockaddr(out: usize, len_ptr: usize, ip: [u8; 4], port: u16) {
 }
 
 fn open_path(path: &str, _flags: usize) -> isize {
-    console::write_str("open "); console::write_str(path); console::write_str("\n");
     if path == "/dev/null" { return alloc_fd(Fd::File { index: usize::MAX, pos: 0 }); }
     if path == "/dev/zero" { return alloc_fd(Fd::File { index: usize::MAX - 1, pos: 0 }); }
     if path == "/dev/stderr" || path == "/dev/stdout" { return alloc_fd(Fd::Stdout); }
@@ -192,19 +189,8 @@ fn epoll_wait(fd: usize, out: usize, maxevents: usize, timeout: isize) -> isize 
     }
 }
 
-fn syscall_name(nr: usize) -> &'static str {
-    match nr { 56=>"openat",57=>"close",63=>"read",64=>"write",80=>"fstat",93=>"exit",94=>"exit_group",98=>"futex",113=>"clock_gettime",134=>"rt_sigaction",135=>"rt_sigprocmask",160=>"uname",172=>"getpid",178=>"gettid",198=>"socket",200=>"bind",201=>"listen",202=>"accept",206=>"sendto",207=>"recvfrom",208=>"setsockopt",214=>"brk",215=>"munmap",220=>"clone",221=>"execve",222=>"mmap",226=>"mprotect",260=>"wait4",261=>"prlimit64",278=>"getrandom",293=>"rseq",_=>"unknown" }
-}
-
 pub fn dispatch(tf: &mut arch::TrapFrame) {
     let nr = tf.regs[17];
-    unsafe {
-        if CALL_COUNT < 260 {
-            console::write_str("syscall "); console::write_dec(CALL_COUNT); console::write_str(" nr="); console::write_dec(nr);
-            console::write_str(" a0="); console::write_hex(tf.regs[10]); console::write_str(" a1="); console::write_hex(tf.regs[11]); console::write_str("\n");
-            CALL_COUNT += 1;
-        }
-    }
     let a = |n| tf.arg(n);
     let result = match nr {
         17 => { // getcwd
@@ -249,7 +235,7 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         57 => { unsafe { if let Some(v)=get_fd(a(0)) { if let Fd::Socket{handle}=v {net::close(handle);} set_fd(a(0),Fd::Empty);0 } else {EBADF} } }
         62 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,..})=>{if let Some(d)=vfs::data(index){let p=if a(1)==0{0}else{a(1)};let _=set_fd(a(0),Fd::File{index,pos:p});p as isize}else{EBADF}}, _=>EBADF } } }
         63 => { unsafe { let out=user_bytes_mut(a(1),a(2)); match get_fd(a(0)) { Some(Fd::Socket{handle})=>net::recv(handle,out), _=>read_file(a(0),out) } } }
-        67 => { unsafe { let out=user_bytes_mut(a(1),a(2)); let n=match get_fd(a(0)) { Some(Fd::File{index,..})=>read_file_at(index,a(3),out), _=>EBADF }; console::write_str("pread fd=");console::write_dec(a(0));console::write_str(" buf=");console::write_hex(a(1));console::write_str(" len=");console::write_dec(a(2));console::write_str(" off=");console::write_hex(a(3));console::write_str(" -> ");console::write_dec(n as usize);console::write_str(" bytes=");for x in out.iter().take(12){console::write_hex_byte(*x);}console::write_str("\n"); n } }
+        67 => { unsafe { let out=user_bytes_mut(a(1),a(2)); match get_fd(a(0)) { Some(Fd::File{index,..})=>read_file_at(index,a(3),out), _=>EBADF } } }
         64 => { unsafe { write_fd(a(0),user_bytes(a(1),a(2))) } }
         65 => { // readv
             let mut total = 0isize;
@@ -337,13 +323,11 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         293 => ENOSYS,
         291 => ENOSYS,
         318 => 0, // getrandom variants on some libc builds
-        _ => { unsafe { if LAST_UNKNOWN!=nr {LAST_UNKNOWN=nr;console::write_str("Luna: unimplemented syscall ");console::write_dec(nr);console::write_str(" (");console::write_str(syscall_name(nr));console::write_str(")\n");} } ENOSYS }
+        _ => ENOSYS,
     };
     tf.sepc = tf.sepc.wrapping_add(4);
     tf.set_ret(result);
 }
-
-fn return_ret(_tf: &mut arch::TrapFrame, value: isize) -> isize { value }
 
 fn mmap(addr: usize, len: usize, _prot: usize, flags: usize, fd: isize, offset: usize) -> isize {
     if len == 0 { return EINVAL; }
@@ -352,24 +336,9 @@ fn mmap(addr: usize, len: usize, _prot: usize, flags: usize, fd: isize, offset: 
         if flags & 0x10 != 0 { addr & !4095 } else { let b=NEXT_MAP; NEXT_MAP=NEXT_MAP.saturating_add(size + 4096); b }
     };
     if base < 0x8040_0000 || base.saturating_add(size) > 0x9f00_0000 {
-        console::write_str("mmap rejected addr="); console::write_hex(addr);
-        console::write_str(" len="); console::write_hex(len);
-        console::write_str(" flags="); console::write_hex(flags);
-        console::write_str(" -> "); console::write_hex(base);
-        console::write_str("\n");
         return ENOMEM;
     }
     unsafe {
-        if CALL_COUNT < 260 {
-            console::write_str("mmap addr="); console::write_hex(addr);
-            console::write_str(" len="); console::write_hex(len);
-            console::write_str(" flags="); console::write_hex(flags);
-            console::write_str(" fd="); console::write_hex(fd as usize);
-            console::write_str(" off="); console::write_hex(offset);
-            if fd >= 0 { console::write_str(" idx="); if let Some(Fd::File { index, .. }) = get_fd(fd as usize) { console::write_hex(index); } }
-            console::write_str(" -> "); console::write_hex(base);
-            console::write_str("\n");
-        }
         ptr::write_bytes(base as *mut u8, 0, size);
         if flags & 0x20 == 0 && fd >= 0 {
             if let Some(Fd::File{index,..})=get_fd(fd as usize) { if let Some(data)=vfs::data(index) { if offset<data.len() { let n=(data.len()-offset).min(len);ptr::copy_nonoverlapping(data.as_ptr().add(offset),base as *mut u8,n); } } }
@@ -379,9 +348,6 @@ fn mmap(addr: usize, len: usize, _prot: usize, flags: usize, fd: isize, offset: 
             // the optional glibc-hwcaps extension so the loader does not
             // depend on an extension format from another distro release.
             ptr::write_unaligned((base + 0x20) as *mut u32, 0);
-            console::write_str("cache mmap ");
-            for i in 0..24 { console::write_hex_byte(ptr::read((base+i) as *const u8)); }
-            console::write_str("\n");
         }
     }
     base as isize

@@ -119,7 +119,6 @@ pub fn start_nginx() -> ! {
         ptr::write((0x8100_0000usize + 0x145798) as *mut usize, 29);
         ptr::write((0x8100_0000usize + 0x1457a0) as *mut usize, date);
     }
-    debug_needed(nginx);
     let mut sp = arch::USER_STACK_TOP;
     let random = [0x4c, 0x75, 0x6e, 0x61, 0x2d, 0x52, 0x49, 0x53, 0x43, 0x2d, 0x36, 0x34, 0x00, 0x01, 0x02, 0x03];
     let random_ptr = put_bytes(&mut sp, &random);
@@ -130,7 +129,6 @@ pub fn start_nginx() -> ! {
     let env0 = cstring(&mut sp, b"PATH=/usr/sbin:/usr/bin\0");
     let env1 = cstring(&mut sp, b"HOME=/\0");
     let env2 = cstring(&mut sp, b"LANG=C\0");
-    let _env3 = cstring(&mut sp, b"LD_DEBUG=libs\0");
     sp &= !15;
     // The stack grows down.  Push auxv values before their types so the
     // final low-to-high layout is the Linux ABI's (type, value) sequence.
@@ -148,33 +146,6 @@ pub fn start_nginx() -> ! {
     put_word(&mut sp, env2); put_word(&mut sp, env1); put_word(&mut sp, env0);
     put_word(&mut sp, 0); // argv NULL
     put_word(&mut sp, arg2); put_word(&mut sp, arg1); put_word(&mut sp, arg0); put_word(&mut sp, 3); // argc
-    debug_stack(sp);
     console::write_str("Luna: entering official nginx ELF via ld.so\n");
     arch::enter_user(interp.entry, sp);
-}
-
-fn debug_stack(sp: usize) {
-    console::write_str("stack:");
-    for i in 0..38 {
-        console::write_str(" ");
-        console::write_hex(unsafe { ptr::read((sp + i * 8) as *const usize) });
-    }
-    console::write_str("\n");
-}
-
-fn debug_needed(data: &[u8]) {
-    let mut off = 0x128750usize;
-    for _ in 0..32 {
-        if off + 16 > data.len() { break; }
-        let tag = u64::from_le_bytes(data[off..off+8].try_into().unwrap());
-        let val = u64::from_le_bytes(data[off+8..off+16].try_into().unwrap());
-        if tag == 0 { break; }
-        if tag == 1 {
-            let p = 0xa3b0 + val as usize;
-            console::write_str("needed: ");
-            if p < data.len() { let mut n=0; while p+n<data.len() && data[p+n]!=0 { n+=1; } console::write_bytes(&data[p..p+n]); }
-            console::write_str("\n");
-        }
-        off += 16;
-    }
 }
