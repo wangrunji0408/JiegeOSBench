@@ -246,7 +246,9 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         134 | 135 | 136 | 139 | 132 | 133 => 0,
         160 => { unsafe { let p=user_bytes_mut(a(0),390);p.fill(0);p[0..4].copy_from_slice(b"Luna");p[65..70].copy_from_slice(b"riscv");0 } }
         169 => 0, // gettimeofday-ish compatibility
-        172 | 178 | 180 | 174 | 175 | 176 | 177 | 173 => 1,
+        172 | 173 | 178 => 1, // getpid/getppid/gettid
+        174 | 175 | 176 | 177 => 0, // root uid/gid
+        258 => 0, // riscv_hwprobe: conservative feature set
         198 => { let domain=a(0);let ty=a(1)&0xf;if domain!=2||ty!=1 { -97 } else { let handle=net::new_socket(); if handle==usize::MAX { ENOMEM } else { alloc_fd(Fd::Socket{handle}) } } }
         200 => { unsafe { let b=user_bytes(a(1),16); let port=u16::from_be_bytes([b[2],b[3]]); match get_fd(a(0)){Some(Fd::Socket{handle})=>net::bind(handle,port),_=>ENOTSOCK} } }
         201 => { unsafe { match get_fd(a(0)){Some(Fd::Socket{handle})=>net::listen(handle,a(1)),_=>ENOTSOCK} } }
