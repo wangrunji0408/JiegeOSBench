@@ -290,6 +290,20 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
             } }
         }
         203 => ENOTCONN,
+        204 | 205 => { // getsockname / getpeername for nginx connection setup
+            unsafe { match get_fd(a(0)) {
+                Some(Fd::Socket { .. }) => {
+                    let out = user_bytes_mut(a(1), 16);
+                    out.fill(0);
+                    out[0..2].copy_from_slice(&2u16.to_ne_bytes());
+                    out[2..4].copy_from_slice(&80u16.to_be_bytes());
+                    if nr == 205 { out[4..8].copy_from_slice(&[10, 0, 2, 2]); }
+                    if a(2) != 0 { user_bytes_mut(a(2), core::mem::size_of::<u32>())[0..4].copy_from_slice(&16u32.to_ne_bytes()); }
+                    0
+                }
+                _ => ENOTSOCK,
+            } }
+        }
         206 => { unsafe { match get_fd(a(0)){Some(Fd::Socket{handle})=>net::send(handle,user_bytes(a(1),a(2))),_=>ENOTSOCK} } }
         207 => { unsafe { match get_fd(a(0)){Some(Fd::Socket{handle})=>net::recv(handle,user_bytes_mut(a(1),a(2))),_=>ENOTSOCK} } }
         208 | 209 | 210 => 0,
