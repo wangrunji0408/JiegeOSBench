@@ -237,7 +237,12 @@ pub fn poll() {
 }
 
 fn arp_reply(frame: &[u8]) {
-    if frame.len() < 42 || frame[20] != 0 || frame[21] != 1 { return; }
+    if frame.len() < 42 { return; }
+    console::write_str("arp op="); console::write_hex(u16::from_be_bytes([frame[20], frame[21]]) as usize);
+    console::write_str("arp tpa=");
+    for x in &frame[38..42] { console::write_dec(*x as usize); console::write_str("."); }
+    console::write_str("\n");
+    if frame[20] != 0 || frame[21] != 1 { return; }
     if frame[38..42] != GUEST_IP { return; }
     let mut out = [0u8; 42];
     out[0..6].copy_from_slice(&frame[6..12]);
