@@ -207,6 +207,7 @@ pub fn poll() {
             RX_LAST_USED = RX_LAST_USED.wrapping_add(1);
             let id = e.id as usize;
             let len = (e.len as usize).min(BUF);
+            console::write_str("net rx len="); console::write_dec(len); console::write_str("\n");
             if len > 10 { handle_packet(&RX.buffers[id][10..len]); }
             let a = RX.avail.idx as usize % Q;
             RX.avail.ring[a] = id as u16;
@@ -280,6 +281,12 @@ fn tcp_input(frame: &[u8], ip: &[u8]) {
     let flags = tcp[13];
     let hdr = ((tcp[12] >> 4) as usize) * 4;
     let payload = if hdr <= tcp.len() { &tcp[hdr..] } else { &[] };
+    console::write_str("tcp in sport="); console::write_dec(src_port as usize);
+    console::write_str(" dport="); console::write_dec(dst_port as usize);
+    console::write_str(" flags="); console::write_hex(flags as usize);
+    console::write_str(" seq="); console::write_hex(seq as usize);
+    console::write_str(" ack="); console::write_hex(ack as usize);
+    console::write_str(" payload="); console::write_dec(payload.len()); console::write_str("\n");
     unsafe {
         let mut found = None;
         for i in 0..CONNS.len() {
@@ -316,6 +323,7 @@ fn tcp_input(frame: &[u8], ip: &[u8]) {
 
 fn handle_packet(frame: &[u8]) {
     if frame.len() < 14 { return; }
+    console::write_str("eth type="); console::write_hex(u16::from_be_bytes([frame[12], frame[13]]) as usize); console::write_str("\n");
     match u16::from_be_bytes([frame[12], frame[13]]) {
         0x0806 => arp_reply(frame),
         0x0800 if frame.len() >= 34 => {
