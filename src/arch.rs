@@ -88,5 +88,5 @@ pub extern "C" fn trap_handler(tf: &mut TrapFrame) {
     console::write_str(" sepc=");
     console::write_hex(tf.sepc);
     console::write_str("\n");
-    tf.sepc = user_halt as usize;
+    tf.sepc = user_halt as *const () as usize;
 }
