@@ -24,9 +24,13 @@ pub struct TrapFrame {
 
 impl TrapFrame {
     #[inline]
-    pub fn arg(&self, n: usize) -> usize { self.regs[10 + n] }
+    pub fn arg(&self, n: usize) -> usize {
+        self.regs[10 + n]
+    }
     #[inline]
-    pub fn set_ret(&mut self, value: isize) { self.regs[10] = value as usize; }
+    pub fn set_ret(&mut self, value: isize) {
+        self.regs[10] = value as usize;
+    }
 }
 
 unsafe extern "C" {
@@ -36,7 +40,9 @@ unsafe extern "C" {
 #[inline]
 pub fn time() -> u64 {
     let value;
-    unsafe { asm!("rdtime {}", out(reg) value); }
+    unsafe {
+        asm!("rdtime {}", out(reg) value);
+    }
     value
 }
 
@@ -67,7 +73,11 @@ pub fn enter_user(entry: usize, stack: usize) -> ! {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn user_halt() -> ! {
-    loop { unsafe { asm!("nop"); } }
+    loop {
+        unsafe {
+            asm!("nop");
+        }
+    }
 }
 
 #[unsafe(no_mangle)]

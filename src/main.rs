@@ -45,5 +45,7 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     console::write_str("\nKERNEL PANIC: ");
     console::write_panic(info);
     console::write_str("\n");
-    loop { core::hint::spin_loop(); }
+    loop {
+        core::hint::spin_loop();
+    }
 }
