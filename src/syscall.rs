@@ -236,6 +236,13 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
             let mut total = 0isize;
             for i in 0..a(2).min(16) { unsafe { let p=user_bytes(a(1)+i*16,16); let base=u64::from_ne_bytes(p[0..8].try_into().unwrap()) as usize; let len=u64::from_ne_bytes(p[8..16].try_into().unwrap()) as usize; let n=write_fd(a(0),user_bytes(base,len)); if n<0 { total=n; break; } total+=n; } } total
         }
+        68 => { // pwrite64: /dev/null is used for nginx's disabled pid file
+            unsafe { match get_fd(a(0)) {
+                Some(Fd::File { index: usize::MAX, .. }) => a(2) as isize,
+                Some(Fd::Stdout) => { console::write_bytes(user_bytes(a(1), a(2))); a(2) as isize },
+                _ => EBADF,
+            } }
+        }
         78 => { // readlinkat
             unsafe { match user_cstr(a(1)) { Some("/proc/self/exe")=>{let b=b"/usr/sbin/nginx";let n=b.len().min(a(3));user_bytes_mut(a(2),n)[..n].copy_from_slice(&b[..n]);n as isize}, _=>ENOENT } }
         }
