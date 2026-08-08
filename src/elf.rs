@@ -108,6 +108,9 @@ pub fn start_nginx() -> ! {
     let loader = vfs::data(vfs::LOADER).unwrap();
     let main = load(nginx, 0x8100_0000).expect("invalid nginx ELF");
     let interp = load(loader, 0x8300_0000).expect("invalid dynamic loader ELF");
+    // Temporary diagnostic: allow nginx's early error logger to run before
+    // ngx_time_init has populated ngx_cached_err_log_time.
+    unsafe { ptr::write((0x8100_0000usize + 0x145798) as *mut usize, 0); }
     debug_needed(nginx);
     let mut sp = arch::USER_STACK_TOP;
     let random = [0x4c, 0x75, 0x6e, 0x61, 0x2d, 0x52, 0x49, 0x53, 0x43, 0x2d, 0x36, 0x34, 0x00, 0x01, 0x02, 0x03];
