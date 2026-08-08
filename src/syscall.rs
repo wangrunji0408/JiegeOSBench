@@ -91,6 +91,17 @@ fn stat_file(out: usize, size: usize, mode: u32, inode: u64) -> isize {
     0
 }
 
+fn fill_sockaddr(out: usize, len_ptr: usize, ip: [u8; 4], port: u16) {
+    unsafe {
+        let s = user_bytes_mut(out, 16);
+        s.fill(0);
+        s[0..2].copy_from_slice(&2u16.to_ne_bytes());
+        s[2..4].copy_from_slice(&port.to_be_bytes());
+        s[4..8].copy_from_slice(&ip);
+        if len_ptr != 0 { user_bytes_mut(len_ptr, 4).copy_from_slice(&16u32.to_ne_bytes()); }
+    }
+}
+
 fn open_path(path: &str, _flags: usize) -> isize {
     console::write_str("open "); console::write_str(path); console::write_str("\n");
     if path == "/dev/null" { return alloc_fd(Fd::File { index: usize::MAX, pos: 0 }); }
@@ -283,7 +294,13 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         202 | 242 => { // accept / accept4
             unsafe { match get_fd(a(0)) {
                 Some(Fd::Socket { handle }) => match net::accept(handle) {
-                    Some(h) => alloc_fd(Fd::Socket { handle: h }),
+                    Some(h) => {
+                        if a(1) != 0 {
+                            let (ip, port) = net::peer_addr(h).unwrap_or(([10, 0, 2, 2], 0));
+                            fill_sockaddr(a(1), a(2), ip, port);
+                        }
+                        alloc_fd(Fd::Socket { handle: h })
+                    }
                     None => EAGAIN,
                 },
                 _ => ENOTSOCK,

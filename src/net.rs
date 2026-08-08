@@ -390,6 +390,14 @@ pub fn accept(socket: usize) -> Option<usize> {
     }
 }
 
+pub fn peer_addr(handle: usize) -> Option<([u8; 4], u16)> {
+    unsafe {
+        let i = handle.checked_sub(0x100)?;
+        if i >= CONNS.len() || CONNS[i].state == State::Free { return None; }
+        Some((CONNS[i].remote_ip, CONNS[i].remote_port))
+    }
+}
+
 pub fn readable(handle: usize) -> bool {
     unsafe {
         if handle < 0x100 { return (0..CONNS.len()).any(|i| CONNS[i].state == State::Established && CONNS[i].listen_socket == handle && !CONNS[i].accepted); }
