@@ -125,6 +125,8 @@ pub fn init() -> bool {
         if mmio_read32(0x070) & 8 == 0 { console::write_str("Luna: virtio feature negotiation failed\n"); return false; }
         setup_queue(0, &raw mut RX);
         setup_queue(1, &raw mut TX);
+        // Tell the device that the initially posted RX buffers are available.
+        mmio_write32(0x050, 0);
         mmio_write32(0x070, 15);
         INITIALIZED = true;
         console::write_str("Luna: virtio-net MAC ");
