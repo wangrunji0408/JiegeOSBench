@@ -123,24 +123,35 @@ pub fn start_nginx() -> ! {
     let env2 = cstring(&mut sp, b"LANG=C\0");
     let env3 = cstring(&mut sp, b"LD_DEBUG=libs\0");
     sp &= !15;
-    put_word(&mut sp, 0); // padding
+    // The stack grows down.  Push auxv values before their types so the
+    // final low-to-high layout is the Linux ABI's (type, value) sequence.
     put_word(&mut sp, 0); // AT_NULL value
-    put_word(&mut sp, 0); // AT_NULL
-    put_word(&mut sp, 25); put_word(&mut sp, random_ptr); // AT_RANDOM
-    put_word(&mut sp, 31); put_word(&mut sp, execfn); // AT_EXECFN
-    put_word(&mut sp, 9); put_word(&mut sp, main.entry); // AT_ENTRY
-    put_word(&mut sp, 7); put_word(&mut sp, interp.base); // AT_BASE
-    put_word(&mut sp, 6); put_word(&mut sp, 4096); // AT_PAGESZ
-    put_word(&mut sp, 5); put_word(&mut sp, main.phnum); // AT_PHNUM
-    put_word(&mut sp, 4); put_word(&mut sp, main.phent); // AT_PHENT
-    put_word(&mut sp, 3); put_word(&mut sp, main.phdr); // AT_PHDR
+    put_word(&mut sp, 0); // AT_NULL type
+    put_word(&mut sp, random_ptr); put_word(&mut sp, 25); // AT_RANDOM
+    put_word(&mut sp, execfn); put_word(&mut sp, 31); // AT_EXECFN
+    put_word(&mut sp, main.entry); put_word(&mut sp, 9); // AT_ENTRY
+    put_word(&mut sp, interp.base); put_word(&mut sp, 7); // AT_BASE
+    put_word(&mut sp, 4096); put_word(&mut sp, 6); // AT_PAGESZ
+    put_word(&mut sp, main.phnum); put_word(&mut sp, 5); // AT_PHNUM
+    put_word(&mut sp, main.phent); put_word(&mut sp, 4); // AT_PHENT
+    put_word(&mut sp, main.phdr); put_word(&mut sp, 3); // AT_PHDR
     put_word(&mut sp, 0); // envp NULL
     put_word(&mut sp, env3); put_word(&mut sp, env2); put_word(&mut sp, env1); put_word(&mut sp, env0);
     put_word(&mut sp, 0); // argv NULL
     put_word(&mut sp, arg4); put_word(&mut sp, arg3); put_word(&mut sp, arg2); put_word(&mut sp, arg1); put_word(&mut sp, arg0); put_word(&mut sp, 5); // argv
     put_word(&mut sp, 5);
+    debug_stack(sp);
     console::write_str("Luna: entering official nginx ELF via ld.so\n");
     arch::enter_user(interp.entry, sp);
+}
+
+fn debug_stack(sp: usize) {
+    console::write_str("stack:");
+    for i in 0..38 {
+        console::write_str(" ");
+        console::write_hex(unsafe { ptr::read((sp + i * 8) as *const usize) });
+    }
+    console::write_str("\n");
 }
 
 fn debug_needed(data: &[u8]) {
