@@ -211,7 +211,9 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         }
         22 => epoll_wait(a(0), a(1), a(2), a(3) as isize),
         25 => 0, // fcntl: accept CLOEXEC and status queries
-        29 => ENOTTY,
+        29 => { // ioctl: nginx uses FIONBIO on listening sockets
+            if a(1) == 0x5421 { 0 } else { ENOTTY }
+        }
         32 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,pos})=>{set_fd(a(0),Fd::File{index,pos:0});0}, _=>-29 } } }
         33 => { unsafe { match get_fd(a(0)) { Some(v)=>{set_fd(a(0),v);0},None=>EBADF } } }
         34 => 0, // mkdirat: nginx's compiled-in temp directories are virtual
