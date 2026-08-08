@@ -209,7 +209,7 @@ fn send_frame(frame: &[u8]) {
         TX.avail.ring[idx] = slot as u16;
         core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
         TX.avail.idx = TX.avail.idx.wrapping_add(1);
-        mmio_write32(0x030, 1); mmio_write32(0x050, 0);
+        mmio_write32(0x030, 1); mmio_write32(0x050, 1);
     }
 }
 
