@@ -72,4 +72,8 @@ pub fn lookup(path: &str) -> Option<usize> {
     }
 }
 
-pub fn exists(path: &str) -> bool { lookup(path).is_some() || matches!(path, "/" | "/dev/null" | "/dev/stderr" | "/dev/stdout") }
+pub fn exists(path: &str) -> bool {
+    lookup(path).is_some()
+        || matches!(path, "/" | "/dev/null" | "/dev/stderr" | "/dev/stdout")
+        || path == "/var/lib" || path == "/var/lib/nginx" || path.starts_with("/var/lib/nginx/")
+}

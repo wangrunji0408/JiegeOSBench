@@ -213,10 +213,12 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         29 => ENOTTY,
         32 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,pos})=>{set_fd(a(0),Fd::File{index,pos:0});0}, _=>-29 } } }
         33 => { unsafe { match get_fd(a(0)) { Some(v)=>{set_fd(a(0),v);0},None=>EBADF } } }
+        34 => 0, // mkdirat: nginx's compiled-in temp directories are virtual
         35 => { // nanosleep
             let p = unsafe { user_bytes(a(0), 16) }; let sec=u64::from_ne_bytes(p[0..8].try_into().unwrap()); let ns=u64::from_ne_bytes(p[8..16].try_into().unwrap()); let until=arch::time().wrapping_add(sec.saturating_mul(10_000_000)+ns/100); while arch::time().wrapping_sub(until) as i64 > 0 {} 0
         }
         48 => { unsafe { match user_cstr(a(1)) { Some(p) if vfs::exists(p)=>0, _=>ENOENT } } }
+        53 | 54 => 0, // fchmodat/fchownat on virtual nginx directories
         56 => { unsafe { match user_cstr(a(1)) { Some(p)=>open_path(p,a(2)),None=>ENOENT } } }
         57 => { unsafe { if let Some(v)=get_fd(a(0)) { if let Fd::Socket{handle}=v {net::close(handle);} set_fd(a(0),Fd::Empty);0 } else {EBADF} } }
         62 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,..})=>{if let Some(d)=vfs::data(index){let p=if a(1)==0{0}else{a(1)};let _=set_fd(a(0),Fd::File{index,pos:p});p as isize}else{EBADF}}, _=>EBADF } } }
@@ -234,7 +236,11 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         78 => { // readlinkat
             unsafe { match user_cstr(a(1)) { Some("/proc/self/exe")=>{let b=b"/usr/sbin/nginx";let n=b.len().min(a(3));user_bytes_mut(a(2),n)[..n].copy_from_slice(&b[..n]);n as isize}, _=>ENOENT } }
         }
-        79 => { unsafe { match user_cstr(a(1)) { Some(p)=>match vfs::lookup(p) { Some(idx)=>stat_file(a(2),vfs::data(idx).unwrap().len(),0o100644,(idx as u64)+1),None=>ENOENT },None=>ENOENT } } }
+        79 => { unsafe { match user_cstr(a(1)) {
+            Some(p) if p == "/var/lib" || p == "/var/lib/nginx" || p.starts_with("/var/lib/nginx/") => stat_file(a(2), 0, 0o040755, 0x20000),
+            Some(p) => match vfs::lookup(p) { Some(idx)=>stat_file(a(2),vfs::data(idx).unwrap().len(),0o100644,(idx as u64)+1),None=>ENOENT },
+            None=>ENOENT
+        } } }
         80 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,..})=>stat_file(a(1),vfs::data(index).map_or(0,|d|d.len()),0o100644,(index as u64)+1),Some(Fd::Socket{handle})=>stat_file(a(1),0,0o140777,0x10000+(handle as u64)),_=>EBADF } } }
         93 | 94 => { tf.sepc = crate::arch::user_halt as usize - 4; 0 }
         98 => { 0 }
