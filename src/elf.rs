@@ -119,8 +119,6 @@ pub fn start_nginx() -> ! {
     let arg0 = cstring(&mut sp, b"nginx\0");
     let arg1 = cstring(&mut sp, b"-c\0");
     let arg2 = cstring(&mut sp, b"/etc/nginx/nginx.conf\0");
-    let arg3 = cstring(&mut sp, b"-g\0");
-    let arg4 = cstring(&mut sp, b"daemon off; master_process off;\0");
     let env0 = cstring(&mut sp, b"PATH=/usr/sbin:/usr/bin\0");
     let env1 = cstring(&mut sp, b"HOME=/\0");
     let env2 = cstring(&mut sp, b"LANG=C\0");
@@ -141,7 +139,7 @@ pub fn start_nginx() -> ! {
     put_word(&mut sp, 0); // envp NULL
     put_word(&mut sp, env2); put_word(&mut sp, env1); put_word(&mut sp, env0);
     put_word(&mut sp, 0); // argv NULL
-    put_word(&mut sp, arg4); put_word(&mut sp, arg3); put_word(&mut sp, arg2); put_word(&mut sp, arg1); put_word(&mut sp, arg0); put_word(&mut sp, 5); // argc
+    put_word(&mut sp, arg2); put_word(&mut sp, arg1); put_word(&mut sp, arg0); put_word(&mut sp, 3); // argc
     debug_stack(sp);
     console::write_str("Luna: entering official nginx ELF via ld.so\n");
     arch::enter_user(interp.entry, sp);
