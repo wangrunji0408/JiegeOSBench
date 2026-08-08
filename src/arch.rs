@@ -42,7 +42,16 @@ pub fn time() -> u64 {
 
 pub fn init() {
     unsafe {
-        asm!("csrw stvec, {}", in(reg) &raw const trap_vector as *const u8 as usize);
+        let vector = &raw const trap_vector as *const u8 as usize;
+        console::write_str("Luna: vector=");
+        console::write_hex(vector);
+        console::write_str("\n");
+        asm!("csrw stvec, {}", in(reg) vector);
+        let observed: usize;
+        asm!("csrr {}, stvec", out(reg) observed);
+        console::write_str("Luna: stvec=");
+        console::write_hex(observed);
+        console::write_str("\n");
         asm!("csrw sscratch, {}", in(reg) kernel_stack_top());
         let mut sstatus: usize;
         asm!("csrr {}, sstatus", out(reg) sstatus);

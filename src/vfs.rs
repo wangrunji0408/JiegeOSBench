@@ -19,6 +19,7 @@ static FILES: &[EmbeddedFile] = &[
     EmbeddedFile { path: "/usr/lib/riscv64-linux-gnu/ossl-modules/legacy.so", data: include_bytes!("../assets/rootfs/usr/lib/riscv64-linux-gnu/ossl-modules/legacy.so") },
     EmbeddedFile { path: "/etc/nginx/nginx.conf", data: include_bytes!("../assets/etc-nginx.conf") },
     EmbeddedFile { path: "/var/www/index.html", data: include_bytes!("../assets/index.html") },
+    EmbeddedFile { path: "/etc/ld.so.cache", data: include_bytes!("../assets/ubuntu-ld.so.cache") },
 ];
 
 pub fn data(index: usize) -> Option<&'static [u8]> { FILES.get(index).map(|f| f.data) }
@@ -45,4 +46,3 @@ pub fn lookup(path: &str) -> Option<usize> {
 }
 
 pub fn exists(path: &str) -> bool { lookup(path).is_some() || matches!(path, "/" | "/dev/null" | "/dev/stderr" | "/dev/stdout") }
-

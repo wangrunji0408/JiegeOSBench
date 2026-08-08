@@ -108,6 +108,7 @@ pub fn start_nginx() -> ! {
     let loader = vfs::data(vfs::LOADER).unwrap();
     let main = load(nginx, 0x8100_0000).expect("invalid nginx ELF");
     let interp = load(loader, 0x8300_0000).expect("invalid dynamic loader ELF");
+    debug_needed(nginx);
     let mut sp = arch::USER_STACK_TOP;
     let random = [0x4c, 0x75, 0x6e, 0x61, 0x2d, 0x52, 0x49, 0x53, 0x43, 0x2d, 0x36, 0x34, 0x00, 0x01, 0x02, 0x03];
     let random_ptr = put_bytes(&mut sp, &random);
@@ -120,6 +121,7 @@ pub fn start_nginx() -> ! {
     let env0 = cstring(&mut sp, b"PATH=/usr/sbin:/usr/bin\0");
     let env1 = cstring(&mut sp, b"HOME=/\0");
     let env2 = cstring(&mut sp, b"LANG=C\0");
+    let env3 = cstring(&mut sp, b"LD_DEBUG=libs\0");
     sp &= !15;
     put_word(&mut sp, 0); // padding
     put_word(&mut sp, 0); // AT_NULL value
@@ -133,10 +135,27 @@ pub fn start_nginx() -> ! {
     put_word(&mut sp, 4); put_word(&mut sp, main.phent); // AT_PHENT
     put_word(&mut sp, 3); put_word(&mut sp, main.phdr); // AT_PHDR
     put_word(&mut sp, 0); // envp NULL
-    put_word(&mut sp, env2); put_word(&mut sp, env1); put_word(&mut sp, env0);
+    put_word(&mut sp, env3); put_word(&mut sp, env2); put_word(&mut sp, env1); put_word(&mut sp, env0);
     put_word(&mut sp, 0); // argv NULL
     put_word(&mut sp, arg4); put_word(&mut sp, arg3); put_word(&mut sp, arg2); put_word(&mut sp, arg1); put_word(&mut sp, arg0); put_word(&mut sp, 5); // argv
     put_word(&mut sp, 5);
     console::write_str("Luna: entering official nginx ELF via ld.so\n");
     arch::enter_user(interp.entry, sp);
+}
+
+fn debug_needed(data: &[u8]) {
+    let mut off = 0x128750usize;
+    for _ in 0..32 {
+        if off + 16 > data.len() { break; }
+        let tag = u64::from_le_bytes(data[off..off+8].try_into().unwrap());
+        let val = u64::from_le_bytes(data[off+8..off+16].try_into().unwrap());
+        if tag == 0 { break; }
+        if tag == 1 {
+            let p = 0xa3b0 + val as usize;
+            console::write_str("needed: ");
+            if p < data.len() { let mut n=0; while p+n<data.len() && data[p+n]!=0 { n+=1; } console::write_bytes(&data[p..p+n]); }
+            console::write_str("\n");
+        }
+        off += 16;
+    }
 }

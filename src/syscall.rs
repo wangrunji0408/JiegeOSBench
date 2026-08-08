@@ -31,6 +31,7 @@ static mut FDS: [Fd; 128] = [Fd::Empty; 128];
 static mut NEXT_MAP: usize = 0x9000_0000;
 static mut CURRENT_BRK: usize = 0x8e00_0000;
 static mut LAST_UNKNOWN: usize = usize::MAX;
+static mut CALL_COUNT: usize = 0;
 
 pub fn init() {
     unsafe { FDS[0] = Fd::Stdin; FDS[1] = Fd::Stdout; FDS[2] = Fd::Stdout; }
@@ -76,15 +77,22 @@ fn stat_file(out: usize, size: usize, mode: u32) -> isize {
     unsafe {
         let s = user_bytes_mut(out, 128);
         s.fill(0);
+        s[0..8].copy_from_slice(&1u64.to_ne_bytes());
+        s[8..16].copy_from_slice(&1u64.to_ne_bytes());
         s[16..20].copy_from_slice(&mode.to_ne_bytes());
-        s[40..48].copy_from_slice(&(size as i64).to_ne_bytes());
-        s[48..52].copy_from_slice(&(4096u32).to_ne_bytes());
-        s[56..64].copy_from_slice(&((size.div_ceil(4096)) as i64).to_ne_bytes());
+        s[20..24].copy_from_slice(&1u32.to_ne_bytes());
+        s[48..56].copy_from_slice(&(size as i64).to_ne_bytes());
+        s[56..60].copy_from_slice(&(4096u32).to_ne_bytes());
+        s[64..72].copy_from_slice(&((size.div_ceil(4096)) as i64).to_ne_bytes());
+        s[72..80].copy_from_slice(&1u64.to_ne_bytes());
+        s[80..88].copy_from_slice(&1u64.to_ne_bytes());
+        s[88..96].copy_from_slice(&1u64.to_ne_bytes());
     }
     0
 }
 
 fn open_path(path: &str, _flags: usize) -> isize {
+    unsafe { if CALL_COUNT < 12 { console::write_str("open "); console::write_str(path); console::write_str("\n"); } }
     if path == "/dev/null" { return alloc_fd(Fd::File { index: usize::MAX, pos: 0 }); }
     if path == "/dev/zero" { return alloc_fd(Fd::File { index: usize::MAX - 1, pos: 0 }); }
     if let Some(index) = vfs::lookup(path) { return alloc_fd(Fd::File { index, pos: 0 }); }
@@ -168,6 +176,13 @@ fn syscall_name(nr: usize) -> &'static str {
 
 pub fn dispatch(tf: &mut arch::TrapFrame) {
     let nr = tf.regs[17];
+    unsafe {
+        if CALL_COUNT < 32 {
+            console::write_str("syscall "); console::write_dec(CALL_COUNT); console::write_str(" nr="); console::write_dec(nr);
+            console::write_str(" a0="); console::write_hex(tf.regs[10]); console::write_str(" a1="); console::write_hex(tf.regs[11]); console::write_str("\n");
+            CALL_COUNT += 1;
+        }
+    }
     let a = |n| tf.arg(n);
     let result = match nr {
         17 => { // getcwd
@@ -196,12 +211,20 @@ pub fn dispatch(tf: &mut arch::TrapFrame) {
         62 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,..})=>{if let Some(d)=vfs::data(index){let p=if a(1)==0{0}else{a(1)};let _=set_fd(a(0),Fd::File{index,pos:p});p as isize}else{EBADF}}, _=>EBADF } } }
         63 => { unsafe { let out=user_bytes_mut(a(1),a(2)); match get_fd(a(0)) { Some(Fd::Socket{handle})=>net::recv(handle,out), _=>read_file(a(0),out) } } }
         64 => { unsafe { write_fd(a(0),user_bytes(a(1),a(2))) } }
+        65 => { // readv
+            let mut total = 0isize;
+            for i in 0..a(2).min(16) { unsafe { let p=user_bytes(a(1)+i*16,16); let base=u64::from_ne_bytes(p[0..8].try_into().unwrap()) as usize; let len=u64::from_ne_bytes(p[8..16].try_into().unwrap()) as usize; let n=match get_fd(a(0)){Some(Fd::Socket{handle})=>net::recv(handle,user_bytes_mut(base,len)),_=>read_file(a(0),user_bytes_mut(base,len))}; if n<0 { total=n; break; } total+=n; if (n as usize)<len {break;} } } total
+        }
+        66 => { // writev
+            let mut total = 0isize;
+            for i in 0..a(2).min(16) { unsafe { let p=user_bytes(a(1)+i*16,16); let base=u64::from_ne_bytes(p[0..8].try_into().unwrap()) as usize; let len=u64::from_ne_bytes(p[8..16].try_into().unwrap()) as usize; let n=write_fd(a(0),user_bytes(base,len)); if n<0 { total=n; break; } total+=n; } } total
+        }
         78 => { // readlinkat
             unsafe { match user_cstr(a(1)) { Some("/proc/self/exe")=>{let b=b"/usr/sbin/nginx";let n=b.len().min(a(3));user_bytes_mut(a(2),n)[..n].copy_from_slice(&b[..n]);n as isize}, _=>ENOENT } }
         }
         79 => { unsafe { match user_cstr(a(1)) { Some(p)=>match vfs::lookup(p) { Some(idx)=>stat_file(a(2),vfs::data(idx).unwrap().len(),0o100644),None=>ENOENT },None=>ENOENT } } }
         80 => { unsafe { match get_fd(a(0)) { Some(Fd::File{index,..})=>stat_file(a(1),vfs::data(index).map_or(0,|d|d.len()),0o100644),Some(Fd::Socket{..})=>stat_file(a(1),0,0o140777),_=>EBADF } } }
-        93 | 94 => { tf.sepc = crate::arch::user_halt as usize; 0 }
+        93 | 94 => { tf.sepc = crate::arch::user_halt as usize - 4; 0 }
         98 => { 0 }
         101 => 0,
         113 => { unsafe { let p=user_bytes_mut(a(1),16);p[..8].copy_from_slice(&0u64.to_ne_bytes());p[8..16].copy_from_slice(&(arch::time()*100).to_ne_bytes());0 } }

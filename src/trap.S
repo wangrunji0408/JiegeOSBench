@@ -1,4 +1,5 @@
 .section .text.trap
+.align 4
 .globl trap_vector
 .type trap_vector, @function
 trap_vector:

@@ -2,7 +2,7 @@ use core::ptr;
 
 use crate::console;
 
-const VIRTIO: usize = 0x1000_1000;
+static mut VIRTIO: usize = 0x1000_1000;
 const Q: usize = 8;
 const BUF: usize = 2048;
 const GUEST_IP: [u8; 4] = [10, 0, 2, 15];
@@ -98,7 +98,14 @@ fn set_addr(low: usize, high: usize, addr: usize) {
 
 pub fn init() -> bool {
     unsafe {
-        if mmio_read32(0x000) != 0x7472_6976 || mmio_read32(0x008) != 1 {
+        let mut found = false;
+        for slot in 1..=8 {
+            let base = 0x1000_0000 + slot * 0x1000;
+            let magic = ptr::read_volatile(base as *const u32);
+            let device = ptr::read_volatile((base + 0x008) as *const u32);
+            if magic == 0x7472_6976 && device == 1 { VIRTIO = base; found = true; break; }
+        }
+        if !found {
             console::write_str("Luna: virtio-net not found\n");
             return false;
         }
