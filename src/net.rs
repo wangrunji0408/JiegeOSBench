@@ -129,7 +129,9 @@ pub fn init() -> bool {
         let offered = (f0 as u64) | ((f1 as u64) << 32);
         let wanted = offered & (1u64 << 32); // VERSION_1
         mmio_write32(0x024, 0); mmio_write32(0x020, wanted as u32);
-        mmio_write32(0x024, 1); mmio_write32(0x020, (wanted >> 32) as u32);
+        if !LEGACY {
+            mmio_write32(0x024, 1); mmio_write32(0x020, (wanted >> 32) as u32);
+        }
         mmio_write32(0x070, 11);
         if mmio_read32(0x070) & 8 == 0 { console::write_str("Luna: virtio feature negotiation failed\n"); return false; }
         if LEGACY { mmio_write32(0x028, PAGE as u32); }
@@ -198,6 +200,7 @@ fn send_frame(frame: &[u8]) {
         reclaim_tx();
         let slot = TX_SLOT;
         TX_SLOT = (TX_SLOT + 1) % Q;
+        console::write_str("net tx len="); console::write_dec(frame.len()); console::write_str(" slot="); console::write_dec(slot); console::write_str("\n");
         let b = &mut TX.buffers[slot];
         for x in &mut b[..10] { *x = 0; }
         b[10..10 + frame.len()].copy_from_slice(frame);
