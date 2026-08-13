@@ -221,15 +221,14 @@ extern "C" fn trap_handler(cx: *mut TrapContext) -> *mut TrapContext {
                     );
                     // Debug: dump physical mapping of tp-relative TLS addresses.
                     let tp = c.x[4];
+                    // Direct deref (hardware TLB) vs software translate.
+                    let vaddr = tp.wrapping_add(0x40018);
+                    let direct = unsafe { *((vaddr) as *const u32) };
+                    crate::println!("[trap]   direct read {:#x} = {:#x}", vaddr, direct);
                     if let Some(p) = crate::process::current().lock().as_ref() {
-                        // dump 64 bytes at tp+0x40000
-                        let va = tp.wrapping_add(0x40000);
-                        if let Some(pa) = p.page_table.translate(va) {
-                            let mut bytes = [0u8; 64];
-                            for i in 0..64 {
-                                bytes[i] = unsafe { *((pa + i) as *const u8) };
-                            }
-                            crate::println!("[trap]   mem@{:#x}: {:02x?}", va, bytes);
+                        if let Some(pa) = p.page_table.translate(vaddr) {
+                            let sw = unsafe { *((pa) as *const u32) };
+                            crate::println!("[trap]   software read {:#x} -> pa {:#x} = {:#x}", vaddr, pa, sw);
                         }
                         for va in [tp.wrapping_add(0x40018), 0x106f734usize] {
                             match p.page_table.translate(va) {
