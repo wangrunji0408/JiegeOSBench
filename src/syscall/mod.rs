@@ -331,7 +331,6 @@ fn sys_openat(dirfd: usize, path_ptr: *const u8, flags: usize, _mode: usize) -> 
     let mut cur = crate::process::current().lock();
     let proc = cur.as_mut().expect("openat: no process");
     let full = resolve_path(proc, dirfd, &path);
-    crate::println!("[openat] \"{}\"", full);
 
     let accmode = flags & 0x3;
     let readable = accmode != 1; // not write-only
