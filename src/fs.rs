@@ -183,13 +183,10 @@ pub fn create_file(path: &str) -> Option<Arc<INode>> {
 }
 
 pub fn mkdir(path: &str) -> isize {
-    let (dir, name) = lookup_parent(path).ok_or(-1isize).unwrap_or_else(|_| {
-        // fall back: -1
-        // (placeholder; replaced below)
-        let _ = &dir;
-        let _ = &name;
-        unreachable!()
-    });
+    let (dir, name) = match lookup_parent(path) {
+        Some(x) => x,
+        None => return -crate::syscall::ENOENT,
+    };
     if !dir.is_dir {
         return -crate::syscall::ENOTDIR;
     }
