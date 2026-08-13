@@ -771,3 +771,82 @@ fn sys_set_tid_address(tidptr: usize) -> isize {
     proc.clear_child_tid = tidptr;
     proc.pid as isize
 }
+
+fn sys_clock_gettime(clk_id: usize, tp: *mut u8) -> isize {
+    let ns = crate::sbi::get_time();
+    let (sec, nsec) = (ns / 1_000_000_000, ns % 1_000_000_000);
+    unsafe {
+        (tp as *mut i64).write(sec as i64);
+        (tp.add(8) as *mut i64).write(nsec as i64);
+    }
+    let _ = clk_id;
+    0
+}
+
+fn sys_gettimeofday(tv: *mut u8, _tz: usize) -> isize {
+    let ns = crate::sbi::get_time();
+    let (sec, usec) = (ns / 1_000_000_000, (ns % 1_000_000_000) / 1000);
+    unsafe {
+        (tv as *mut i64).write(sec as i64);
+        (tv.add(8) as *mut i64).write(usec as i64);
+    }
+    0
+}
+
+fn write_cfield(buf: *mut u8, off: usize, s: &str) {
+    unsafe {
+        let dst = buf.add(off);
+        core::ptr::copy_nonoverlapping(s.as_ptr(), dst, s.len());
+        *dst.add(s.len()) = 0;
+    }
+}
+
+fn sys_uname(buf: *mut u8) -> isize {
+    write_cfield(buf, 0, "Linux");
+    write_cfield(buf, 65, "ijiege");
+    write_cfield(buf, 130, "6.6.0-iJiege");
+    write_cfield(buf, 195, "#1");
+    write_cfield(buf, 260, "riscv64");
+    write_cfield(buf, 325, "(none)");
+    0
+}
+
+fn sys_getrlimit(res: usize, rlim: *mut u8) -> isize {
+    const RLIM_INFINITY: u64 = u64::MAX;
+    let (cur, max) = match res {
+        7 => (1024, 4096),        // RLIMIT_NOFILE
+        8 => (RLIM_INFINITY, RLIM_INFINITY), // RLIMIT_AS
+        6 => (RLIM_INFINITY, RLIM_INFINITY), // RLIMIT_CORE
+        _ => (RLIM_INFINITY, RLIM_INFINITY),
+    };
+    unsafe {
+        (rlim as *mut u64).write(cur);
+        (rlim.add(8) as *mut u64).write(max);
+    }
+    0
+}
+
+fn sys_sched_getaffinity(_pid: usize, _len: usize, mask: usize) -> isize {
+    // Single CPU: set the first bit.
+    unsafe { (mask as *mut u64).write(1); }
+    8
+}
+
+fn sys_times(buf: *mut u8) -> isize {
+    sys_zero_buf(buf, 32)
+}
+
+fn sys_sysinfo(buf: *mut u8) -> isize {
+    sys_zero_buf(buf, 112);
+    let ns = crate::sbi::get_time();
+    unsafe {
+        (buf as *mut i64).write((ns / 1_000_000_000) as i64); // uptime seconds
+        (buf.add(104) as *mut u32).write(4096); // mem_unit
+    }
+    0
+}
+
+fn sys_zero_buf(buf: *mut u8, len: usize) -> isize {
+    unsafe { core::ptr::write_bytes(buf, 0, len); }
+    0
+}
