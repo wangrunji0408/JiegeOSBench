@@ -293,7 +293,10 @@ impl smoltcp::phy::Device for VirtioNet {
             crate::println!("[virtio] first RX len={} head={:02x?}", len, head);
         }
         let buf_phys = self.rx_buffers[desc_idx as usize];
-        let buf = unsafe { core::slice::from_raw_parts_mut(buf_phys as *mut u8, len as usize) };
+        // Skip the 10-byte legacy header.
+        let buf = unsafe {
+            core::slice::from_raw_parts_mut((buf_phys + NET_HDR_SIZE) as *mut u8, (len as usize).saturating_sub(NET_HDR_SIZE))
+        };
         let tx_buf = unsafe { &mut TX_BUF.0 };
         let net_ptr = self as *mut VirtioNet;
         Some((
