@@ -47,7 +47,6 @@ impl INode {
 }
 
 /// The kind of open file a descriptor refers to.
-#[derive(Clone)]
 pub enum FileKind {
     /// /dev/null
     Null,
@@ -56,11 +55,10 @@ pub enum FileKind {
     Stderr,
     /// A regular file or directory.
     Inode(Arc<INode>),
-    /// A networking socket.
-    Socket(smoltcp::iface::SocketHandle),
+    /// A networking socket (implemented later).
+    Socket(usize),
 }
 
-#[derive(Clone)]
 pub struct FileDesc {
     pub kind: FileKind,
     pub offset: usize,
@@ -81,15 +79,6 @@ pub const O_CLOEXEC: u32 = 0o2000000;
 
 static ROOT: SpinLock<Option<Arc<INode>>> = SpinLock::new(None);
 
-/// Standard file descriptors 0,1,2 (stdin/stdout/stderr).
-pub fn default_fds() -> Vec<Option<FileDesc>> {
-    vec![
-        Some(FileDesc { kind: FileKind::Stdin, offset: 0, flags: 0, readable: true, writable: false }),
-        Some(FileDesc { kind: FileKind::Stdout, offset: 0, flags: 0, readable: false, writable: true }),
-        Some(FileDesc { kind: FileKind::Stderr, offset: 0, flags: 0, readable: false, writable: true }),
-    ]
-}
-
 /// Populate the filesystem with the layout nginx expects.
 pub fn init() {
     let root = INode::new_dir("/");
@@ -100,36 +89,23 @@ pub fn init() {
     let usr = INode::new_dir("usr");
     let local = INode::new_dir("local");
     let nginx = INode::new_dir("nginx");
-    let etc = INode::new_dir("etc");
     let conf = INode::new_dir("conf");
     let sbin = INode::new_dir("sbin");
-    let logs = INode::new_dir("logs");
 
-    conf.add_child(INode::new_file("mime.types", include_bytes!("../nginx-conf/mime.types").to_vec()));
-    conf.add_child(INode::new_file("nginx.conf", include_bytes!("../nginx-conf/nginx.conf").to_vec()));
-    sbin.add_child(INode::new_file("nginx", include_bytes!("../third_party/nginx").to_vec()));
-    logs.add_child(INode::new_file("error.log", Vec::new()));
-    logs.add_child(INode::new_file("access.log", Vec::new()));
+    conf.add_child(INode::new_file("mime.types", include_bytes!("../../nginx-conf/mime.types").to_vec()));
+    conf.add_child(INode::new_file("nginx.conf", include_bytes!("../../nginx-conf/nginx.conf").to_vec()));
+    sbin.add_child(INode::new_file("nginx", include_bytes!("../../third_party/nginx").to_vec()));
     nginx.add_child(conf);
     nginx.add_child(sbin);
-    nginx.add_child(logs);
     local.add_child(nginx);
     usr.add_child(local);
-    www.add_child(INode::new_file("index.html", include_bytes!("../webroot/index.html").to_vec()));
-
-    etc.add_child(INode::new_file("passwd", b"root:x:0:0:root:/root:/bin/sh\nnobody:x:65534:65534:nobody:/:/sbin/nologin\n".to_vec()));
-    etc.add_child(INode::new_file("group", b"root:x:0:\nnobody:x:65534:\n".to_vec()));
-    etc.add_child(INode::new_file("hosts", b"127.0.0.1 localhost\n".to_vec()));
-    etc.add_child(INode::new_file("hostname", b"ijiege\n".to_vec()));
-    etc.add_child(INode::new_file("resolv.conf", b"nameserver 10.0.2.3\n".to_vec()));
-    etc.add_child(INode::new_file("nsswitch.conf", b"hosts: files\npasswd: files\ngroup: files\n".to_vec()));
+    www.add_child(INode::new_file("index.html", include_bytes!("../../webroot/index.html").to_vec()));
 
     root.add_child(dev);
     root.add_child(tmp);
     root.add_child(run);
     root.add_child(www);
     root.add_child(usr);
-    root.add_child(etc);
 
     *ROOT.lock() = Some(root);
 }
@@ -198,10 +174,13 @@ pub fn create_file(path: &str) -> Option<Arc<INode>> {
 }
 
 pub fn mkdir(path: &str) -> isize {
-    let (dir, name) = match lookup_parent(path) {
-        Some(x) => x,
-        None => return -crate::syscall::ENOENT,
-    };
+    let (dir, name) = lookup_parent(path).ok_or(-1isize).unwrap_or_else(|_| {
+        // fall back: -1
+        // (placeholder; replaced below)
+        let _ = &dir;
+        let _ = &name;
+        unreachable!()
+    });
     if !dir.is_dir {
         return -crate::syscall::ENOTDIR;
     }
