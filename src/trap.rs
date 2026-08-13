@@ -212,7 +212,7 @@ extern "C" fn trap_handler(cx: *mut TrapContext) -> *mut TrapContext {
                 _ => {
                     crate::println!(
                         "[trap] exception: scause={:#x}, sepc={:#x}, stval={:#x}",
-                        scause, sepc, stval()
+                        scause, (*cx).sepc, stval()
                     );
                     crate::sbi::shutdown();
                 }
