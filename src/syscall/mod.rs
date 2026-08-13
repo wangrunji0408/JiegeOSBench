@@ -714,13 +714,6 @@ fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: usize, offse
         va += PAGE_SIZE;
     }
     proc.mmap_hint = start + len_aligned;
-    if len_aligned > 0x30000 {
-        crate::println!("[mmap] large map: addr={:#x} len={:#x} prot={:#x} flags={:#x} -> {:#x}", addr, len, prot, flags, start);
-        for off in [0usize, 0xc8, 0x40018, 0x400e0, 0x41000] {
-            let probe = unsafe { *((start + off) as *const u64) };
-            crate::println!("[mmap]   probe {:#x} = {:#x}", start + off, probe);
-        }
-    }
     start as isize
 }
 
