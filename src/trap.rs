@@ -187,9 +187,7 @@ extern "C" {
 extern "C" fn trap_handler(cx: *mut TrapContext) -> *mut TrapContext {
     unsafe {
         let scause: usize;
-        let mut sepc: usize;
         core::arch::asm!("csrr {}, scause", out(reg) scause);
-        core::arch::asm!("csrr {}, sepc", out(reg) sepc);
 
         if scause & INTERRUPT != 0 {
             // Interrupt
