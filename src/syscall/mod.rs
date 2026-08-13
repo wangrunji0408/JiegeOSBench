@@ -708,6 +708,229 @@ fn sys_exit(code: i32) -> isize {
     crate::sbi::shutdown();
 }
 
+fn fd_socket_handle(fd: usize) -> Option<usize> {
+    let cur = crate::process::current().lock();
+    let proc = cur.as_ref().unwrap();
+    match proc.fds.get(fd).and_then(Option::as_ref) {
+        Some(f) => match &f.kind {
+            FileKind::Socket(h) => Some(*h),
+            _ => None,
+        },
+        None => None,
+    }
+}
+
+unsafe fn parse_sockaddr_in(ptr: *const u8) -> (u32, u16) {
+    let port = u16::from_be(*(ptr.add(2) as *const u16));
+    let addr_be = *(ptr.add(4) as *const u32);
+    (addr_be, port)
+}
+
+fn write_sockaddr_in(ptr: *mut u8, addr: u32, port: u16) {
+    unsafe {
+        (ptr as *mut u16).write(2); // AF_INET
+        (ptr.add(2) as *mut u16).write(port.to_be());
+        (ptr.add(4) as *mut u32).write(addr);
+        core::ptr::write_bytes(ptr.add(8), 0, 8);
+    }
+}
+
+fn sys_socket(domain: usize, ty: usize, _proto: usize) -> isize {
+    let _ = domain;
+    let is_tcp = ty == 1; // SOCK_STREAM
+    match crate::net::socket_new(is_tcp) {
+        Ok(h) => {
+            let mut cur = crate::process::current().lock();
+            let proc = cur.as_mut().unwrap();
+            let fd = FileDesc {
+                kind: FileKind::Socket(h),
+                offset: 0,
+                flags: crate::fs::O_RDWR as u32,
+                readable: true,
+                writable: true,
+            };
+            alloc_fd(proc, fd)
+        }
+        Err(e) => e,
+    }
+}
+
+fn sys_bind(fd: usize, addr: *const u8, _addrlen: usize) -> isize {
+    let (_addr, port) = unsafe { parse_sockaddr_in(addr) };
+    let h = match fd_socket_handle(fd) {
+        Some(h) => h,
+        None => return -EBADF,
+    };
+    crate::net::socket_bind(h, port)
+}
+
+fn sys_listen(fd: usize, _backlog: usize) -> isize {
+    let h = match fd_socket_handle(fd) {
+        Some(h) => h,
+        None => return -EBADF,
+    };
+    crate::net::socket_listen_stored(h)
+}
+
+fn sys_accept(fd: usize, addr: *mut u8, addrlen: *mut u8) -> isize {
+    let h = match fd_socket_handle(fd) {
+        Some(h) => h,
+        None => return -EBADF,
+    };
+    match crate::net::socket_accept(h) {
+        Ok((conn_handle, new_listen_handle, peer, port)) => {
+            let mut cur = crate::process::current().lock();
+            let proc = cur.as_mut().unwrap();
+            // Update the listening fd to point at the new listening socket.
+            if let Some(Some(f)) = proc.fds.get_mut(fd) {
+                if let FileKind::Socket(ref mut sh) = f.kind {
+                    *sh = new_listen_handle;
+                }
+            }
+            // Create a new fd for the accepted connection.
+            let conn = FileDesc {
+                kind: FileKind::Socket(conn_handle),
+                offset: 0,
+                flags: crate::fs::O_RDWR as u32,
+                readable: true,
+                writable: true,
+            };
+            let newfd = alloc_fd(proc, conn);
+            if addr != 0 {
+                write_sockaddr_in(addr, u32::from_be_bytes(peer), port);
+            }
+            if addrlen != 0 {
+                unsafe { (addrlen as *mut u32).write(16); }
+            }
+            newfd
+        }
+        Err(e) => e,
+    }
+}
+
+fn sys_connect(fd: usize, addr: *const u8, _addrlen: usize) -> isize {
+    let (addr_be, port) = unsafe { parse_sockaddr_in(addr) };
+    let h = match fd_socket_handle(fd) {
+        Some(h) => h,
+        None => return -EBADF,
+    };
+    let a = (addr_be >> 24) as u8;
+    let b = (addr_be >> 16) as u8;
+    let c = (addr_be >> 8) as u8;
+    let d = addr_be as u8;
+    crate::net::socket_connect(h, a, b, c, d, port)
+}
+
+fn sys_getsockname(fd: usize, addr: *mut u8, addrlen: *mut u8) -> isize {
+    let h = match fd_socket_handle(fd) {
+        Some(h) => h,
+        None => return -EBADF,
+    };
+    match crate::net::socket_local(h) {
+        Some((a, p)) => {
+            if addr != 0 {
+                write_sockaddr_in(addr, a, p);
+            }
+            if addrlen != 0 {
+                unsafe { (addrlen as *mut u32).write(16); }
+            }
+            0
+        }
+        None => -EINVAL,
+    }
+}
+
+fn sys_getpeername(fd: usize, addr: *mut u8, addrlen: *mut u8) -> isize {
+    let h = match fd_socket_handle(fd) {
+        Some(h) => h,
+        None => return -EBADF,
+    };
+    match crate::net::socket_peer(h) {
+        Some((a, p)) => {
+            if addr != 0 {
+                write_sockaddr_in(addr, a, p);
+            }
+            if addrlen != 0 {
+                unsafe { (addrlen as *mut u32).write(16); }
+            }
+            0
+        }
+        None => -ENOTCONN,
+    }
+}
+
+fn sys_sendto(fd: usize, buf: *const u8, len: usize, _flags: usize, _to: *const u8, _tolen: usize) -> isize {
+    let h = match fd_socket_handle(fd) {
+        Some(h) => h,
+        None => return -EBADF,
+    };
+    let data = unsafe { core::slice::from_raw_parts(buf, len) };
+    crate::net::socket_send(h, data)
+}
+
+fn sys_recvfrom(fd: usize, buf: *mut u8, len: usize, _flags: usize, _from: *mut u8, _fromlen: *mut u8) -> isize {
+    let h = match fd_socket_handle(fd) {
+        Some(h) => h,
+        None => return -EBADF,
+    };
+    let data = unsafe { core::slice::from_raw_parts_mut(buf, len) };
+    crate::net::socket_recv(h, data)
+}
+
+fn sys_sendmsg(fd: usize, msg: *const u8, _flags: usize) -> isize {
+    // struct msghdr: name(8) namelen(4) iov(8) iovlen(4) control(8) controllen(4) flags(4)
+    let iov = unsafe { *(msg.add(16) as *const usize) };
+    let iovcnt = unsafe { *(msg.add(24) as *const u32) } as usize;
+    sys_writev(fd, iov as *const u8, iovcnt)
+}
+
+fn sys_recvmsg(fd: usize, msg: *mut u8, _flags: usize) -> isize {
+    let iov = unsafe { *(msg.add(16) as *const usize) };
+    let iovcnt = unsafe { *(msg.add(24) as *const u32) } as usize;
+    sys_readv(fd, iov as *const u8, iovcnt)
+}
+
+fn sys_ppoll(fds: *const u8, nfds: usize, _timeout: usize) -> isize {
+    crate::net::poll();
+    let mut ready = 0;
+    for i in 0..nfds {
+        let p = unsafe { fds.add(i * 8) };
+        let fd = unsafe { *(p as *const i32) } as usize;
+        let events = unsafe { *(p.add(4) as *const i16) };
+        let mut revents = 0i16;
+        if (fd as i32) >= 0 {
+            let cur = crate::process::current().lock();
+            let proc = cur.as_ref().unwrap();
+            if let Some(Some(f)) = proc.fds.get(fd) {
+                match &f.kind {
+                    FileKind::Socket(h) => {
+                        if events & 1 != 0 && crate::net::socket_readable(*h) {
+                            revents |= 1; // POLLIN
+                        }
+                        if events & 4 != 0 && crate::net::socket_writable(*h) {
+                            revents |= 4; // POLLOUT
+                        }
+                    }
+                    FileKind::Stdin => {
+                        if events & 1 != 0 && crate::console::getchar().is_some() {
+                            revents |= 1;
+                        }
+                    }
+                    _ => {
+                        // regular files / null are always ready
+                        revents |= events & (1 | 4);
+                    }
+                }
+            }
+        }
+        unsafe { *(p.add(6) as *mut i16) = revents; }
+        if revents != 0 {
+            ready += 1;
+        }
+    }
+    ready as isize
+}
+
 fn sys_brk(addr: usize) -> isize {
     let mut cur = crate::process::current().lock();
     let proc = cur.as_mut().expect("brk: no process");
