@@ -195,8 +195,6 @@ extern "C" fn trap_handler(cx: *mut TrapContext) -> *mut TrapContext {
             // Interrupt
             match scause & !INTERRUPT {
                 TIMER_IRQ => {
-                    let cx = &mut *cx;
-                    sepc = cx.sepc;
                     crate::timer_tick();
                 }
                 other => {
@@ -205,13 +203,22 @@ extern "C" fn trap_handler(cx: *mut TrapContext) -> *mut TrapContext {
             }
         } else {
             // Exception
-            let cx_ref = &mut *cx;
-            sepc = cx_ref.sepc;
-            crate::println!(
-                "[trap] exception: scause={:#x}, sepc={:#x}, stval={:#x}",
-                scause, sepc, stval()
-            );
-            crate::sbi::shutdown();
+            match scause {
+                // Environment call from U-mode (syscall)
+                8 => {
+                    let cx = &mut *cx;
+                    let ret = crate::syscall::dispatch(cx);
+                    cx.x[10] = ret as usize; // a0
+                    cx.sepc += 4;
+                }
+                _ => {
+                    crate::println!(
+                        "[trap] exception: scause={:#x}, sepc={:#x}, stval={:#x}",
+                        scause, sepc, stval()
+                    );
+                    crate::sbi::shutdown();
+                }
+            }
         }
         cx
     }
