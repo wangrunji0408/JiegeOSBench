@@ -67,6 +67,7 @@ fn syscall(num: usize, args: [usize; 6]) -> isize {
         38 => sys_renameat(a0, a1 as *const u8, a2, a3 as *const u8), // renameat
         48 => sys_faccessat(a0, a1 as *const u8, a2),          // faccessat
         49 => sys_chdir(a0 as *const u8),                      // chdir
+        52 | 53 | 54 | 55 => 0,                                // fchmod/fchmodat/fchownat/fchown (no-op)
         56 => sys_openat(a0, a1 as *const u8, a2, a3),         // openat
         57 => sys_close(a0),                                   // close
         61 => sys_getdents64(a0, a1 as *mut u8, a2),           // getdents64
