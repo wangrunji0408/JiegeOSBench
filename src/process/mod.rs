@@ -39,6 +39,32 @@ pub const AT_EXECFN: usize = 31;
 
 static NEXT_PID: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(1);
 
+/// Static pool of kernel stacks (identity-mapped, so their addresses are
+/// directly usable as kernel stack pointers). Kernel stacks must be contiguous,
+/// so we reserve them statically rather than from the frame free list.
+const MAX_PROCS: usize = 16;
+#[repr(align(16))]
+static KSTACKS: [[u8; KSTACK_SIZE]; MAX_PROCS] = [[0; KSTACK_SIZE]; MAX_PROCS];
+static KSTACK_USED: SpinLock<u64> = SpinLock::new(0);
+
+fn alloc_kstack() -> usize {
+    let mut used = KSTACK_USED.lock();
+    for i in 0..MAX_PROCS {
+        if *used & (1 << i) == 0 {
+            *used |= 1 << i;
+            return &raw const KSTACKS[i] as usize + KSTACK_SIZE;
+        }
+    }
+    panic!("out of kernel stacks");
+}
+
+#[allow(dead_code)]
+fn free_kstack(top: usize) {
+    let idx = (top - KSTACK_SIZE - &raw const KSTACKS[0] as usize) / KSTACK_SIZE;
+    let mut used = KSTACK_USED.lock();
+    *used &= !(1 << idx);
+}
+
 pub struct Process {
     pub pid: u32,
     pub page_table: PageTable,
