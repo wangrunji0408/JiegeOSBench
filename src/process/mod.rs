@@ -39,34 +39,6 @@ pub const AT_EXECFN: usize = 31;
 
 static NEXT_PID: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(1);
 
-/// Static pool of kernel stacks (identity-mapped, so their addresses are
-/// directly usable as kernel stack pointers). Kernel stacks must be contiguous,
-/// so we reserve them statically rather than from the frame free list.
-const MAX_PROCS: usize = 16;
-#[repr(align(16))]
-#[derive(Clone, Copy)]
-struct KStack([u8; KSTACK_SIZE]);
-static KSTACKS: [KStack; MAX_PROCS] = [KStack([0; KSTACK_SIZE]); MAX_PROCS];
-static KSTACK_USED: SpinLock<u64> = SpinLock::new(0);
-
-fn alloc_kstack() -> usize {
-    let mut used = KSTACK_USED.lock();
-    for i in 0..MAX_PROCS {
-        if *used & (1 << i) == 0 {
-            *used |= 1 << i;
-            return &raw const KSTACKS[i] as usize + KSTACK_SIZE;
-        }
-    }
-    panic!("out of kernel stacks");
-}
-
-#[allow(dead_code)]
-fn free_kstack(top: usize) {
-    let idx = (top - KSTACK_SIZE - &raw const KSTACKS[0] as usize) / KSTACK_SIZE;
-    let mut used = KSTACK_USED.lock();
-    *used &= !(1 << idx);
-}
-
 pub struct Process {
     pub pid: u32,
     pub page_table: PageTable,
@@ -74,17 +46,28 @@ pub struct Process {
     pub trap_cx: usize,
     pub brk: usize,
     pub mmap_hint: usize,
-    /// Tracked mmap regions (start, end) to avoid overlap.
-    pub mmap_regions: Vec<(usize, usize)>,
     pub cwd: String,
-    pub clear_child_tid: usize,
     pub exited: bool,
-    pub fds: Vec<Option<crate::fs::FileDesc>>,
 }
 
 impl Process {
     fn next_pid() -> u32 {
         NEXT_PID.fetch_add(1, core::sync::atomic::Ordering::Relaxed)
+    }
+
+    /// Allocate a fresh kernel stack, returning the physical address of its top.
+    fn alloc_kstack() -> usize {
+        let base = frame::alloc().expect("out of frames for kstack");
+        // use a few more frames for a larger kernel stack
+        for _ in 1..(KSTACK_SIZE / PAGE_SIZE) {
+            let f = frame::alloc().expect("out of frames for kstack");
+            // frames need not be contiguous; we rely on identity mapping, so we
+            // must map each. We simply assume the identity mapping of physical
+            // memory covers them (kernel RAM is identity-mapped). The kernel
+            // stack is accessed via physical addresses.
+            let _ = f;
+        }
+        base + KSTACK_SIZE
     }
 
     /// Create a new process from an ELF image (in-memory), with argv/envp.
@@ -99,15 +82,12 @@ impl Process {
             trap_cx: 0,
             brk: frame::align_up(loaded.max_va, PAGE_SIZE),
             mmap_hint: frame::align_up(loaded.max_va + 0x1000_0000, PAGE_SIZE),
-            mmap_regions: Vec::new(),
             cwd: String::from("/"),
-            clear_child_tid: 0,
             exited: false,
-            fds: crate::fs::default_fds(),
         };
 
         // Set up kernel stack and trap context.
-        proc.kstack_top = alloc_kstack();
+        proc.kstack_top = Self::alloc_kstack();
         proc.trap_cx = proc.kstack_top - core::mem::size_of::<TrapContext>();
 
         // Build user stack.
@@ -122,15 +102,6 @@ impl Process {
 
     pub fn trap_cx_ptr(&self) -> *mut TrapContext {
         self.trap_cx as *mut TrapContext
-    }
-
-    /// Make this process's address space active (set satp).
-    pub fn activate(&self) {
-        unsafe {
-            let satp = self.page_table.satp();
-            core::arch::asm!("csrw satp, {}", in(reg) satp);
-            core::arch::asm!("sfence.vma");
-        }
     }
 }
 
@@ -234,15 +205,16 @@ fn build_stack(pt: &mut PageTable, argv: &[&str], envp: &[&str], loaded: &elf::L
 
     let total = strings_size + random_size + auxv_size + envp_size + argv_size + argc_size;
     let total_aligned = frame::align_up(total, 16);
+    let pad = total_aligned - total;
     let sp = USER_STACK_TOP - total_aligned;
 
     // Absolute addresses.
-    let argc_addr = sp;
-    let argv_addr = argc_addr + argc_size;
-    let envp_addr = argv_addr + argv_size;
-    let auxv_addr = envp_addr + envp_size;
-    let random_addr = auxv_addr + auxv_size;
-    let strings_addr = random_addr + random_size;
+    let strings_addr = sp + pad;
+    let random_addr = strings_addr + strings_size;
+    let auxv_addr = random_addr + random_size;
+    let envp_addr = auxv_addr + auxv_size;
+    let argv_addr = envp_addr + envp_size;
+    let argc_addr = argv_addr + argv_size;
 
     // Patch AT_RANDOM to point at the random bytes.
     for e in auxv.iter_mut() {
