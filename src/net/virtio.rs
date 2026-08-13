@@ -136,11 +136,11 @@ impl VirtioNet {
         mmio_write(STATUS, 1);
         mmio_write(STATUS, 3);
 
-        // Negotiate features: MAC (bit 5) + STATUS (bit 16).
+        // Negotiate features: MAC (bit 5) + STATUS (bit 16) + VERSION_1 (bit 32).
         mmio_write(DRIVER_FEATURES_SEL, 0);
         mmio_write(DRIVER_FEATURES, (1 << 5) | (1 << 16));
         mmio_write(DRIVER_FEATURES_SEL, 1);
-        mmio_write(DRIVER_FEATURES, 0);
+        mmio_write(DRIVER_FEATURES, 1); // VIRTIO_F_VERSION_1
         mmio_write(STATUS, 3 | 8);
 
         // Read MAC.
