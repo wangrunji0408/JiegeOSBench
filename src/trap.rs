@@ -44,7 +44,11 @@ global_asm!(
     .section .text.trap
     .globl __alltraps
     .globl __trap_return
+    .globl trap_entry
     .align 2
+
+trap_entry:
+    j __alltraps
 
 # On entry:
 #   - from user: sscratch holds kernel stack top, sp holds user sp
