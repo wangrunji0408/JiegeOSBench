@@ -44,6 +44,7 @@ static NEXT_PID: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::
 /// so we reserve them statically rather than from the frame free list.
 const MAX_PROCS: usize = 16;
 #[repr(align(16))]
+#[derive(Clone, Copy)]
 struct KStack([u8; KSTACK_SIZE]);
 static KSTACKS: [KStack; MAX_PROCS] = [KStack([0; KSTACK_SIZE]); MAX_PROCS];
 static KSTACK_USED: SpinLock<u64> = SpinLock::new(0);
