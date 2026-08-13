@@ -55,6 +55,8 @@ fn syscall(num: usize, args: [usize; 6]) -> isize {
         64 => sys_write(a0, a1 as *const u8, a2),           // write
         93 => sys_exit(a0 as i32),                           // exit
         94 => sys_exit(a0 as i32),                           // exit_group
+        96 => sys_set_tid_address(a0),                       // set_tid_address
+        99 => 0,                                             // set_robust_list
         172 => crate::process::current()
             .lock()
             .as_ref()
