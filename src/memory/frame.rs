@@ -72,43 +72,7 @@ pub fn dealloc(f: PhysAddr) {
 }
 
 pub fn free_count() -> usize {
-    let fa = FRAME_ALLOCATOR.lock();
-    fa.total - fa.used
-}
-
-/// Allocate `n` physically-contiguous frames, returning the lowest address.
-/// Relies on the free list being ordered (true early in boot); used for DMA.
-pub fn alloc_contiguous(n: usize) -> Option<PhysAddr> {
-    if n == 0 {
-        return None;
-    }
-    let mut collected: alloc::vec::Vec<usize> = alloc::vec::Vec::with_capacity(n);
-    let mut alloc_one = || -> Option<usize> {
-        let mut fa = FRAME_ALLOCATOR.lock();
-        let f = fa.free_head?;
-        let next = unsafe { *(f.0 as *const usize) };
-        fa.free_head = if next == 0 { None } else { Some(PhysAddr(next)) };
-        fa.used += 1;
-        unsafe { core::slice::from_raw_parts_mut(f.0 as *mut u8, PAGE_SIZE).fill(0) };
-        Some(f.0)
-    };
-    let first = alloc_one()?;
-    collected.push(first);
-    let mut prev = first;
-    for _ in 1..n {
-        let f = alloc_one()?;
-        if f != prev.wrapping_sub(PAGE_SIZE) {
-            // Not contiguous; give everything back and fail.
-            for fr in collected {
-                dealloc(PhysAddr(fr));
-            }
-            dealloc(PhysAddr(f));
-            return None;
-        }
-        prev = f;
-        collected.push(f);
-    }
-    Some(PhysAddr(prev))
+    FRAME_ALLOCATOR.lock().total - FRAME_ALLOCATOR.lock().used
 }
 
 pub fn align_up(addr: usize, align: usize) -> usize {
