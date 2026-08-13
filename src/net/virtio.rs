@@ -155,7 +155,7 @@ impl VirtioNet {
             }
         }
 
-        let rx = Self::setup_queue(0, QUEUE_SIZE);
+        let mut rx = Self::setup_queue(0, QUEUE_SIZE);
         let tx = Self::setup_queue(1, QUEUE_SIZE);
 
         let mut rx_buffers = Vec::with_capacity(QUEUE_SIZE);
@@ -168,6 +168,8 @@ impl VirtioNet {
                 d.len = 2048;
                 d.flags = DESC_F_WRITE;
                 d.next = 0;
+                // Make the RX buffer available to the device before DRIVER_OK.
+                rx.add_avail(i as u16);
             }
         }
 
@@ -177,16 +179,16 @@ impl VirtioNet {
         mmio_write(QUEUE_READY, 1);
         mmio_write(STATUS, 3 | 8 | 4);
 
-        let mut this = VirtioNet {
+        // Notify the RX queue that buffers are available.
+        mmio_write(QUEUE_SEL, 0);
+        mmio_write(QUEUE_NOTIFY, 0);
+
+        VirtioNet {
             rx,
             tx,
             rx_buffers,
             mac,
-        };
-        for i in 0..QUEUE_SIZE {
-            unsafe { this.rx.add_avail(i as u16); }
         }
-        this
     }
 
     fn setup_queue(queue_sel: u32, size: usize) -> VirtQueue {
