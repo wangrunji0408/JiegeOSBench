@@ -4,7 +4,7 @@ set -e
 cd "$(dirname "$0")/.."
 
 KERNEL="${KERNEL:-target/riscv64gc-unknown-none-elf/debug/ijiege-kernel}"
-MEM="${MEM:-128M}"
+MEM="${MEM:-256M}"
 SMP="${SMP:-1}"
 PORTFWD="${PORTFWD:-hostfwd=tcp::8080-:80}"
 
