@@ -31,8 +31,8 @@ impl TrapContext {
         cx.x[2] = sp; // user stack pointer
         // SPIE=1 (bit5) so sret enables interrupts in user mode; SPP=0 (user).
         // SUM=1 (bit18) so the kernel (S-mode) may directly access user pages
-        // during syscall handling.
-        cx.sstatus = (1 << 5) | (1 << 18);
+        // during syscall handling. FS=3 (bits 13-14) enables floating point.
+        cx.sstatus = (1 << 5) | (1 << 18) | (3 << 13);
         cx
     }
 
