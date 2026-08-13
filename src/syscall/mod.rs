@@ -549,14 +549,20 @@ fn sys_renameat(_olddir: usize, old_ptr: *const u8, _newdir: usize, new_ptr: *co
         Some(n) => n,
         None => return -ENOENT,
     };
-    let (new_dir, new_name) = match crate::fs::lookup_parent(&new_full) {
-        Some(x) => x,
-        None => return -ENOENT,
-    };
-    crate::fs::unlink(&old_full);
-    // detach node's old name by re-adding under new name
-    new_dir.add_child(crate::fs::INode { name: new_name, is_dir: node.is_dir, data: crate::sync::SpinLock::new(node.data.lock().clone()), children: crate::sync::SpinLock::new(node.children.lock().clone()) }.into());
-    0
+    let data = node.data.lock().clone();
+    let is_dir = node.is_dir;
+    let _ = crate::fs::unlink(&old_full);
+    if is_dir {
+        crate::fs::mkdir(&new_full)
+    } else {
+        match crate::fs::create_file(&new_full) {
+            Some(n) => {
+                *n.data.lock() = data;
+                0
+            }
+            None => -ENOENT,
+        }
+    }
 }
 
 fn sys_faccessat(dirfd: usize, path_ptr: *const u8, _mode: usize) -> isize {
