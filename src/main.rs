@@ -2,6 +2,7 @@
 #![no_main]
 #![allow(clippy::missing_safety_doc)]
 #![allow(dead_code)]
+#![feature(alloc_error_handler)]
 
 mod console;
 mod lang;
