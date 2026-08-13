@@ -284,7 +284,12 @@ impl smoltcp::phy::Device for VirtioNet {
 
     fn receive(&mut self, _timestamp: Instant) -> Option<(Self::RxToken<'_>, Self::TxToken<'_>)> {
         let (desc_idx, len) = unsafe { self.rx.get_used()? };
-        RX_COUNT.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+        let n = RX_COUNT.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+        if n == 0 {
+            let buf_phys = self.rx_buffers[desc_idx as usize];
+            let head: [u8; 16] = unsafe { core::ptr::read((buf_phys as *const u8) as *const [u8; 16]) };
+            crate::println!("[virtio] first RX len={} head={:02x?}", len, head);
+        }
         let buf_phys = self.rx_buffers[desc_idx as usize];
         let buf = unsafe { core::slice::from_raw_parts_mut(buf_phys as *mut u8, len as usize) };
         let tx_buf = unsafe { &mut TX_BUF.0 };
