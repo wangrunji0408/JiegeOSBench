@@ -177,6 +177,10 @@ fn fd_write(f: &mut FileDesc, buf: *const u8, count: usize) -> isize {
             f.offset = end;
             count as isize
         }
+        FileKind::Socket(h) => {
+            let data = unsafe { core::slice::from_raw_parts(buf, count) };
+            crate::net::socket_send(*h, data)
+        }
         _ => -EBADF,
     }
 }
