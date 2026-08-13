@@ -243,7 +243,7 @@ const AT_FDCWD: usize = (-100isize) as usize;
 
 fn resolve_path(proc: &crate::process::Process, dirfd: usize, path: &str) -> String {
     if path.starts_with('/') {
-        path.to_string()
+        String::from(path)
     } else {
         let base = if dirfd == AT_FDCWD {
             proc.cwd.clone()
