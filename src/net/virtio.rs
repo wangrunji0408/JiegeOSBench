@@ -25,6 +25,8 @@ const CONFIG_GENERATION: usize = 0x0fc;
 const CONFIG: usize = 0x100;
 
 const DESC_F_WRITE: u16 = 2;
+/// Legacy virtio-net prepends a 10-byte header to each packet.
+const NET_HDR_SIZE: usize = 10;
 
 pub static RX_COUNT: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
 pub static TX_COUNT: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
