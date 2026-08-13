@@ -1,34 +1,33 @@
-//! Virtio-net (MMIO, modern interface) driver with split virtqueues.
+//! Virtio-net (MMIO, legacy 0.9.5 interface) driver with split virtqueues.
 
 use crate::memory::frame::{self, PAGE_SIZE};
 use alloc::vec::Vec;
 
 pub const VIRTIO_NET_MMIO: usize = 0x1000_1000;
 
-// MMIO register offsets
+// Legacy MMIO register offsets.
 const MAGIC: usize = 0x000;
 const VERSION: usize = 0x004;
 const DEVICE_ID: usize = 0x008;
-const DEVICE_FEATURES: usize = 0x010;
-const DEVICE_FEATURES_SEL: usize = 0x014;
-const DRIVER_FEATURES: usize = 0x020;
-const DRIVER_FEATURES_SEL: usize = 0x024;
+const HOST_FEATURES: usize = 0x010;
+const HOST_FEATURES_SEL: usize = 0x014;
+const GUEST_FEATURES: usize = 0x020;
+const GUEST_FEATURES_SEL: usize = 0x024;
+const GUEST_PAGE_SIZE: usize = 0x028;
 const QUEUE_SEL: usize = 0x030;
 const QUEUE_NUM_MAX: usize = 0x034;
 const QUEUE_NUM: usize = 0x038;
-const QUEUE_READY: usize = 0x044;
+const QUEUE_ALIGN: usize = 0x03c;
+const QUEUE_PFN: usize = 0x040;
 const QUEUE_NOTIFY: usize = 0x050;
 const STATUS: usize = 0x070;
-const QUEUE_DESC_LOW: usize = 0x080;
-const QUEUE_DESC_HIGH: usize = 0x084;
-const QUEUE_DRIVER_LOW: usize = 0x090;
-const QUEUE_DRIVER_HIGH: usize = 0x094;
-const QUEUE_DEVICE_LOW: usize = 0x0a0;
-const QUEUE_DEVICE_HIGH: usize = 0x0a4;
 const CONFIG_GENERATION: usize = 0x0fc;
 const CONFIG: usize = 0x100;
 
 const DESC_F_WRITE: u16 = 2;
+
+pub static RX_COUNT: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
+pub static TX_COUNT: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
 
 static MMIO_BASE: core::sync::atomic::AtomicUsize =
     core::sync::atomic::AtomicUsize::new(VIRTIO_NET_MMIO);
@@ -60,6 +59,7 @@ pub const QUEUE_SIZE: usize = 64;
 struct VirtQueue {
     base: usize,
     num: usize,
+    used_off: usize,
     avail_idx: u16,
     used_idx: u16,
 }
@@ -72,9 +72,7 @@ impl VirtQueue {
         (self.base + self.num * DESC_SIZE) as *mut u16
     }
     fn used(&self) -> *mut u16 {
-        let avail_size = 4 + self.num * 2 + 2;
-        let off = self.num * DESC_SIZE + (avail_size + 1) & !1;
-        (self.base + off) as *mut u16
+        (self.base + self.used_off) as *mut u16
     }
 
     unsafe fn desc(&self, i: usize) -> &mut Desc {
@@ -116,7 +114,6 @@ pub struct VirtioNet {
 
 impl VirtioNet {
     pub fn init() -> Self {
-        // Probe virtio-mmio slots for the net device (DeviceID == 1).
         let mut base = 0usize;
         for slot in 0..8usize {
             let b = VIRTIO_NET_MMIO + slot * 0x1000;
@@ -130,25 +127,18 @@ impl VirtioNet {
         }
         assert_ne!(base, 0, "virtio-net device not found");
         MMIO_BASE.store(base, core::sync::atomic::Ordering::Relaxed);
-        crate::println!("[virtio] virtio-net at {:#x}", base);
+        crate::println!("[virtio] virtio-net at {:#x} (legacy)", base);
 
+        // Legacy init: reset, acknowledge, driver.
         mmio_write(STATUS, 0);
         mmio_write(STATUS, 1);
         mmio_write(STATUS, 3);
 
-        // Debug: print version and device features.
-        mmio_write(DEVICE_FEATURES_SEL, 0);
-        let df0 = mmio_read(DEVICE_FEATURES);
-        mmio_write(DEVICE_FEATURES_SEL, 1);
-        let df1 = mmio_read(DEVICE_FEATURES);
-        crate::println!("[virtio] version={} dev_features=[{:#x},{:#x}]", mmio_read(VERSION), df0, df1);
-
-        // Negotiate features: MAC (bit 5) + STATUS (bit 16) + VERSION_1 (bit 32).
-        mmio_write(DRIVER_FEATURES_SEL, 0);
-        mmio_write(DRIVER_FEATURES, (1 << 5) | (1 << 16));
-        mmio_write(DRIVER_FEATURES_SEL, 1);
-        mmio_write(DRIVER_FEATURES, 1); // VIRTIO_F_VERSION_1
-        mmio_write(STATUS, 3 | 8);
+        // Negotiate features: MAC (bit 5).
+        mmio_write(GUEST_FEATURES_SEL, 0);
+        mmio_write(GUEST_FEATURES, 1 << 5);
+        mmio_write(GUEST_FEATURES_SEL, 1);
+        mmio_write(GUEST_FEATURES, 0);
 
         // Read MAC.
         let mut mac = [0u8; 6];
@@ -161,6 +151,9 @@ impl VirtioNet {
                 break;
             }
         }
+
+        // Set guest page size.
+        mmio_write(GUEST_PAGE_SIZE, PAGE_SIZE as u32);
 
         let mut rx = Self::setup_queue(0, QUEUE_SIZE);
         let tx = Self::setup_queue(1, QUEUE_SIZE);
@@ -175,18 +168,14 @@ impl VirtioNet {
                 d.len = 2048;
                 d.flags = DESC_F_WRITE;
                 d.next = 0;
-                // Make the RX buffer available to the device before DRIVER_OK.
                 rx.add_avail(i as u16);
             }
         }
 
-        mmio_write(QUEUE_SEL, 0);
-        mmio_write(QUEUE_READY, 1);
-        mmio_write(QUEUE_SEL, 1);
-        mmio_write(QUEUE_READY, 1);
-        mmio_write(STATUS, 3 | 8 | 4);
+        // Driver OK.
+        mmio_write(STATUS, 3 | 4);
 
-        // Notify the RX queue that buffers are available.
+        // Notify RX queue.
         mmio_write(QUEUE_SEL, 0);
         mmio_write(QUEUE_NOTIFY, 0);
 
@@ -203,19 +192,26 @@ impl VirtioNet {
         let max = mmio_read(QUEUE_NUM_MAX) as usize;
         let num = size.min(max.max(1));
         mmio_write(QUEUE_NUM, num as u32);
-        let base = frame::alloc().expect("out of frames for virtqueue");
-        unsafe { core::slice::from_raw_parts_mut(base.0 as *mut u8, PAGE_SIZE).fill(0); }
-        mmio_write(QUEUE_DESC_LOW, base.0 as u32);
-        mmio_write(QUEUE_DESC_HIGH, 0);
-        mmio_write(QUEUE_DRIVER_LOW, (base.0 + num * DESC_SIZE) as u32);
-        mmio_write(QUEUE_DRIVER_HIGH, 0);
-        let avail_size = 4 + num * 2 + 2;
-        let used_off = num * DESC_SIZE + (avail_size + 1) & !1;
-        mmio_write(QUEUE_DEVICE_LOW, (base.0 + used_off) as u32);
-        mmio_write(QUEUE_DEVICE_HIGH, 0);
+        mmio_write(QUEUE_ALIGN, PAGE_SIZE as u32);
+
+        // The legacy used ring must be page-aligned, so the virtqueue spans
+        // two pages for a 64-entry queue.
+        let avail_size = 2 + 2 + 2 * num;
+        let used_off = (num * DESC_SIZE + avail_size + PAGE_SIZE - 1) & !(PAGE_SIZE - 1);
+        let used_size = 2 + 2 + 8 * num;
+        let total = used_off + used_size;
+        let pages = (total + PAGE_SIZE - 1) / PAGE_SIZE;
+
+        let base = frame::alloc_contiguous(pages).expect("no contiguous frames for virtqueue");
+        unsafe { core::slice::from_raw_parts_mut(base.0 as *mut u8, pages * PAGE_SIZE).fill(0); }
+
+        // Legacy: the device is given the physical page number of the queue.
+        mmio_write(QUEUE_PFN, (base.0 / PAGE_SIZE) as u32);
+
         VirtQueue {
             base: base.0,
             num,
+            used_off,
             avail_idx: 0,
             used_idx: 0,
         }
@@ -243,6 +239,8 @@ impl smoltcp::phy::RxToken for RxToken<'_> {
         let res = f(self.buf);
         unsafe {
             (&mut *self.net).rx.add_avail(self.desc_idx);
+            mmio_write(QUEUE_SEL, 0);
+            mmio_write(QUEUE_NOTIFY, 0);
         }
         res
     }
@@ -268,6 +266,7 @@ impl smoltcp::phy::TxToken for TxToken<'_> {
             d.flags = 0;
             d.next = 0;
             net.tx.add_avail(idx as u16);
+            TX_COUNT.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
             mmio_write(QUEUE_SEL, 1);
             mmio_write(QUEUE_NOTIFY, 1);
         }
@@ -285,6 +284,7 @@ impl smoltcp::phy::Device for VirtioNet {
 
     fn receive(&mut self, _timestamp: Instant) -> Option<(Self::RxToken<'_>, Self::TxToken<'_>)> {
         let (desc_idx, len) = unsafe { self.rx.get_used()? };
+        RX_COUNT.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
         let buf_phys = self.rx_buffers[desc_idx as usize];
         let buf = unsafe { core::slice::from_raw_parts_mut(buf_phys as *mut u8, len as usize) };
         let tx_buf = unsafe { &mut TX_BUF.0 };
