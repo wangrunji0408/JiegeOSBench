@@ -136,6 +136,13 @@ impl VirtioNet {
         mmio_write(STATUS, 1);
         mmio_write(STATUS, 3);
 
+        // Debug: print version and device features.
+        mmio_write(DEVICE_FEATURES_SEL, 0);
+        let df0 = mmio_read(DEVICE_FEATURES);
+        mmio_write(DEVICE_FEATURES_SEL, 1);
+        let df1 = mmio_read(DEVICE_FEATURES);
+        crate::println!("[virtio] version={} dev_features=[{:#x},{:#x}]", mmio_read(VERSION), df0, df1);
+
         // Negotiate features: MAC (bit 5) + STATUS (bit 16) + VERSION_1 (bit 32).
         mmio_write(DRIVER_FEATURES_SEL, 0);
         mmio_write(DRIVER_FEATURES, (1 << 5) | (1 << 16));
