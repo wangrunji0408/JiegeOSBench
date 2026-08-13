@@ -11,6 +11,7 @@ mod console;
 mod fs;
 mod lang;
 mod memory;
+mod net;
 mod process;
 mod sbi;
 mod sync;
