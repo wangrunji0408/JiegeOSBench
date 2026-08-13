@@ -47,6 +47,7 @@ impl INode {
 }
 
 /// The kind of open file a descriptor refers to.
+#[derive(Clone)]
 pub enum FileKind {
     /// /dev/null
     Null,
@@ -59,6 +60,7 @@ pub enum FileKind {
     Socket(usize),
 }
 
+#[derive(Clone)]
 pub struct FileDesc {
     pub kind: FileKind,
     pub offset: usize,
