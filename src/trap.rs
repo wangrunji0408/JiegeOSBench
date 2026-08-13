@@ -160,13 +160,14 @@ pub fn init() {
     unsafe {
         core::arch::asm!(
             "csrw stvec, {tvec}",
-            tvec = in(reg) trap_entry as usize,
+            tvec = in(reg) trap_entry as *const () as usize,
         );
         // enable supervisor timer interrupt (STIE)
         let sie: usize = 1 << 5;
         core::arch::asm!("csrs sie, {}", in(reg) sie);
         // enable interrupts in sstatus (SIE)
-        core::arch::asm!("csrsi sstatus, {}", in(reg) 1 << 1);
+        let sie: usize = 1 << 1;
+        core::arch::asm!("csrs sstatus, {}", in(reg) sie);
     }
 }
 
