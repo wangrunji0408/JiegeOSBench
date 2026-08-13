@@ -9,8 +9,10 @@ extern crate alloc;
 mod console;
 mod lang;
 mod memory;
+mod process;
 mod sbi;
 mod sync;
+mod syscall;
 mod trap;
 
 use core::arch::global_asm;
