@@ -227,7 +227,6 @@ fn build_stack(pt: &mut PageTable, argv: &[&str], envp: &[&str], loaded: &elf::L
 
     let total = strings_size + random_size + auxv_size + envp_size + argv_size + argc_size;
     let total_aligned = frame::align_up(total, 16);
-    let pad = total_aligned - total;
     let sp = USER_STACK_TOP - total_aligned;
 
     // Absolute addresses.
