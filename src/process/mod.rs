@@ -75,6 +75,7 @@ pub struct Process {
     pub brk: usize,
     pub mmap_hint: usize,
     pub cwd: String,
+    pub clear_child_tid: usize,
     pub exited: bool,
 }
 
