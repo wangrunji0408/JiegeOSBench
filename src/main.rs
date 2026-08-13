@@ -93,6 +93,7 @@ pub fn timer_tick() {
     // 10ms tick
     sbi::set_timer(now + 10_000_000);
     let n = TICKS.fetch_add(1, core::sync::atomic::Ordering::Relaxed) + 1;
+    net::poll();
     if n % 100 == 0 {
         println!("[tick] {} ({} ms)", n, n * 10);
     }
