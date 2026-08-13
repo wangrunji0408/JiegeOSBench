@@ -55,11 +55,28 @@ fn syscall(num: usize, args: [usize; 6]) -> isize {
     let [a0, a1, a2, a3, a4, a5] = args;
     match num {
         // basic
-        29 => 0,                                             // ioctl (no-op)
-        64 => sys_write(a0, a1 as *const u8, a2),           // write
-        65 => sys_readv(a0, a1 as *const u8, a2),            // readv
-        66 => sys_writev(a0, a1 as *const u8, a2),           // writev
-        93 => sys_exit(a0 as i32),                           // exit
+        17 => sys_getcwd(a0 as *mut u8, a1),                  // getcwd
+        23 => sys_dup(a0),                                     // dup
+        24 => sys_dup3(a0, a1, a2),                            // dup3
+        25 => sys_fcntl(a0, a1, a2),                           // fcntl
+        29 => sys_ioctl(a0, a1, a2),                           // ioctl
+        34 => sys_mkdirat(a0, a1 as *const u8, a2),            // mkdirat
+        35 => sys_unlinkat(a0, a1 as *const u8, a2),           // unlinkat
+        38 => sys_renameat(a0, a1 as *const u8, a2, a3 as *const u8), // renameat
+        48 => sys_faccessat(a0, a1 as *const u8, a2),          // faccessat
+        49 => sys_chdir(a0 as *const u8),                      // chdir
+        56 => sys_openat(a0, a1 as *const u8, a2, a3),         // openat
+        57 => sys_close(a0),                                   // close
+        61 => sys_getdents64(a0, a1 as *mut u8, a2),           // getdents64
+        62 => sys_lseek(a0, a1 as i64, a2),                    // lseek
+        63 => sys_read(a0, a1 as *mut u8, a2),                 // read
+        64 => sys_write(a0, a1 as *const u8, a2),              // write
+        65 => sys_readv(a0, a1 as *const u8, a2),              // readv
+        66 => sys_writev(a0, a1 as *const u8, a2),             // writev
+        78 => sys_readlinkat(a0, a1 as *const u8, a2 as *mut u8, a3), // readlinkat
+        79 => sys_newfstatat(a0, a1 as *const u8, a2 as *mut u8, a3), // newfstatat
+        80 => sys_fstat(a0, a1 as *mut u8),                    // fstat
+        93 => sys_exit(a0 as i32),                             // exit
         94 => sys_exit(a0 as i32),                           // exit_group
         96 => sys_set_tid_address(a0),                       // set_tid_address
         99 => 0,                                             // set_robust_list
