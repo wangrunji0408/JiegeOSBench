@@ -278,6 +278,7 @@ fn sys_openat(dirfd: usize, path_ptr: *const u8, flags: usize, _mode: usize) -> 
     let accmode = flags & 0x3;
     let readable = accmode != 1; // not write-only
     let writable = accmode != 0; // not read-only
+    let fl = flags as u32;
 
     // Special files.
     match full.as_str() {
