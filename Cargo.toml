@@ -1,0 +1,25 @@
+[package]
+name = "ijiege-kernel"
+version = "0.1.0"
+edition = "2021"
+
+[profile.dev]
+opt-level = 1
+debug = true
+
+[profile.release]
+opt-level = 3
+debug = false
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[dependencies]
+smoltcp = { version = "0.11", default-features = false, features = [
+    "proto-ipv4",
+    "proto-ipv6",
+    "socket-tcp",
+    "socket-udp",
+    "socket-raw",
+    "medium-ethernet",
+] }
