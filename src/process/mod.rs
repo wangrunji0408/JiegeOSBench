@@ -116,6 +116,15 @@ impl Process {
     pub fn trap_cx_ptr(&self) -> *mut TrapContext {
         self.trap_cx as *mut TrapContext
     }
+
+    /// Make this process's address space active (set satp).
+    pub fn activate(&self) {
+        unsafe {
+            let satp = self.page_table.satp();
+            core::arch::asm!("csrw satp, {}", in(reg) satp);
+            core::arch::asm!("sfence.vma");
+        }
+    }
 }
 
 pub static CURRENT: SpinLock<Option<Process>> = SpinLock::new(None);
