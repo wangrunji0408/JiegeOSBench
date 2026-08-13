@@ -49,6 +49,7 @@ pub fn dispatch(cx: &mut TrapContext) -> isize {
     let num = cx.x[17];
     let args = [cx.x[10], cx.x[11], cx.x[12], cx.x[13], cx.x[14], cx.x[15]];
     let ret = syscall(num, args);
+    crate::println!("[sc] #{} -> {:#x}", num, ret);
     ret
 }
 
