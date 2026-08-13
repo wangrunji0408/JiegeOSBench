@@ -58,6 +58,7 @@ pub extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
     trap::init();
     sbi::init_timer();
     memory::init();
+    fs::init();
 
     // smoke test the allocator
     let mut v = alloc::vec::Vec::new();
