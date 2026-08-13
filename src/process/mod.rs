@@ -74,6 +74,8 @@ pub struct Process {
     pub trap_cx: usize,
     pub brk: usize,
     pub mmap_hint: usize,
+    /// Tracked mmap regions (start, end) to avoid overlap.
+    pub mmap_regions: Vec<(usize, usize)>,
     pub cwd: String,
     pub clear_child_tid: usize,
     pub exited: bool,
