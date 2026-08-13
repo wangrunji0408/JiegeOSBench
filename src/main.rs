@@ -4,8 +4,11 @@
 #![allow(dead_code)]
 #![feature(alloc_error_handler)]
 
+extern crate alloc;
+
 mod console;
 mod lang;
+mod memory;
 mod sbi;
 mod sync;
 mod trap;
