@@ -2,20 +2,11 @@
 #![no_main]
 #![allow(clippy::missing_safety_doc)]
 #![allow(dead_code)]
-#![feature(alloc_error_handler)]
-
-#[macro_use]
-extern crate alloc;
 
 mod console;
-mod fs;
 mod lang;
-mod memory;
-mod net;
-mod process;
 mod sbi;
 mod sync;
-mod syscall;
 mod trap;
 
 use core::arch::global_asm;
@@ -58,43 +49,9 @@ pub extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
 
     trap::init();
     sbi::init_timer();
-    memory::init();
-    fs::init();
-    net::init();
 
-    // smoke test the allocator
-    let mut v = alloc::vec::Vec::new();
-    v.push(42usize);
-    v.push(1337usize);
-    println!("[mem] allocator smoke test: {:?}", v);
-    core::mem::drop(v);
-
-    // Spawn the first user process: the official static nginx binary.
-    let nginx = include_bytes!("../third_party/nginx");
-    let proc = process::Process::from_elf(
-        nginx,
-        &["nginx", "-c", "/usr/local/nginx/conf/nginx.conf"],
-        &["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "TZ=UTC"],
-    );
-    let cx = proc.trap_cx_ptr();
-    proc.activate();
-    *process::current().lock() = Some(proc);
-    unsafe {
-        println!("[kernel] entering user mode (entry={:#x}, sp={:#x})", (*cx).sepc, (*cx).x[2]);
-    }
-    trap::switch_to(cx);
-}
-
-static TICKS: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
-
-/// Called from the trap handler on each supervisor timer interrupt.
-pub fn timer_tick() {
-    let now = sbi::get_time();
-    // 10ms tick
-    sbi::set_timer(now + 10_000_000);
-    let n = TICKS.fetch_add(1, core::sync::atomic::Ordering::Relaxed) + 1;
-    net::poll();
-    if n % 100 == 0 {
-        println!("[tick] {} ({} ms)", n, n * 10);
+    println!("[iJiege kernel] kernel initialized. entering idle loop...");
+    loop {
+        unsafe { core::arch::asm!("wfi") };
     }
 }

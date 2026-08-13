@@ -2,9 +2,6 @@
 
 use core::panic::PanicInfo;
 
-#[global_allocator]
-static GLOBAL_ALLOCATOR: crate::memory::heap::GlobalAllocator = crate::memory::heap::GlobalAllocator;
-
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     use crate::console::print_fmt;
