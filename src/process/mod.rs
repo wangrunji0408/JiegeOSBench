@@ -81,11 +81,6 @@ impl Process {
         NEXT_PID.fetch_add(1, core::sync::atomic::Ordering::Relaxed)
     }
 
-    /// Allocate a fresh kernel stack, returning the physical address of its top.
-    fn alloc_kstack() -> usize {
-        crate::process::alloc_kstack()
-    }
-
     /// Create a new process from an ELF image (in-memory), with argv/envp.
     pub fn from_elf(elf: &[u8], argv: &[&str], envp: &[&str]) -> Process {
         let mut pt = page_table::kernel_page_table();
