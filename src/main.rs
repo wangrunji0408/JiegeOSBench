@@ -69,6 +69,7 @@ pub extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
     let hello = include_bytes!("../user/hello");
     let proc = process::Process::from_elf(hello, &["hello", "world"], &[]);
     let cx = proc.trap_cx_ptr();
+    proc.activate();
     *process::current().lock() = Some(proc);
     unsafe {
         println!("[kernel] entering user mode (entry={:#x}, sp={:#x})", (*cx).sepc, (*cx).x[2]);
