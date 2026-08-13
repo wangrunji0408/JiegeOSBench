@@ -121,7 +121,6 @@ impl VirtioNet {
             let b = VIRTIO_NET_MMIO + slot * 0x1000;
             let magic = unsafe { core::ptr::read_volatile((b + MAGIC) as *const u32) };
             let devid = unsafe { core::ptr::read_volatile((b + DEVICE_ID) as *const u32) };
-            crate::println!("[virtio] slot {}: magic={:#x} devid={}", slot, magic, devid);
             if magic == 0x7472_6976 && devid == 1 {
                 base = b;
                 break;
