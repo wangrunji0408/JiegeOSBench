@@ -83,17 +83,7 @@ impl Process {
 
     /// Allocate a fresh kernel stack, returning the physical address of its top.
     fn alloc_kstack() -> usize {
-        let base = frame::alloc().expect("out of frames for kstack");
-        // use a few more frames for a larger kernel stack
-        for _ in 1..(KSTACK_SIZE / PAGE_SIZE) {
-            let f = frame::alloc().expect("out of frames for kstack");
-            // frames need not be contiguous; we rely on identity mapping, so we
-            // must map each. We simply assume the identity mapping of physical
-            // memory covers them (kernel RAM is identity-mapped). The kernel
-            // stack is accessed via physical addresses.
-            let _ = f;
-        }
-        base + KSTACK_SIZE
+        crate::process::alloc_kstack()
     }
 
     /// Create a new process from an ELF image (in-memory), with argv/envp.
