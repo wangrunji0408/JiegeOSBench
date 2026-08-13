@@ -23,3 +23,5 @@ smoltcp = { version = "0.11", default-features = false, features = [
     "socket-raw",
     "medium-ethernet",
 ] }
+buddy_system_allocator = "0.11"
+
