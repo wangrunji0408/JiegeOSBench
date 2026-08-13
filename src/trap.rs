@@ -210,36 +210,15 @@ extern "C" fn trap_handler(cx: *mut TrapContext) -> *mut TrapContext {
                     cx.sepc += 4;
                 }
                 _ => {
+                    let c = &*cx;
                     crate::println!(
                         "[trap] exception: scause={:#x}, sepc={:#x}, stval={:#x}",
                         scause, (*cx).sepc, stval()
                     );
-                    let c = &*cx;
                     crate::println!(
                         "[trap] ra={:#x} sp={:#x} tp={:#x} a0={:#x} a1={:#x} a2={:#x}",
                         c.x[1], c.x[2], c.x[4], c.x[10], c.x[11], c.x[12]
                     );
-                    // Debug: dump physical mapping of tp-relative TLS addresses.
-                    let tp = c.x[4];
-                    // Direct deref (hardware TLB) vs software translate.
-                    let vaddr = tp.wrapping_add(0x40018);
-                    let direct = unsafe { *((vaddr) as *const u32) };
-                    crate::println!("[trap]   direct read {:#x} = {:#x}", vaddr, direct);
-                    if let Some(p) = crate::process::current().lock().as_ref() {
-                        if let Some(pa) = p.page_table.translate(vaddr) {
-                            let sw = unsafe { *((pa) as *const u32) };
-                            crate::println!("[trap]   software read {:#x} -> pa {:#x} = {:#x}", vaddr, pa, sw);
-                        }
-                        for va in [tp.wrapping_add(0x40018), 0x106f734usize] {
-                            match p.page_table.translate(va) {
-                                Some(pa) => {
-                                    let word = unsafe { *((pa & !0xfff) as *const u64) };
-                                    crate::println!("[trap]   va {:#x} -> pa {:#x}, page[0]={:#x}", va, pa, word);
-                                }
-                                None => crate::println!("[trap]   va {:#x} -> unmapped", va),
-                            }
-                        }
-                    }
                     crate::sbi::shutdown();
                 }
             }
