@@ -1104,18 +1104,21 @@ fn sys_set_tid_address(tidptr: usize) -> isize {
 }
 
 fn sys_clock_gettime(clk_id: usize, tp: *mut u8) -> isize {
-    let ns = crate::sbi::get_time();
+    // CLOCK_REALTIME (0) uses wall-clock time; others use monotonic boot time.
+    const EPOCH_NS: u64 = 1_704_067_200_000_000_000; // 2024-01-01T00:00:00Z
+    let boot_ns = crate::sbi::get_time();
+    let ns = if clk_id == 0 { boot_ns + EPOCH_NS } else { boot_ns };
     let (sec, nsec) = (ns / 1_000_000_000, ns % 1_000_000_000);
     unsafe {
         (tp as *mut i64).write(sec as i64);
         (tp.add(8) as *mut i64).write(nsec as i64);
     }
-    let _ = clk_id;
     0
 }
 
 fn sys_gettimeofday(tv: *mut u8, _tz: usize) -> isize {
-    let ns = crate::sbi::get_time();
+    const EPOCH_NS: u64 = 1_704_067_200_000_000_000;
+    let ns = crate::sbi::get_time() + EPOCH_NS;
     let (sec, usec) = (ns / 1_000_000_000, (ns % 1_000_000_000) / 1000);
     unsafe {
         (tv as *mut i64).write(sec as i64);
