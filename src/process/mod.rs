@@ -99,6 +99,7 @@ impl Process {
             trap_cx: 0,
             brk: frame::align_up(loaded.max_va, PAGE_SIZE),
             mmap_hint: frame::align_up(loaded.max_va + 0x1000_0000, PAGE_SIZE),
+            mmap_regions: Vec::new(),
             cwd: String::from("/"),
             clear_child_tid: 0,
             exited: false,
