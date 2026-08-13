@@ -899,6 +899,57 @@ fn sys_recvmsg(fd: usize, msg: *mut u8, _flags: usize) -> isize {
     sys_readv(fd, iov as *const u8, iovcnt)
 }
 
+/// Returns (readable, writable) for an fd, after polling the network.
+fn fd_ready(fd: usize) -> (bool, bool) {
+    let cur = crate::process::current().lock();
+    let proc = cur.as_ref().unwrap();
+    match proc.fds.get(fd).and_then(Option::as_ref) {
+        Some(f) => match &f.kind {
+            FileKind::Socket(h) => (crate::net::socket_readable(*h), crate::net::socket_writable(*h)),
+            FileKind::Stdin => (crate::console::getchar().is_some(), true),
+            _ => (true, true),
+        },
+        None => (false, false),
+    }
+}
+
+fn fdset_isset(set: *const u8, fd: usize) -> bool {
+    if set.is_null() {
+        return false;
+    }
+    let word = fd / 64;
+    let bit = fd % 64;
+    unsafe { (*(set as *const u64).add(word)) & (1u64 << bit) != 0 }
+}
+
+fn fdset_set(set: *mut u8, fd: usize) {
+    let word = fd / 64;
+    let bit = fd % 64;
+    unsafe { (*(set as *mut u64).add(word)) |= 1u64 << bit; }
+}
+
+fn sys_pselect6(nfds: usize, readfds: *mut u8, writefds: *mut u8, _exceptfds: *mut u8, _timeout: usize, _sigmask: usize) -> isize {
+    crate::net::poll();
+    let mut ready = 0;
+    for fd in 0..nfds {
+        let want_read = fdset_isset(readfds, fd);
+        let want_write = fdset_isset(writefds, fd);
+        if !want_read && !want_write {
+            continue;
+        }
+        let (r, w) = fd_ready(fd);
+        if want_read && r {
+            fdset_set(readfds, fd);
+            ready += 1;
+        }
+        if want_write && w {
+            fdset_set(writefds, fd);
+            ready += 1;
+        }
+    }
+    ready as isize
+}
+
 fn sys_ppoll(fds: *const u8, nfds: usize, _timeout: usize) -> isize {
     crate::net::poll();
     let mut ready = 0;
@@ -908,28 +959,12 @@ fn sys_ppoll(fds: *const u8, nfds: usize, _timeout: usize) -> isize {
         let events = unsafe { *(p.add(4) as *const i16) };
         let mut revents = 0i16;
         if (fd as i32) >= 0 {
-            let cur = crate::process::current().lock();
-            let proc = cur.as_ref().unwrap();
-            if let Some(Some(f)) = proc.fds.get(fd) {
-                match &f.kind {
-                    FileKind::Socket(h) => {
-                        if events & 1 != 0 && crate::net::socket_readable(*h) {
-                            revents |= 1; // POLLIN
-                        }
-                        if events & 4 != 0 && crate::net::socket_writable(*h) {
-                            revents |= 4; // POLLOUT
-                        }
-                    }
-                    FileKind::Stdin => {
-                        if events & 1 != 0 && crate::console::getchar().is_some() {
-                            revents |= 1;
-                        }
-                    }
-                    _ => {
-                        // regular files / null are always ready
-                        revents |= events & (1 | 4);
-                    }
-                }
+            let (r, w) = fd_ready(fd);
+            if events & 1 != 0 && r {
+                revents |= 1; // POLLIN
+            }
+            if events & 4 != 0 && w {
+                revents |= 4; // POLLOUT
             }
         }
         unsafe { *(p.add(6) as *mut i16) = revents; }
