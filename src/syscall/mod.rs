@@ -103,15 +103,105 @@ fn sys_brk(addr: usize) -> isize {
         return new as isize;
     }
     // grow: map frames up to aligned new brk
-    let new_end = crate::memory::frame::align_up(new, crate::memory::PAGE_SIZE);
-    let mut va = crate::memory::frame::align_up(proc.brk, crate::memory::PAGE_SIZE);
+    let new_end = frame::align_up(new, PAGE_SIZE);
+    let mut va = frame::align_up(proc.brk, PAGE_SIZE);
     while va < new_end {
-        let f = crate::memory::frame::alloc().expect("brk: out of frames");
-        proc.page_table.map(va, f.0, crate::memory::page_table::USER_RW);
-        va += crate::memory::PAGE_SIZE;
+        let f = frame::alloc().expect("brk: out of frames");
+        proc.page_table.map(va, f.0, page_table::USER_RW);
+        va += PAGE_SIZE;
     }
     proc.brk = new;
     new as isize
+}
+
+fn prot_to_flags(prot: usize) -> usize {
+    let mut flags = page_table::PTE_U | page_table::PTE_A | page_table::PTE_D;
+    if prot & 1 != 0 { flags |= page_table::PTE_R; }
+    if prot & 2 != 0 { flags |= page_table::PTE_W; }
+    if prot & 4 != 0 { flags |= page_table::PTE_X; }
+    flags
+}
+
+fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: usize, offset: usize) -> isize {
+    if len == 0 {
+        return -EINVAL;
+    }
+    let len_aligned = frame::align_up(len, PAGE_SIZE);
+    let fixed = flags & 0x10 != 0;
+    let anonymous = flags & 0x20 != 0;
+
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("mmap: no process");
+
+    let start = if fixed {
+        frame::align_down(addr, PAGE_SIZE)
+    } else if addr != 0 {
+        frame::align_up(addr, PAGE_SIZE)
+    } else {
+        proc.mmap_hint
+    };
+
+    let pte = prot_to_flags(prot);
+    if pte & (page_table::PTE_R | page_table::PTE_W | page_table::PTE_X) == 0 {
+        return -EACCES;
+    }
+
+    let mut va = start;
+    while va < start + len_aligned {
+        let f = match frame::alloc() {
+            Some(f) => f,
+            None => return -ENOMEM,
+        };
+        proc.page_table.map(va, f.0, pte);
+        // File-backed mapping: copy from fd at offset.
+        if !anonymous && fd != usize::MAX {
+            // TODO: read from file descriptor
+        }
+        va += PAGE_SIZE;
+    }
+    proc.mmap_hint = start + len_aligned;
+    start as isize
+}
+
+fn sys_munmap(addr: usize, len: usize) -> isize {
+    if len == 0 {
+        return 0;
+    }
+    let start = frame::align_down(addr, PAGE_SIZE);
+    let end = frame::align_up(addr + len, PAGE_SIZE);
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("munmap: no process");
+    let mut va = start;
+    while va < end {
+        if let Some(pa) = proc.page_table.translate(va) {
+            proc.page_table.unmap(va);
+            frame::dealloc(PhysAddr(frame::align_down(pa, PAGE_SIZE)));
+        }
+        va += PAGE_SIZE;
+    }
+    0
+}
+
+fn sys_mprotect(addr: usize, len: usize, prot: usize) -> isize {
+    if len == 0 {
+        return 0;
+    }
+    let start = frame::align_down(addr, PAGE_SIZE);
+    let end = frame::align_up(addr + len, PAGE_SIZE);
+    let pte = prot_to_flags(prot);
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("mprotect: no process");
+    let mut va = start;
+    while va < end {
+        match proc.page_table.translate(va) {
+            Some(pa) => {
+                proc.page_table.map(va, frame::align_down(pa, PAGE_SIZE), pte);
+            }
+            None => return -ENOMEM,
+        }
+        va += PAGE_SIZE;
+    }
+    0
 }
 
 fn sys_getrandom(buf: *mut u8, count: usize, _flags: usize) -> isize {
