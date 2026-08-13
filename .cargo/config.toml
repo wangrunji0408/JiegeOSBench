@@ -3,6 +3,5 @@ target = "riscv64gc-unknown-none-elf"
 
 [target.riscv64gc-unknown-none-elf]
 rustflags = [
-    "-C", "link-arg=-Tkernel/src/linker.ld",
-    "-C", "link-arg=-nostartfiles",
+    "-C", "link-arg=-Tsrc/linker.ld",
 ]
