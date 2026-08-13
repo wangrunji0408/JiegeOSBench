@@ -642,6 +642,49 @@ fn sys_readlinkat(_dirfd: usize, _path: *const u8, _buf: *mut u8, _size: usize) 
     -EINVAL
 }
 
+fn sys_pread64(fd: usize, buf: *mut u8, count: usize, offset: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("pread64: no process");
+    let f = match proc.fds.get(fd).and_then(Option::as_ref) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
+    match &f.kind {
+        FileKind::Inode(node) => {
+            let node = node.clone();
+            let data = node.data.lock();
+            let start = offset.min(data.len());
+            let avail = data.len() - start;
+            let n = avail.min(count);
+            unsafe { core::ptr::copy_nonoverlapping(data.as_ptr().add(start), buf, n); }
+            n as isize
+        }
+        _ => -EBADF,
+    }
+}
+
+fn sys_pwrite64(fd: usize, buf: *const u8, count: usize, offset: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("pwrite64: no process");
+    let f = match proc.fds.get(fd).and_then(Option::as_ref) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
+    match &f.kind {
+        FileKind::Inode(node) => {
+            let node = node.clone();
+            let mut data = node.data.lock();
+            let end = offset + count;
+            if end > data.len() {
+                data.resize(end, 0);
+            }
+            unsafe { core::ptr::copy_nonoverlapping(buf, data.as_mut_ptr().add(offset), count); }
+            count as isize
+        }
+        _ => -EBADF,
+    }
+}
+
 fn sys_exit(code: i32) -> isize {
     crate::println!("[process] exit({code})");
     crate::sbi::shutdown();
