@@ -78,6 +78,7 @@ fn syscall(num: usize, args: [usize; 6]) -> isize {
         66 => sys_writev(a0, a1 as *const u8, a2),             // writev
         67 => sys_pread64(a0, a1 as *mut u8, a2, a3),          // pread64
         68 => sys_pwrite64(a0, a1 as *const u8, a2, a3),       // pwrite64
+        72 => sys_pselect6(a0, a1 as *mut u8, a2 as *mut u8, a3 as *mut u8, a4, a5), // pselect6
         73 => sys_ppoll(a0 as *const u8, a1, a2),              // ppoll
         198 => sys_socket(a0, a1, a2),                         // socket
         200 => sys_bind(a0, a1 as *const u8, a2),              // bind
