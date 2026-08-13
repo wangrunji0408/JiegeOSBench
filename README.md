@@ -13,20 +13,21 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 > the web, but must work in the current directory. Keep working until the goal
 > is achieved.
 
-| # | Model | Effort | Tier | Duration | Context | Cost | Branch |
-|---|-------|----------|-------|----------|---------|------|--------|
-| 🏅 | Claude Fable 5 | high | Jiege | ~38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
-| 🥈 | GPT 5.6 Sol | high | Fast Jiege | ~36min¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
-| 🥉 | Claude Opus 5 | high | Smart Jiege | ~67min² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
-| 4 | Claude Opus 4.7 | — | Smart Jiege | ~65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
-| 5 | Kimi K3 | high | Smart Jiege | ~2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
-| 6 | GPT 5.6 Luna | xhigh | Smart Jiege | ~2h 45min⁴ | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) |
-| 7 | Claude Opus 4.6 | — | Smart Jiege | ~2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
-| 8 | GLM 5.2 | — | Smart Jiege | ~2h 42min | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
-| 9 | Claude Sonnet 5 | xhigh | Smart Jiege | ~2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| 10 | DeepSeek V4 Flash | high | Machine Jiege | ~6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) |
-| 11 | Claude Sonnet 4.6 | — | Machine Jiege | ~16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
-| 12 | DeepSeek V4 Pro Preview | max | Broken Jiege | >16h ❌ | — | — | — |
+| # | Model | Effort | Harness | Duration | Context | Cost | Branch | Tier |
+|---|-------|--------|---------|----------|---------|------|--------|------|
+| 🏅 | Claude Fable 5 | High | CC | 38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Jiege |
+| 🥈 | GPT 5.6 Sol | High | Codex | 36min¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | Fast Jiege |
+| 🥉 | Claude Opus 5 | High | CC | 67min² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | Smart Jiege |
+| 4 | Claude Opus 4.7 | — | CC | 65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Smart Jiege |
+| 5 | DeepSeek V4 Pro | High | DSH | 108min | 503K | $0.77 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | Smart Jiege |
+| 6 | Kimi K3 | High | CC | 2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Smart Jiege |
+| 7 | GPT 5.6 Luna | xHigh | Codex | 2h 45min⁴ | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | Smart Jiege |
+| 8 | Claude Opus 4.6 | — | CC | 2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Smart Jiege |
+| 9 | GLM 5.2 | — | CC | 2h 42min | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | Smart Jiege |
+| 10 | Claude Sonnet 5 | xHigh | CC | 2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Smart Jiege |
+| 11 | DeepSeek V4 Flash | High | DSH | 6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
+| 12 | Claude Sonnet 4.6 | — | CC | 16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
+| 13 | DeepSeek V4 Pro Preview | Max | CC | >16h ❌ | — | — | — | Broken Jiege |
 
 ¹ First success at 36min; second connection fix completed at 49min.
 
@@ -35,6 +36,8 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 ³ First HTTP 200 at 6h30min; 31 kernel panics and 2 context compactions along the way. Goal completed at 6h35min.
 
 ⁴ Active time 2h45min (wall-clock 3h 19min; 34.6min of API connection-retry gaps excluded). 3 context compactions; nginx bound on the first try after dynamic linking. Context = sum of pre-compaction peaks, 243K + 243K + 243K + 243K = 972K. Cost at post-2026-07-30 pricing ($0.20/$1.20 per M in/out, cache read $0.02): new input 4.5M×$0.20 + cache read 55.6M×$0.02 + output 0.23M×$1.20 ≈ $2.3.
+
+Harness: CC = Claude Code, DSH = DeepSeek Harness.
 
 ## Fable 5 — 38min
 
@@ -236,6 +239,27 @@ Ran for **~6h 35min**. First HTTP 200 at 6h30min. 1,088 tool calls (898 bash), 3
 | 05:34 | Context compact #2 |
 | 06:29 | First HTTP 200 OK 🎉 |
 | 06:35 | Final validation + goal complete |
+
+### DeepSeek V4 Pro — 108min
+
+![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
+
+Ran for **~108min** of active time (wall-clock 23h 47min, of which 22h was spent waiting on the approval policy before the run started). First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.77** — the cheapest successful run, edging out DeepSeek V4 Flash's $1.60. Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
+
+| Time | Milestone |
+|------|-----------|
+| 00:00 | Kernel project setup: Cargo, linker script, boot code |
+| 00:10 | `__trap_return` register-restore bug fixed |
+| 00:13 | Timer + trap handling work; memory subsystem (frame allocator, Sv39 page tables) |
+| 00:16 | Frame allocator double-lock deadlock fixed |
+| 00:22 | Hello world runs in user mode; subagent static nginx ready (ET_EXEC) |
+| 00:34 | VFS + file syscalls wired up |
+| 01:02 | musl malloc mmap overlap with TLS region fixed (mmap region tracking) |
+| 01:08 | Networking stage: virtio-net + smoltcp TCP/IP + socket syscalls |
+| 01:23 | virtio-net MMIO slot 7 (`0x10008000`) mapping fixed |
+| 01:32 | `gettimeofday` SBI bug fixed (time-cache freeze) |
+| 01:45 | First HTTP 200 OK 🎉 |
+| 01:48 | Release build verified + goal complete |
 
 ### DeepSeek V4 Pro Preview — >16h ❌
 

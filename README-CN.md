@@ -6,20 +6,21 @@
 
 > 提示词：你是智能杰哥。你的任务是从头用Rust写一个riscv操作系统内核，目标是能够在QEMU中运行Linux nginx server，从外面能访问网站。必须运行nginx官方binary，不能自行修改目标。请自行设计实现，不要问我任何问题，我不会给你答复或提供帮助。你拥有所有权限，包括上网查资料，但必须在当前目录下工作。你需要一直干活直到目标实现为止。
 
-| # | 模型 | Effort | 段位 | 耗时 | 上下文 | 成本 | 分支 |
-|:--|:------|:--------|:----|:------|:----|:------|:------|
-| 🏅 | Claude Fable 5 | high | 杰哥 | ~38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) |
-| 🥈 | GPT 5.6 Sol | high | 快速杰哥 | ~36分钟¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) |
-| 🥉 | Claude Opus 5 | high | 智能杰哥 | ~67分钟² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) |
-| 4 | Claude Opus 4.7 | — | 智能杰哥 | ~65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) |
-| 5 | Kimi K3 | high | 智能杰哥 | ~2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) |
-| 6 | GPT 5.6 Luna | xhigh | 智能杰哥 | ~2小时45分⁴ | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) |
-| 7 | Claude Opus 4.6 | — | 智能杰哥 | ~2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) |
-| 8 | GLM 5.2 | — | 智能杰哥 | ~2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) |
-| 9 | Claude Sonnet 5 | xhigh | 智能杰哥 | ~2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) |
-| 10 | DeepSeek V4 Flash | high | 机器杰哥 | ~6小时35分³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) |
-| 11 | Claude Sonnet 4.6 | — | 机器杰哥 | ~16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) |
-| 12 | DeepSeek V4 Pro 预览版 | max | 损坏杰哥 | >16小时 未完成 | — | — | — |
+| # | 模型 | 思考强度 | Harness | 耗时 | 上下文 | 成本 | 分支 | 段位 |
+|:--|:------|:--------|:---------|:----|:------|:------|:------|:----|
+| 🏅 | Claude Fable 5 | 高 | CC | 38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | 杰哥 |
+| 🥈 | GPT 5.6 Sol | 高 | Codex | 36分钟¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | 快速杰哥 |
+| 🥉 | Claude Opus 5 | 高 | CC | 67分钟² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | 智能杰哥 |
+| 4 | Claude Opus 4.7 | — | CC | 65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | 智能杰哥 |
+| 5 | DeepSeek V4 Pro | 高 | DSH | 108分钟 | 503K | $0.77 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | 智能杰哥 |
+| 6 | Kimi K3 | 高 | CC | 2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | 智能杰哥 |
+| 7 | GPT 5.6 Luna | 极高 | Codex | 2小时45分⁴ | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | 智能杰哥 |
+| 8 | Claude Opus 4.6 | — | CC | 2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 智能杰哥 |
+| 9 | GLM 5.2 | — | CC | 2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | 智能杰哥 |
+| 10 | Claude Sonnet 5 | 极高 | CC | 2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 智能杰哥 |
+| 11 | DeepSeek V4 Flash | 高 | DSH | 6小时35分³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 机器杰哥 |
+| 12 | Claude Sonnet 4.6 | — | CC | 16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 机器杰哥 |
+| 13 | DeepSeek V4 Pro 预览版 | 最高 | CC | >16小时 未完成 | — | — | — | 损坏杰哥 |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
 
@@ -28,6 +29,8 @@
 ³ 6小时30分首次 HTTP 200；期间经历 31 次内核 panic 和 2 次上下文压缩。最终完成于 6小时35分。
 
 ⁴ 有效时间 2小时45分（墙钟 3小时19分；已剔除 34.6 分钟 API 断线重试等待）。经历 3 次上下文压缩；动态链接成功后 nginx 一次绑定成功。Context = 各窗口压缩前峰值求和，243K + 243K + 243K + 243K = 972K。成本按 2026-07-30 后官方价（输入/输出 $0.20/$1.20 每 M，缓存读取 $0.02）：新输入 4.5M×$0.20 + 缓存读取 55.6M×$0.02 + 输出 0.23M×$1.20 ≈ $2.3。
+
+Harness 说明：CC = Claude Code，DSH = DeepSeek Harness。
 
 ## Fable 5 — 38分钟
 
@@ -229,6 +232,27 @@ Claude Code 全程运行共 16 小时。总成本约 60 美元。
 | 05:34 | 第二次上下文压缩 |
 | 06:29 | 首次 HTTP 200 OK 🎉 |
 | 06:35 | 最终验证 + 目标完成 |
+
+### DeepSeek V4 Pro — 108分钟
+
+![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
+
+有效运行约 **108 分钟**（墙钟 23小时47分，其中 22 小时是在审批策略改为 never 之前干等）。开跑后 105.6 分钟首次拿到 HTTP 200。共 373 个模型步，累计 9790 万 token（99.9% 缓存命中），上下文峰值 503K。成本约 **$0.77**——史上最便宜的成功方案，比 DeepSeek V4 Flash 的 $1.60 还低。零内核 panic、零上下文压缩。静态 musl nginx 二进制由后台子代理与主线写内核并行构建；两次网络搜索（musl TLS 布局、QEMU virtio MMIO）均为技术查询，非找答案。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:00 | 内核项目搭建：Cargo、链接脚本、启动代码 |
+| 00:10 | 修复 `__trap_return` 寄存器恢复 bug |
+| 00:13 | 定时器 + trap 处理打通；内存子系统（frame allocator、Sv39 页表） |
+| 00:16 | 修复 frame allocator 双重加锁死锁 |
+| 00:22 | Hello world 用户态运行；子代理静态 nginx 就绪（ET_EXEC） |
+| 00:34 | VFS + 文件 syscall 打通 |
+| 01:02 | 修复 musl malloc mmap 与 TLS 区域重叠（mmap 区域跟踪） |
+| 01:08 | 网络阶段：virtio-net + smoltcp TCP/IP + socket syscall |
+| 01:23 | 修复 virtio-net MMIO slot 7（`0x10008000`）映射 |
+| 01:32 | 修复 `gettimeofday` SBI bug（时间缓存冻结） |
+| 01:45 | 首次 HTTP 200 OK 🎉 |
+| 01:48 | Release 构建验证 + 目标完成 |
 
 ### DeepSeek V4 Pro 预览版 — >16h ❌
 
