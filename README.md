@@ -39,6 +39,12 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 
 Harness: CC = Claude Code, DSH = DeepSeek Harness.
 
+## Who is Jiege
+
+In 2019, Jiege was the first to [successfully run nginx on rCore OS](https://jia.je/programming/2019/03/08/running-nginx-on-rcore/), a Rust OS built from scratch. The achievement became legendary in our community — "Jiege" turned into a symbol of peak systems engineering, the kind of thing humans take pride in being able to do. We wore our ability to hand-craft OS kernels as a badge of honor, convinced it was proof of a uniquely human creativity and drive. Then AI kept raising the bar, and "AI-Jiege" started to feel inevitable. So I ran this experiment: have the most advanced coding agent of our time retrace that legendary journey and reproduce what Jiege once pulled off. The result: for well-defined systems tasks like this, humans simply cannot compete with AI anymore. ~~OS is finished.~~
+
+Dare to try, and anyone can be Jiege.
+
 ## Fable 5 — 38min
 
 ![Fable 5 Timeline](figures/fable5-timeline.png)
@@ -244,7 +250,7 @@ Ran for **~6h 35min**. First HTTP 200 at 6h30min. 1,088 tool calls (898 bash), 3
 
 ![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
 
-Ran for **~108min** of active time (wall-clock 23h 47min, of which 22h was spent waiting on the approval policy before the run started). First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.77** — the cheapest successful run, edging out DeepSeek V4 Flash's $1.60. Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
+Ran for **~108min** of active time. First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.77** — the cheapest successful run, edging out DeepSeek V4 Flash's $1.60. Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
 
 | Time | Milestone |
 |------|-----------|
@@ -266,12 +272,6 @@ Ran for **~108min** of active time (wall-clock 23h 47min, of which 22h was spent
 Ran for over 16 hours but never reached a working state. Got stuck in dependency hell and architecture dead ends.
 
 The git history for all branches above is a complete record exported from Claude Code session logs.
-
-## Who is Jiege
-
-In 2019, Jiege was the first to [successfully run nginx on rCore OS](https://jia.je/programming/2019/03/08/running-nginx-on-rcore/), a Rust OS built from scratch. The achievement became legendary in our community — "Jiege" turned into a symbol of peak systems engineering, the kind of thing humans take pride in being able to do. We wore our ability to hand-craft OS kernels as a badge of honor, convinced it was proof of a uniquely human creativity and drive. Then AI kept raising the bar, and "AI-Jiege" started to feel inevitable. So I ran this experiment: have the most advanced coding agent of our time retrace that legendary journey and reproduce what Jiege once pulled off. The result: for well-defined systems tasks like this, humans simply cannot compete with AI anymore. ~~OS is finished.~~
-
-Dare to try, and anyone can be Jiege.
 
 ## License
 
