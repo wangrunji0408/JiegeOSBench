@@ -52,7 +52,10 @@ fn syscall(num: usize, args: [usize; 6]) -> isize {
     let [a0, a1, a2, a3, a4, a5] = args;
     match num {
         // basic
+        29 => 0,                                             // ioctl (no-op)
         64 => sys_write(a0, a1 as *const u8, a2),           // write
+        65 => sys_readv(a0, a1 as *const u8, a2),            // readv
+        66 => sys_writev(a0, a1 as *const u8, a2),           // writev
         93 => sys_exit(a0 as i32),                           // exit
         94 => sys_exit(a0 as i32),                           // exit_group
         96 => sys_set_tid_address(a0),                       // set_tid_address
