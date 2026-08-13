@@ -70,28 +70,18 @@ pub fn load(pt: &mut PageTable, data: &[u8]) -> Result<LoadedElf, ElfError> {
     let base = if e_type == ET_DYN { 0x1_0000 } else { 0 };
 
     let mut max_va = 0usize;
-    let mut first_load_vaddr: Option<usize> = None;
-    let mut phdr_vaddr: Option<usize> = None;
     for i in 0..e_phnum {
         let ph = e_phoff + i * e_phentsize;
         if ph + 56 > data.len() {
             return Err(ElfError);
         }
         let p_type = u32_at(data, ph);
-        let p_vaddr = u64_at(data, ph + 16) as usize;
-        if p_type == 6 {
-            // PT_PHDR: virtual address of the program header table
-            phdr_vaddr = Some(p_vaddr);
-            continue;
-        }
         if p_type != PT_LOAD {
             continue;
         }
-        if first_load_vaddr.is_none() {
-            first_load_vaddr = Some(p_vaddr);
-        }
         let p_flags = u32_at(data, ph + 4);
         let p_offset = u64_at(data, ph + 8) as usize;
+        let p_vaddr = u64_at(data, ph + 16) as usize;
         let p_filesz = u64_at(data, ph + 32) as usize;
         let p_memsz = u64_at(data, ph + 40) as usize;
 
@@ -110,17 +100,10 @@ pub fn load(pt: &mut PageTable, data: &[u8]) -> Result<LoadedElf, ElfError> {
         }
     }
 
-    // The program headers are mapped either at the PT_PHDR virtual address or,
-    // for the usual layout, at base + first-load-vaddr + e_phoff.
-    let phdr = match phdr_vaddr {
-        Some(v) => base + v,
-        None => base + first_load_vaddr.unwrap_or(0) + e_phoff,
-    };
-
     Ok(LoadedElf {
         base,
         entry: base + e_entry,
-        phdr,
+        phdr: base + e_phoff,
         phentsize: e_phentsize,
         phnum: e_phnum,
         max_va,
