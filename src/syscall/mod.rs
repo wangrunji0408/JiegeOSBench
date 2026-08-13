@@ -5,6 +5,7 @@ use crate::memory::page_table;
 use crate::trap::TrapContext;
 use alloc::string::String;
 use alloc::sync::Arc;
+use alloc::vec::Vec;
 use crate::fs::{FileDesc, FileKind};
 
 // Common Linux errno values (positive; we return -errno).
