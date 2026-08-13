@@ -30,14 +30,19 @@ const CONFIG: usize = 0x100;
 
 const DESC_F_WRITE: u16 = 2;
 
+static MMIO_BASE: core::sync::atomic::AtomicUsize =
+    core::sync::atomic::AtomicUsize::new(VIRTIO_NET_MMIO);
+
 #[inline]
 pub fn mmio_read(off: usize) -> u32 {
-    unsafe { core::ptr::read_volatile((VIRTIO_NET_MMIO + off) as *const u32) }
+    let base = MMIO_BASE.load(core::sync::atomic::Ordering::Relaxed);
+    unsafe { core::ptr::read_volatile((base + off) as *const u32) }
 }
 
 #[inline]
 pub fn mmio_write(off: usize, val: u32) {
-    unsafe { core::ptr::write_volatile((VIRTIO_NET_MMIO + off) as *mut u32, val) }
+    let base = MMIO_BASE.load(core::sync::atomic::Ordering::Relaxed);
+    unsafe { core::ptr::write_volatile((base + off) as *mut u32, val) }
 }
 
 #[repr(C)]
