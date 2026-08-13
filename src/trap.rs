@@ -106,50 +106,51 @@ __alltraps:
 # Return to (possibly different) context pointed by a0.
 __trap_return:
     # a0 = TrapContext*
-    ld t0, 32*8(a0)
-    andi t1, t0, 0x100          # SPP bit: 0 => user, 1 => kernel
+    ld t0, 32*8(a0)           # saved sstatus
+    andi t1, t0, 0x100        # SPP: 0 => user, 1 => kernel
     csrw sstatus, t0
-    ld t0, 33*8(a0)
+    ld t0, 33*8(a0)           # saved sepc
     csrw sepc, t0
-    # restore regs
-    ld x1, 1*8(a0)
-    ld x3, 3*8(a0)
-    ld x4, 4*8(a0)
-    ld x5, 5*8(a0)
-    ld x6, 6*8(a0)
-    ld x7, 7*8(a0)
-    ld x8, 8*8(a0)
-    ld x9, 9*8(a0)
-    ld x10, 10*8(a0)
-    ld x11, 11*8(a0)
-    ld x12, 12*8(a0)
-    ld x13, 13*8(a0)
-    ld x14, 14*8(a0)
-    ld x15, 15*8(a0)
-    ld x16, 16*8(a0)
-    ld x17, 17*8(a0)
-    ld x18, 18*8(a0)
-    ld x19, 19*8(a0)
-    ld x20, 20*8(a0)
-    ld x21, 21*8(a0)
-    ld x22, 22*8(a0)
-    ld x23, 23*8(a0)
-    ld x24, 24*8(a0)
-    ld x25, 25*8(a0)
-    ld x26, 26*8(a0)
-    ld x27, 27*8(a0)
-    ld x28, 28*8(a0)
-    ld x29, 29*8(a0)
-    ld x30, 30*8(a0)
-    ld x31, 31*8(a0)
-    ld sp, 2*8(a0)
-    # set sscratch: kernel sp top if returning to user, else 0
-    addi t2, a0, 34*8
-    beqz t1, 2f
-    csrw sscratch, x0           # to kernel
-    sret
+    # prepare sscratch for the next trap
+    beqz t1, 1f
+    csrw sscratch, x0         # returning to kernel
+    j 2f
+1:
+    addi t2, a0, 34*8         # kernel stack top
+    csrw sscratch, t2         # returning to user
 2:
-    csrw sscratch, t2           # to user
+    mv sp, a0                 # use sp as the context base
+    ld x1, 1*8(sp)
+    ld x3, 3*8(sp)
+    ld x4, 4*8(sp)
+    ld x5, 5*8(sp)
+    ld x6, 6*8(sp)
+    ld x7, 7*8(sp)
+    ld x8, 8*8(sp)
+    ld x9, 9*8(sp)
+    ld x10, 10*8(sp)
+    ld x11, 11*8(sp)
+    ld x12, 12*8(sp)
+    ld x13, 13*8(sp)
+    ld x14, 14*8(sp)
+    ld x15, 15*8(sp)
+    ld x16, 16*8(sp)
+    ld x17, 17*8(sp)
+    ld x18, 18*8(sp)
+    ld x19, 19*8(sp)
+    ld x20, 20*8(sp)
+    ld x21, 21*8(sp)
+    ld x22, 22*8(sp)
+    ld x23, 23*8(sp)
+    ld x24, 24*8(sp)
+    ld x25, 25*8(sp)
+    ld x26, 26*8(sp)
+    ld x27, 27*8(sp)
+    ld x28, 28*8(sp)
+    ld x29, 29*8(sp)
+    ld x30, 30*8(sp)
+    ld x31, 31*8(sp)
+    ld sp, 2*8(sp)            # restore sp last
     sret
 "#
 );
