@@ -79,6 +79,15 @@ pub const O_CLOEXEC: u32 = 0o2000000;
 
 static ROOT: SpinLock<Option<Arc<INode>>> = SpinLock::new(None);
 
+/// Standard file descriptors 0,1,2 (stdin/stdout/stderr).
+pub fn default_fds() -> Vec<Option<FileDesc>> {
+    vec![
+        Some(FileDesc { kind: FileKind::Stdin, offset: 0, flags: 0, readable: true, writable: false }),
+        Some(FileDesc { kind: FileKind::Stdout, offset: 0, flags: 0, readable: false, writable: true }),
+        Some(FileDesc { kind: FileKind::Stderr, offset: 0, flags: 0, readable: false, writable: true }),
+    ]
+}
+
 /// Populate the filesystem with the layout nginx expects.
 pub fn init() {
     let root = INode::new_dir("/");
