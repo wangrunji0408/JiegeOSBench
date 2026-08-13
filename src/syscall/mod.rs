@@ -112,7 +112,7 @@ fn sys_brk(addr: usize) -> isize {
 
 fn sys_getrandom(buf: *mut u8, count: usize, _flags: usize) -> isize {
     for i in 0..count {
-        unsafe { *buf.add(i) = (i * 2654435761u32).wrapping_mul(7) as u8 };
+        unsafe { *buf.add(i) = ((i.wrapping_mul(1103515245).wrapping_add(12345)) >> 16) as u8 };
     }
     count as isize
 }
