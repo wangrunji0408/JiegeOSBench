@@ -79,7 +79,35 @@ fn syscall(num: usize, args: [usize; 6]) -> isize {
         93 => sys_exit(a0 as i32),                             // exit
         94 => sys_exit(a0 as i32),                           // exit_group
         96 => sys_set_tid_address(a0),                       // set_tid_address
+        98 => 0,                                             // futex
         99 => 0,                                             // set_robust_list
+        101 => 0,                                            // nanosleep
+        113 => sys_clock_gettime(a0, a1 as *mut u8),         // clock_gettime
+        115 => 0,                                            // clock_nanosleep
+        122 => 0,                                            // sched_setaffinity
+        123 => sys_sched_getaffinity(a0, a1, a2),            // sched_getaffinity
+        124 => 0,                                            // sched_yield
+        129 | 130 | 131 => 0,                                // kill/tkill/tgkill
+        132 => 0,                                            // sigaltstack
+        134 => 0,                                            // rt_sigaction
+        135 => 0,                                            // rt_sigprocmask
+        139 => 0,                                            // rt_sigreturn
+        153 => sys_times(a0 as *mut u8),                     // times
+        157 => crate::process::current().lock().as_ref().map(|p| p.pid as isize).unwrap_or(1), // setsid
+        160 => sys_uname(a0 as *mut u8),                     // uname
+        163 => sys_getrlimit(a0, a1 as *mut u8),             // getrlimit
+        164 => 0,                                            // setrlimit
+        165 => sys_zero_buf(a1 as *mut u8, 144),             // getrusage
+        166 => 0o22,                                         // umask
+        167 => 0,                                            // prctl
+        169 => sys_gettimeofday(a0 as *mut u8, a1),          // gettimeofday
+        173 => 1,                                            // getppid
+        174 | 175 | 176 | 177 => 0,                          // getuid/euid/gid/egid
+        178 => crate::process::current().lock().as_ref().map(|p| p.pid as isize).unwrap_or(1), // gettid
+        179 => sys_sysinfo(a0 as *mut u8),                   // sysinfo
+        232 => 0,                                            // mincore
+        233 => 0,                                            // madvise
+        261 => 0,                                            // prlimit64
         172 => crate::process::current()
             .lock()
             .as_ref()
