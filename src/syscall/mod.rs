@@ -212,3 +212,10 @@ fn sys_getrandom(buf: *mut u8, count: usize, _flags: usize) -> isize {
     }
     count as isize
 }
+
+fn sys_set_tid_address(tidptr: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("set_tid_address: no process");
+    proc.clear_child_tid = tidptr;
+    proc.pid as isize
+}
