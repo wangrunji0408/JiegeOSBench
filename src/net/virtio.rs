@@ -148,7 +148,7 @@ impl VirtioNet {
         loop {
             let gen = mmio_read(CONFIG_GENERATION);
             for i in 0..6 {
-                mac[i] = mmio_read(CONFIG + i) as u8;
+                mac[i] = unsafe { core::ptr::read_volatile((base + CONFIG + i) as *const u8) };
             }
             if gen == mmio_read(CONFIG_GENERATION) {
                 break;
