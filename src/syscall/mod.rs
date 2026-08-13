@@ -1,5 +1,7 @@
 //! Linux riscv64 syscall dispatch.
 
+use crate::memory::frame::{self, PhysAddr, PAGE_SIZE};
+use crate::memory::page_table;
 use crate::trap::TrapContext;
 
 // Common Linux errno values (positive; we return -errno).
