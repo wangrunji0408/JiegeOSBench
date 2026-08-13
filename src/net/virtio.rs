@@ -258,13 +258,15 @@ impl smoltcp::phy::TxToken for TxToken<'_> {
     where
         F: FnOnce(&mut [u8]) -> R,
     {
-        let res = f(&mut self.buf[..len]);
+        // Zero the legacy header, then let smoltcp fill the packet after it.
+        self.buf[..NET_HDR_SIZE].fill(0);
+        let res = f(&mut self.buf[NET_HDR_SIZE..NET_HDR_SIZE + len]);
         unsafe {
             let net = &mut *self.net;
             let idx = 0usize;
             let d = net.tx.desc(idx);
             d.addr = self.buf.as_ptr() as u64;
-            d.len = len as u32;
+            d.len = (NET_HDR_SIZE + len) as u32;
             d.flags = 0;
             d.next = 0;
             net.tx.add_avail(idx as u16);
