@@ -77,6 +77,7 @@ pub struct Process {
     pub cwd: String,
     pub clear_child_tid: usize,
     pub exited: bool,
+    pub fds: Vec<Option<crate::fs::FileDesc>>,
 }
 
 impl Process {
