@@ -18,7 +18,7 @@ pub struct NetStack {
 static NET: SpinLock<Option<NetStack>> = SpinLock::new(None);
 
 pub fn now() -> Instant {
-    Instant::from_millis(crate::sbi::get_time() / 1_000_000)
+    Instant::from_millis((crate::sbi::get_time() / 1_000_000) as i64)
 }
 
 pub fn init() {
