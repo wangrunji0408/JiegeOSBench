@@ -716,7 +716,7 @@ fn sys_exit(code: i32) -> isize {
     crate::sbi::shutdown();
 }
 
-fn fd_socket_handle(fd: usize) -> Option<usize> {
+fn fd_socket_handle(fd: usize) -> Option<smoltcp::iface::SocketHandle> {
     let cur = crate::process::current().lock();
     let proc = cur.as_ref().unwrap();
     match proc.fds.get(fd).and_then(Option::as_ref) {
