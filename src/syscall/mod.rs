@@ -61,7 +61,9 @@ fn syscall(num: usize, args: [usize; 6]) -> isize {
             .map(|p| p.pid as isize)
             .unwrap_or(-1), // getpid
         214 => sys_brk(a0),                                  // brk
-        226 => 0,                                            // mprotect (no-op for now)
+        215 => sys_munmap(a0, a1),                           // munmap
+        222 => sys_mmap(a0, a1, a2, a3, a4, a5),             // mmap
+        226 => sys_mprotect(a0, a1, a2),                     // mprotect
         278 => sys_getrandom(a0 as *mut u8, a1, a2),         // getrandom
         _ => {
             crate::println!("[syscall] unimplemented #{num} args=[{a0:#x},{a1:#x},{a2:#x},{a3:#x}]");
