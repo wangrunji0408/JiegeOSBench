@@ -29,10 +29,8 @@ impl TrapContext {
         let mut cx = Self::zero();
         cx.sepc = entry;
         cx.x[2] = sp; // user stack pointer
-        // SPIE=1 (bit5) so sret enables interrupts in user mode; SPP=0 (user).
-        // SUM=1 (bit18) so the kernel (S-mode) may directly access user pages
-        // during syscall handling. FS=3 (bits 13-14) enables floating point.
-        cx.sstatus = (1 << 5) | (1 << 18) | (3 << 13);
+        // SPIE=1 (bit5), so sret enables interrupts in user mode; SPP=0 (user)
+        cx.sstatus = 1 << 5;
         cx
     }
 
@@ -46,11 +44,7 @@ global_asm!(
     .section .text.trap
     .globl __alltraps
     .globl __trap_return
-    .globl trap_entry
     .align 2
-
-trap_entry:
-    j __alltraps
 
 # On entry:
 #   - from user: sscratch holds kernel stack top, sp holds user sp
@@ -108,51 +102,50 @@ __alltraps:
 # Return to (possibly different) context pointed by a0.
 __trap_return:
     # a0 = TrapContext*
-    ld t0, 32*8(a0)           # saved sstatus
-    andi t1, t0, 0x100        # SPP: 0 => user, 1 => kernel
+    ld t0, 32*8(a0)
+    andi t1, t0, 0x100          # SPP bit: 0 => user, 1 => kernel
     csrw sstatus, t0
-    ld t0, 33*8(a0)           # saved sepc
+    ld t0, 33*8(a0)
     csrw sepc, t0
-    # prepare sscratch for the next trap
-    beqz t1, 1f
-    csrw sscratch, x0         # returning to kernel
-    j 2f
-1:
-    addi t2, a0, 34*8         # kernel stack top
-    csrw sscratch, t2         # returning to user
+    # restore regs
+    ld x1, 1*8(a0)
+    ld x3, 3*8(a0)
+    ld x4, 4*8(a0)
+    ld x5, 5*8(a0)
+    ld x6, 6*8(a0)
+    ld x7, 7*8(a0)
+    ld x8, 8*8(a0)
+    ld x9, 9*8(a0)
+    ld x10, 10*8(a0)
+    ld x11, 11*8(a0)
+    ld x12, 12*8(a0)
+    ld x13, 13*8(a0)
+    ld x14, 14*8(a0)
+    ld x15, 15*8(a0)
+    ld x16, 16*8(a0)
+    ld x17, 17*8(a0)
+    ld x18, 18*8(a0)
+    ld x19, 19*8(a0)
+    ld x20, 20*8(a0)
+    ld x21, 21*8(a0)
+    ld x22, 22*8(a0)
+    ld x23, 23*8(a0)
+    ld x24, 24*8(a0)
+    ld x25, 25*8(a0)
+    ld x26, 26*8(a0)
+    ld x27, 27*8(a0)
+    ld x28, 28*8(a0)
+    ld x29, 29*8(a0)
+    ld x30, 30*8(a0)
+    ld x31, 31*8(a0)
+    ld sp, 2*8(a0)
+    # set sscratch: kernel sp top if returning to user, else 0
+    addi t2, a0, 34*8
+    beqz t1, 2f
+    csrw sscratch, x0           # to kernel
+    sret
 2:
-    mv sp, a0                 # use sp as the context base
-    ld x1, 1*8(sp)
-    ld x3, 3*8(sp)
-    ld x4, 4*8(sp)
-    ld x5, 5*8(sp)
-    ld x6, 6*8(sp)
-    ld x7, 7*8(sp)
-    ld x8, 8*8(sp)
-    ld x9, 9*8(sp)
-    ld x10, 10*8(sp)
-    ld x11, 11*8(sp)
-    ld x12, 12*8(sp)
-    ld x13, 13*8(sp)
-    ld x14, 14*8(sp)
-    ld x15, 15*8(sp)
-    ld x16, 16*8(sp)
-    ld x17, 17*8(sp)
-    ld x18, 18*8(sp)
-    ld x19, 19*8(sp)
-    ld x20, 20*8(sp)
-    ld x21, 21*8(sp)
-    ld x22, 22*8(sp)
-    ld x23, 23*8(sp)
-    ld x24, 24*8(sp)
-    ld x25, 25*8(sp)
-    ld x26, 26*8(sp)
-    ld x27, 27*8(sp)
-    ld x28, 28*8(sp)
-    ld x29, 29*8(sp)
-    ld x30, 30*8(sp)
-    ld x31, 31*8(sp)
-    ld sp, 2*8(sp)            # restore sp last
+    csrw sscratch, t2           # to user
     sret
 "#
 );
@@ -167,14 +160,13 @@ pub fn init() {
     unsafe {
         core::arch::asm!(
             "csrw stvec, {tvec}",
-            tvec = in(reg) trap_entry as *const () as usize,
+            tvec = in(reg) trap_entry as usize,
         );
         // enable supervisor timer interrupt (STIE)
         let sie: usize = 1 << 5;
         core::arch::asm!("csrs sie, {}", in(reg) sie);
         // enable interrupts in sstatus (SIE)
-        let sie: usize = 1 << 1;
-        core::arch::asm!("csrs sstatus, {}", in(reg) sie);
+        core::arch::asm!("csrsi sstatus, {}", in(reg) 1 << 1);
     }
 }
 
@@ -187,12 +179,16 @@ extern "C" {
 extern "C" fn trap_handler(cx: *mut TrapContext) -> *mut TrapContext {
     unsafe {
         let scause: usize;
+        let mut sepc: usize;
         core::arch::asm!("csrr {}, scause", out(reg) scause);
+        core::arch::asm!("csrr {}, sepc", out(reg) sepc);
 
         if scause & INTERRUPT != 0 {
             // Interrupt
             match scause & !INTERRUPT {
                 TIMER_IRQ => {
+                    let cx = &mut *cx;
+                    sepc = cx.sepc;
                     crate::timer_tick();
                 }
                 other => {
@@ -201,27 +197,13 @@ extern "C" fn trap_handler(cx: *mut TrapContext) -> *mut TrapContext {
             }
         } else {
             // Exception
-            match scause {
-                // Environment call from U-mode (syscall)
-                8 => {
-                    let cx = &mut *cx;
-                    let ret = crate::syscall::dispatch(cx);
-                    cx.x[10] = ret as usize; // a0
-                    cx.sepc += 4;
-                }
-                _ => {
-                    let c = &*cx;
-                    crate::println!(
-                        "[trap] exception: scause={:#x}, sepc={:#x}, stval={:#x}",
-                        scause, (*cx).sepc, stval()
-                    );
-                    crate::println!(
-                        "[trap] ra={:#x} sp={:#x} tp={:#x} a0={:#x} a1={:#x} a2={:#x}",
-                        c.x[1], c.x[2], c.x[4], c.x[10], c.x[11], c.x[12]
-                    );
-                    crate::sbi::shutdown();
-                }
-            }
+            let cx_ref = &mut *cx;
+            sepc = cx_ref.sepc;
+            crate::println!(
+                "[trap] exception: scause={:#x}, sepc={:#x}, stval={:#x}",
+                scause, sepc, stval()
+            );
+            crate::sbi::shutdown();
         }
         cx
     }
