@@ -289,7 +289,7 @@ fn sys_openat(dirfd: usize, path_ptr: *const u8, flags: usize, _mode: usize) -> 
         _ => {}
     }
 
-    let node = if flags & crate::fs::O_CREAT != 0 {
+    let node = if fl & crate::fs::O_CREAT != 0 {
         match crate::fs::lookup(&full) {
             Some(n) => n,
             None => match crate::fs::create_file(&full) {
@@ -304,14 +304,14 @@ fn sys_openat(dirfd: usize, path_ptr: *const u8, flags: usize, _mode: usize) -> 
         }
     };
 
-    if flags & crate::fs::O_DIRECTORY != 0 && !node.is_dir {
+    if fl & crate::fs::O_DIRECTORY != 0 && !node.is_dir {
         return -ENOTDIR;
     }
-    if flags & crate::fs::O_TRUNC != 0 && !node.is_dir {
+    if fl & crate::fs::O_TRUNC != 0 && !node.is_dir {
         node.data.lock().clear();
     }
 
-    let offset = if flags & crate::fs::O_APPEND != 0 { node.data.lock().len() } else { 0 };
+    let offset = if fl & crate::fs::O_APPEND != 0 { node.data.lock().len() } else { 0 };
     let fd = FileDesc {
         kind: FileKind::Inode(node),
         offset,
