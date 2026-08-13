@@ -100,6 +100,7 @@ pub fn init() {
     let usr = INode::new_dir("usr");
     let local = INode::new_dir("local");
     let nginx = INode::new_dir("nginx");
+    let etc = INode::new_dir("etc");
     let conf = INode::new_dir("conf");
     let sbin = INode::new_dir("sbin");
 
