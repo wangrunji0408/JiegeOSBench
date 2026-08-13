@@ -53,6 +53,14 @@ pub extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
 
     trap::init();
     sbi::init_timer();
+    memory::init();
+
+    // smoke test the allocator
+    let mut v = alloc::vec::Vec::new();
+    v.push(42usize);
+    v.push(1337usize);
+    println!("[mem] allocator smoke test: {:?}", v);
+    core::mem::drop(v);
 
     println!("[iJiege kernel] kernel initialized. entering idle loop...");
     loop {
