@@ -90,6 +90,52 @@ fn sys_write(fd: usize, buf: *const u8, count: usize) -> isize {
     }
 }
 
+struct Iovec {
+    base: usize,
+    len: usize,
+}
+
+unsafe fn read_iovec(ptr: *const u8, idx: usize) -> Iovec {
+    let base = *(ptr.add(idx * 16) as *const usize);
+    let len = *(ptr.add(idx * 16 + 8) as *const usize);
+    Iovec { base, len }
+}
+
+fn sys_writev(fd: usize, iov: *const u8, iovcnt: usize) -> isize {
+    let mut total = 0usize;
+    for i in 0..iovcnt {
+        let v = unsafe { read_iovec(iov, i) };
+        if fd == 1 || fd == 2 {
+            for j in 0..v.len {
+                crate::console::putchar(unsafe { *(v.base as *const u8).add(j) });
+            }
+            total += v.len;
+        } else {
+            return -EBADF;
+        }
+    }
+    total as isize
+}
+
+fn sys_readv(fd: usize, iov: *const u8, iovcnt: usize) -> isize {
+    if fd != 0 {
+        return -EBADF;
+    }
+    let mut total = 0usize;
+    for i in 0..iovcnt {
+        let v = unsafe { read_iovec(iov, i) };
+        for j in 0..v.len {
+            if let Some(c) = crate::console::getchar() {
+                unsafe { *(v.base as *mut u8).add(j) = c };
+                total += 1;
+            } else {
+                return total as isize;
+            }
+        }
+    }
+    total as isize
+}
+
 fn sys_exit(code: i32) -> isize {
     crate::println!("[process] exit({code})");
     crate::sbi::shutdown();
