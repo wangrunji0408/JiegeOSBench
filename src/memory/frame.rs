@@ -72,7 +72,8 @@ pub fn dealloc(f: PhysAddr) {
 }
 
 pub fn free_count() -> usize {
-    FRAME_ALLOCATOR.lock().total - FRAME_ALLOCATOR.lock().used
+    let fa = FRAME_ALLOCATOR.lock();
+    fa.total - fa.used
 }
 
 pub fn align_up(addr: usize, align: usize) -> usize {
