@@ -15,7 +15,7 @@ pub const MEMORY_END: usize = 0x9000_0000;
 /// (start, end): PLIC, UART0 + virtio MMIO.
 pub const MMIO_REGIONS: &[(usize, usize)] = &[
     (0x0c00_0000, 0x0c40_0000), // PLIC
-    (0x1000_0000, 0x1000_8000), // UART0 + virtio MMIO
+    (0x1000_0000, 0x1000_9000), // UART0 + virtio MMIO (8 slots + config)
 ];
 
 /// Initialize memory: frame allocator + kernel heap, then set up the kernel
