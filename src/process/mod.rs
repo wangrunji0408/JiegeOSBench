@@ -100,6 +100,7 @@ impl Process {
             cwd: String::from("/"),
             clear_child_tid: 0,
             exited: false,
+            fds: crate::fs::default_fds(),
         };
 
         // Set up kernel stack and trap context.
