@@ -55,3 +55,16 @@ pub extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
         unsafe { core::arch::asm!("wfi") };
     }
 }
+
+static TICKS: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
+
+/// Called from the trap handler on each supervisor timer interrupt.
+pub fn timer_tick() {
+    let now = sbi::get_time();
+    // 10ms tick
+    sbi::set_timer(now + 10_000_000);
+    let n = TICKS.fetch_add(1, core::sync::atomic::Ordering::Relaxed) + 1;
+    if n % 100 == 0 {
+        println!("[tick] {} ({} ms)", n, n * 10);
+    }
+}
