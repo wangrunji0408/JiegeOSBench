@@ -111,8 +111,21 @@ pub struct VirtioNet {
 
 impl VirtioNet {
     pub fn init() -> Self {
-        assert_eq!(mmio_read(MAGIC), 0x7472_6976, "virtio-net magic mismatch");
-        assert_eq!(mmio_read(DEVICE_ID), 1, "not virtio-net");
+        // Probe virtio-mmio slots for the net device (DeviceID == 1).
+        let mut base = 0usize;
+        for slot in 0..8usize {
+            let b = VIRTIO_NET_MMIO + slot * 0x1000;
+            let magic = unsafe { core::ptr::read_volatile((b + MAGIC) as *const u32) };
+            let devid = unsafe { core::ptr::read_volatile((b + DEVICE_ID) as *const u32) };
+            crate::println!("[virtio] slot {}: magic={:#x} devid={}", slot, magic, devid);
+            if magic == 0x7472_6976 && devid == 1 {
+                base = b;
+                break;
+            }
+        }
+        assert_ne!(base, 0, "virtio-net device not found");
+        MMIO_BASE.store(base, core::sync::atomic::Ordering::Relaxed);
+        crate::println!("[virtio] virtio-net at {:#x}", base);
 
         mmio_write(STATUS, 0);
         mmio_write(STATUS, 1);
