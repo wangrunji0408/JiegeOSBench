@@ -64,10 +64,15 @@ pub extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
     println!("[mem] allocator smoke test: {:?}", v);
     core::mem::drop(v);
 
-    println!("[iJiege kernel] kernel initialized. entering idle loop...");
-    loop {
-        unsafe { core::arch::asm!("wfi") };
+    // Spawn the first user process (embedded static ELF).
+    let hello = include_bytes!("../user/hello");
+    let proc = process::Process::from_elf(hello, &["hello", "world"], &[]);
+    let cx = proc.trap_cx_ptr();
+    *process::current().lock() = Some(proc);
+    unsafe {
+        println!("[kernel] entering user mode (entry={:#x}, sp={:#x})", (*cx).sepc, (*cx).x[2]);
     }
+    trap::switch_to(cx);
 }
 
 static TICKS: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
