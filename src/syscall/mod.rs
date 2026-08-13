@@ -74,6 +74,8 @@ fn syscall(num: usize, args: [usize; 6]) -> isize {
         64 => sys_write(a0, a1 as *const u8, a2),              // write
         65 => sys_readv(a0, a1 as *const u8, a2),              // readv
         66 => sys_writev(a0, a1 as *const u8, a2),             // writev
+        67 => sys_pread64(a0, a1 as *mut u8, a2, a3),          // pread64
+        68 => sys_pwrite64(a0, a1 as *const u8, a2, a3),       // pwrite64
         78 => sys_readlinkat(a0, a1 as *const u8, a2 as *mut u8, a3), // readlinkat
         79 => sys_newfstatat(a0, a1 as *const u8, a2 as *mut u8, a3), // newfstatat
         80 => sys_fstat(a0, a1 as *mut u8),                    // fstat
