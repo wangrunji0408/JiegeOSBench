@@ -4,6 +4,7 @@ pub mod frame;
 pub mod heap;
 pub mod page_table;
 
+pub use frame::{align_down, align_up, PAGE_SIZE};
 pub use page_table::PageTable;
 
 /// Physical RAM bounds for QEMU `virt` with `-m 256M`.
