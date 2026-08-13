@@ -98,15 +98,38 @@ fn syscall(num: usize, args: [usize; 6]) -> isize {
 }
 
 fn sys_write(fd: usize, buf: *const u8, count: usize) -> isize {
-    if fd == 1 || fd == 2 {
-        // stdout/stderr -> serial console
-        for i in 0..count {
-            crate::console::putchar(unsafe { *buf.add(i) });
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("write: no process");
+    let f = match proc.fds.get_mut(fd).and_then(Option::as_mut) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
+    fd_write(f, buf, count)
+}
+
+/// Write `count` bytes from `buf` to the open file `f`.
+fn fd_write(f: &mut FileDesc, buf: *const u8, count: usize) -> isize {
+    match &f.kind {
+        FileKind::Stdout | FileKind::Stderr => {
+            for i in 0..count {
+                crate::console::putchar(unsafe { *buf.add(i) });
+            }
+            count as isize
         }
-        count as isize
-    } else {
-        // TODO: other file descriptors
-        -EBADF
+        FileKind::Null => count as isize,
+        FileKind::Inode(node) => {
+            let node = node.clone();
+            let mut data = node.data.lock();
+            let start = if f.flags & crate::fs::O_APPEND != 0 { data.len() } else { f.offset.min(data.len()) };
+            let end = start + count;
+            if end > data.len() {
+                data.resize(end, 0);
+            }
+            unsafe { core::ptr::copy_nonoverlapping(buf, data.as_mut_ptr().add(start), count); }
+            f.offset = end;
+            count as isize
+        }
+        _ => -EBADF,
     }
 }
 
@@ -123,37 +146,462 @@ unsafe fn read_iovec(ptr: *const u8, idx: usize) -> Iovec {
 
 fn sys_writev(fd: usize, iov: *const u8, iovcnt: usize) -> isize {
     let mut total = 0usize;
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("writev: no process");
+    let f = match proc.fds.get_mut(fd).and_then(Option::as_mut) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
     for i in 0..iovcnt {
         let v = unsafe { read_iovec(iov, i) };
-        if fd == 1 || fd == 2 {
-            for j in 0..v.len {
-                crate::console::putchar(unsafe { *(v.base as *const u8).add(j) });
-            }
-            total += v.len;
-        } else {
-            return -EBADF;
+        let n = fd_write(f, v.base as *const u8, v.len);
+        if n < 0 {
+            return if total > 0 { total as isize } else { n };
         }
+        total += n as usize;
     }
     total as isize
 }
 
 fn sys_readv(fd: usize, iov: *const u8, iovcnt: usize) -> isize {
-    if fd != 0 {
-        return -EBADF;
-    }
     let mut total = 0usize;
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("readv: no process");
+    let f = match proc.fds.get_mut(fd).and_then(Option::as_mut) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
     for i in 0..iovcnt {
         let v = unsafe { read_iovec(iov, i) };
-        for j in 0..v.len {
-            if let Some(c) = crate::console::getchar() {
-                unsafe { *(v.base as *mut u8).add(j) = c };
-                total += 1;
-            } else {
-                return total as isize;
-            }
+        let n = fd_read(f, v.base as *mut u8, v.len);
+        if n < 0 {
+            return if total > 0 { total as isize } else { n };
+        }
+        total += n as usize;
+        if (n as usize) < v.len {
+            break;
         }
     }
     total as isize
+}
+
+fn sys_read(fd: usize, buf: *mut u8, count: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("read: no process");
+    let f = match proc.fds.get_mut(fd).and_then(Option::as_mut) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
+    fd_read(f, buf, count)
+}
+
+/// Read up to `count` bytes from open file `f` into `buf`.
+fn fd_read(f: &mut FileDesc, buf: *mut u8, count: usize) -> isize {
+    match &f.kind {
+        FileKind::Stdin => {
+            let mut n = 0;
+            while n < count {
+                match crate::console::getchar() {
+                    Some(c) => {
+                        unsafe { *buf.add(n) = c };
+                        n += 1;
+                    }
+                    None => break,
+                }
+            }
+            n as isize
+        }
+        FileKind::Null => 0,
+        FileKind::Inode(node) => {
+            let node = node.clone();
+            let data = node.data.lock();
+            let start = f.offset.min(data.len());
+            let avail = data.len() - start;
+            let n = avail.min(count);
+            unsafe { core::ptr::copy_nonoverlapping(data.as_ptr().add(start), buf, n); }
+            f.offset += n;
+            n as isize
+        }
+        _ => -EBADF,
+    }
+}
+
+/// Read a NUL-terminated string from user memory (SUM=1 is active during syscalls).
+unsafe fn read_cstr(ptr: *const u8) -> String {
+    let mut s = String::new();
+    let mut p = ptr;
+    let mut guard = 0;
+    while *p != 0 && guard < 8192 {
+        s.push(*p as char);
+        p = p.add(1);
+        guard += 1;
+    }
+    s
+}
+
+const AT_FDCWD: usize = (-100isize) as usize;
+
+fn resolve_path(proc: &crate::process::Process, dirfd: usize, path: &str) -> String {
+    if path.starts_with('/') {
+        path.to_string()
+    } else {
+        let base = if dirfd == AT_FDCWD {
+            proc.cwd.clone()
+        } else {
+            String::from("/")
+        };
+        if base == "/" {
+            alloc::format!("/{}", path)
+        } else {
+            alloc::format!("{}/{}", base, path)
+        }
+    }
+}
+
+fn alloc_fd(proc: &mut crate::process::Process, fd: FileDesc) -> isize {
+    for (i, slot) in proc.fds.iter_mut().enumerate() {
+        if slot.is_none() {
+            *slot = Some(fd);
+            return i as isize;
+        }
+    }
+    proc.fds.push(Some(fd));
+    (proc.fds.len() - 1) as isize
+}
+
+fn sys_openat(dirfd: usize, path_ptr: *const u8, flags: usize, _mode: usize) -> isize {
+    let path = unsafe { read_cstr(path_ptr) };
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("openat: no process");
+    let full = resolve_path(proc, dirfd, &path);
+
+    let accmode = flags & 0x3;
+    let readable = accmode != 1; // not write-only
+    let writable = accmode != 0; // not read-only
+
+    // Special files.
+    match full.as_str() {
+        "/dev/null" => return alloc_fd(proc, FileDesc { kind: FileKind::Null, offset: 0, flags: flags as u32, readable, writable }),
+        "/dev/stdin" => return alloc_fd(proc, FileDesc { kind: FileKind::Stdin, offset: 0, flags: flags as u32, readable, writable }),
+        "/dev/stdout" => return alloc_fd(proc, FileDesc { kind: FileKind::Stdout, offset: 0, flags: flags as u32, readable, writable }),
+        "/dev/stderr" => return alloc_fd(proc, FileDesc { kind: FileKind::Stderr, offset: 0, flags: flags as u32, readable, writable }),
+        _ => {}
+    }
+
+    let node = if flags & crate::fs::O_CREAT != 0 {
+        match crate::fs::lookup(&full) {
+            Some(n) => n,
+            None => match crate::fs::create_file(&full) {
+                Some(n) => n,
+                None => return -ENOENT,
+            },
+        }
+    } else {
+        match crate::fs::lookup(&full) {
+            Some(n) => n,
+            None => return -ENOENT,
+        }
+    };
+
+    if flags & crate::fs::O_DIRECTORY != 0 && !node.is_dir {
+        return -ENOTDIR;
+    }
+    if flags & crate::fs::O_TRUNC != 0 && !node.is_dir {
+        node.data.lock().clear();
+    }
+
+    let offset = if flags & crate::fs::O_APPEND != 0 { node.data.lock().len() } else { 0 };
+    let fd = FileDesc {
+        kind: FileKind::Inode(node),
+        offset,
+        flags: flags as u32,
+        readable,
+        writable,
+    };
+    alloc_fd(proc, fd)
+}
+
+fn sys_close(fd: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("close: no process");
+    if fd >= proc.fds.len() || proc.fds[fd].is_none() {
+        return -EBADF;
+    }
+    proc.fds[fd] = None;
+    0
+}
+
+fn sys_lseek(fd: usize, offset: i64, whence: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("lseek: no process");
+    let f = match proc.fds.get_mut(fd).and_then(Option::as_mut) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
+    let size = match &f.kind {
+        FileKind::Inode(node) => node.data.lock().len() as i64,
+        _ => 0,
+    };
+    let base = match whence {
+        0 => 0,
+        1 => f.offset as i64,
+        2 => size,
+        _ => return -EINVAL,
+    };
+    let new = base + offset;
+    if new < 0 {
+        return -EINVAL;
+    }
+    f.offset = new as usize;
+    new as isize
+}
+
+fn fill_stat(node: &Arc<crate::fs::INode>, buf: *mut u8) {
+    let mut st = [0u8; 128];
+    crate::fs::stat_of(node, &mut st);
+    unsafe { core::ptr::copy_nonoverlapping(st.as_ptr(), buf, 128); }
+}
+
+fn fill_char_stat(buf: *mut u8) {
+    let mut st = [0u8; 128];
+    let w = |off: usize, bytes: &[u8], st: &mut [u8; 128]| st[off..off + bytes.len()].copy_from_slice(bytes);
+    w(16, &(0o020666u32).to_le_bytes(), &mut st); // S_IFCHR | 0666
+    w(20, &1u32.to_le_bytes(), &mut st);
+    let t = crate::sbi::get_time() as i64;
+    w(72, &t.to_le_bytes(), &mut st);
+    w(88, &t.to_le_bytes(), &mut st);
+    w(104, &t.to_le_bytes(), &mut st);
+    unsafe { core::ptr::copy_nonoverlapping(st.as_ptr(), buf, 128); }
+}
+
+fn sys_fstat(fd: usize, buf: *mut u8) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("fstat: no process");
+    let f = match proc.fds.get(fd).and_then(Option::as_ref) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
+    match &f.kind {
+        FileKind::Inode(node) => fill_stat(node, buf),
+        _ => fill_char_stat(buf),
+    }
+    0
+}
+
+fn sys_newfstatat(dirfd: usize, path_ptr: *const u8, buf: *mut u8, _flags: usize) -> isize {
+    let path = unsafe { read_cstr(path_ptr) };
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("newfstatat: no process");
+    let full = resolve_path(proc, dirfd, &path);
+    match crate::fs::lookup(&full) {
+        Some(node) => {
+            fill_stat(&node, buf);
+            0
+        }
+        None => -ENOENT,
+    }
+}
+
+fn sys_getdents64(fd: usize, dirp: *mut u8, count: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("getdents64: no process");
+    let f = match proc.fds.get_mut(fd).and_then(Option::as_mut) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
+    let node = match &f.kind {
+        FileKind::Inode(n) if n.is_dir => n.clone(),
+        _ => return -ENOTDIR,
+    };
+    let children = node.children.lock();
+    let mut written = 0usize;
+    let mut idx = f.offset;
+    while idx < children.len() {
+        let child = &children[idx];
+        let name = child.name.as_bytes();
+        let reclen = 19 + name.len() + 1; // d_ino(8) + d_off(8) + d_reclen(2) + d_type(1) + name + nul
+        let reclen = (reclen + 7) & !7; // align to 8
+        if written + reclen > count {
+            break;
+        }
+        let d_type = if child.is_dir { 4u8 } else { 8u8 };
+        unsafe {
+            let p = dirp.add(written);
+            (p as *mut u64).write_unaligned(idx as u64 + 1); // d_ino
+            (p.add(8) as *mut i64).write_unaligned((idx + 1) as i64); // d_off
+            (p.add(16) as *mut u16).write_unaligned(reclen as u16); // d_reclen
+            (p.add(18) as *mut u8).write(d_type); // d_type
+            core::ptr::copy_nonoverlapping(name.as_ptr(), p.add(19), name.len());
+            p.add(19 + name.len()).write(0);
+        }
+        written += reclen;
+        idx += 1;
+    }
+    f.offset = idx;
+    written as isize
+}
+
+fn sys_ioctl(fd: usize, _req: usize, _arg: usize) -> isize {
+    // Validate the fd; accept all ioctls for now (mostly harmless no-ops).
+    let cur = crate::process::current().lock();
+    let proc = cur.as_ref().expect("ioctl: no process");
+    if fd >= proc.fds.len() || proc.fds[fd].is_none() {
+        return -EBADF;
+    }
+    0
+}
+
+const F_DUPFD: usize = 0;
+const F_GETFD: usize = 1;
+const F_SETFD: usize = 2;
+const F_GETFL: usize = 3;
+const F_SETFL: usize = 4;
+
+fn sys_fcntl(fd: usize, cmd: usize, arg: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("fcntl: no process");
+    match cmd {
+        F_GETFL => match proc.fds.get(fd).and_then(Option::as_ref) {
+            Some(f) => (f.flags & 0o7777) as isize,
+            None => -EBADF,
+        },
+        F_SETFL => match proc.fds.get_mut(fd).and_then(Option::as_mut) {
+            Some(f) => {
+                f.flags = (f.flags & !0o7777) | (arg as u32 & 0o7777);
+                0
+            }
+            None => -EBADF,
+        },
+        F_GETFD | F_SETFD => 0,
+        F_DUPFD | 1030 => {
+            // F_DUPFD / F_DUPFD_CLOEXEC
+            let f = match proc.fds.get(fd).and_then(Option::as_ref) {
+                Some(f) => f,
+                None => return -EBADF,
+            };
+            let kind = f.kind.clone();
+            let newfd = FileDesc { kind, offset: f.offset, flags: f.flags, readable: f.readable, writable: f.writable };
+            let mut target = arg;
+            while target < proc.fds.len() && proc.fds[target].is_some() {
+                target += 1;
+            }
+            if target == proc.fds.len() {
+                proc.fds.push(Some(newfd));
+            } else {
+                proc.fds[target] = Some(newfd);
+            }
+            target as isize
+        }
+        _ => 0,
+    }
+}
+
+fn sys_dup(fd: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("dup: no process");
+    let f = match proc.fds.get(fd).and_then(Option::as_ref) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
+    let newfd = FileDesc { kind: f.kind.clone(), offset: f.offset, flags: f.flags, readable: f.readable, writable: f.writable };
+    alloc_fd(proc, newfd)
+}
+
+fn sys_dup3(fd: usize, newfd: usize, _flags: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("dup3: no process");
+    let f = match proc.fds.get(fd).and_then(Option::as_ref) {
+        Some(f) => f,
+        None => return -EBADF,
+    };
+    let new = FileDesc { kind: f.kind.clone(), offset: f.offset, flags: f.flags, readable: f.readable, writable: f.writable };
+    if newfd >= proc.fds.len() {
+        proc.fds.resize(newfd + 1, None);
+    }
+    proc.fds[newfd] = Some(new);
+    newfd as isize
+}
+
+fn sys_unlinkat(dirfd: usize, path_ptr: *const u8, _flags: usize) -> isize {
+    let path = unsafe { read_cstr(path_ptr) };
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("unlinkat: no process");
+    let full = resolve_path(proc, dirfd, &path);
+    crate::fs::unlink(&full)
+}
+
+fn sys_mkdirat(dirfd: usize, path_ptr: *const u8, _mode: usize) -> isize {
+    let path = unsafe { read_cstr(path_ptr) };
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("mkdirat: no process");
+    let full = resolve_path(proc, dirfd, &path);
+    crate::fs::mkdir(&full)
+}
+
+fn sys_renameat(_olddir: usize, old_ptr: *const u8, _newdir: usize, new_ptr: *const u8) -> isize {
+    let old = unsafe { read_cstr(old_ptr) };
+    let new = unsafe { read_cstr(new_ptr) };
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("renameat: no process");
+    let old_full = resolve_path(proc, AT_FDCWD, &old);
+    let new_full = resolve_path(proc, AT_FDCWD, &new);
+    let node = match crate::fs::lookup(&old_full) {
+        Some(n) => n,
+        None => return -ENOENT,
+    };
+    let (new_dir, new_name) = match crate::fs::lookup_parent(&new_full) {
+        Some(x) => x,
+        None => return -ENOENT,
+    };
+    crate::fs::unlink(&old_full);
+    // detach node's old name by re-adding under new name
+    new_dir.add_child(crate::fs::INode { name: new_name, is_dir: node.is_dir, data: crate::sync::SpinLock::new(node.data.lock().clone()), children: crate::sync::SpinLock::new(node.children.lock().clone()) }.into());
+    0
+}
+
+fn sys_faccessat(dirfd: usize, path_ptr: *const u8, _mode: usize) -> isize {
+    let path = unsafe { read_cstr(path_ptr) };
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("faccessat: no process");
+    let full = resolve_path(proc, dirfd, &path);
+    if crate::fs::lookup(&full).is_some() {
+        0
+    } else {
+        -ENOENT
+    }
+}
+
+fn sys_chdir(path_ptr: *const u8) -> isize {
+    let path = unsafe { read_cstr(path_ptr) };
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("chdir: no process");
+    let full = resolve_path(proc, AT_FDCWD, &path);
+    match crate::fs::lookup(&full) {
+        Some(n) if n.is_dir => {
+            proc.cwd = full;
+            0
+        }
+        Some(_) => -ENOTDIR,
+        None => -ENOENT,
+    }
+}
+
+fn sys_getcwd(buf: *mut u8, size: usize) -> isize {
+    let mut cur = crate::process::current().lock();
+    let proc = cur.as_mut().expect("getcwd: no process");
+    let cwd = proc.cwd.clone();
+    if cwd.len() + 1 > size {
+        return -ERANGE;
+    }
+    unsafe {
+        core::ptr::copy_nonoverlapping(cwd.as_ptr(), buf, cwd.len());
+        *buf.add(cwd.len()) = 0;
+    }
+    cwd.len() as isize
+}
+
+fn sys_readlinkat(_dirfd: usize, _path: *const u8, _buf: *mut u8, _size: usize) -> isize {
+    -EINVAL
 }
 
 fn sys_exit(code: i32) -> isize {
