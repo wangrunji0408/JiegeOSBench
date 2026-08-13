@@ -8,6 +8,7 @@
 extern crate alloc;
 
 mod console;
+mod fs;
 mod lang;
 mod memory;
 mod process;
