@@ -274,6 +274,10 @@ fn fd_read(f: &mut FileDesc, buf: *mut u8, count: usize) -> isize {
             f.offset += n;
             n as isize
         }
+        FileKind::Socket(h) => {
+            let data = unsafe { core::slice::from_raw_parts_mut(buf, count) };
+            crate::net::socket_recv(*h, data)
+        }
         _ => -EBADF,
     }
 }
