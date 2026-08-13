@@ -222,7 +222,16 @@ extern "C" fn trap_handler(cx: *mut TrapContext) -> *mut TrapContext {
                     // Debug: dump physical mapping of tp-relative TLS addresses.
                     let tp = c.x[4];
                     if let Some(p) = crate::process::current().lock().as_ref() {
-                        for va in [tp.wrapping_add(0x40000), tp.wrapping_add(0x40018), 0x106f734usize] {
+                        // dump 64 bytes at tp+0x40000
+                        let va = tp.wrapping_add(0x40000);
+                        if let Some(pa) = p.page_table.translate(va) {
+                            let mut bytes = [0u8; 64];
+                            for i in 0..64 {
+                                bytes[i] = unsafe { *((pa + i) as *const u8) };
+                            }
+                            crate::println!("[trap]   mem@{:#x}: {:02x?}", va, bytes);
+                        }
+                        for va in [tp.wrapping_add(0x40018), 0x106f734usize] {
                             match p.page_table.translate(va) {
                                 Some(pa) => {
                                     let word = unsafe { *((pa & !0xfff) as *const u64) };
