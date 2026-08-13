@@ -20,15 +20,21 @@ pub fn sbi_call(eid: usize, fid: usize, a0: usize, a1: usize, a2: usize) -> (usi
 const EXT_TIME: usize = 0x54494D45;
 const EXT_SRST: usize = 0x53525354;
 
-pub fn set_timer(stime: u64) {
-    sbi_call(EXT_TIME, 0, stime as usize, 0, 0);
+/// Timebase frequency on QEMU `virt` (10 MHz).
+pub const TIMEBASE_HZ: u64 = 10_000_000;
+
+/// Schedule a one-shot timer interrupt `ns` nanoseconds from now
+/// (converted to platform ticks internally).
+pub fn set_timer(ns: u64) {
+    let ticks = ns * TIMEBASE_HZ / 1_000_000_000;
+    sbi_call(EXT_TIME, 0, ticks as usize, 0, 0);
 }
 
-/// Returns the current time from the SBI timer (unit is implementation-defined,
-/// on QEMU/OpenSBI it is nanoseconds since boot).
+/// Read the current time as nanoseconds since boot via the RISC-V `time` CSR.
 pub fn get_time() -> u64 {
-    let (_, value) = sbi_call(EXT_TIME, 1, 0, 0, 0);
-    value as u64
+    let ticks: u64;
+    unsafe { core::arch::asm!("rdtime {}", out(reg) ticks) };
+    ticks * 1_000_000_000 / TIMEBASE_HZ
 }
 
 pub fn shutdown() -> ! {
