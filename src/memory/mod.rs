@@ -21,18 +21,21 @@ pub const MMIO_REGIONS: &[(usize, usize)] = &[
 /// page table and enable Sv39 paging.
 pub fn init() {
     frame::init();
+    crate::println!("[mem] heap init...");
     heap::init();
+    crate::println!("[mem] heap ready");
 
     let mut pt = page_table::kernel_page_table();
+    crate::println!("[mem] kernel page table built (root {:#x})", pt.root());
     // Activate paging.
     unsafe {
         let satp = pt.satp();
         core::arch::asm!("csrw satp, {}", in(reg) satp);
         core::arch::asm!("sfence.vma");
     }
+    crate::println!("[mem] paging enabled");
     crate::println!(
-        "[mem] paging enabled (satp={:#x}), heap={} bytes, frames {} free",
-        pt.satp(),
+        "[mem] heap={} bytes, frames {} free",
         heap::HEAP_SIZE,
         frame::free_count(),
     );
