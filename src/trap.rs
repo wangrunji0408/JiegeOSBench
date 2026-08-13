@@ -29,8 +29,10 @@ impl TrapContext {
         let mut cx = Self::zero();
         cx.sepc = entry;
         cx.x[2] = sp; // user stack pointer
-        // SPIE=1 (bit5), so sret enables interrupts in user mode; SPP=0 (user)
-        cx.sstatus = 1 << 5;
+        // SPIE=1 (bit5) so sret enables interrupts in user mode; SPP=0 (user).
+        // SUM=1 (bit18) so the kernel (S-mode) may directly access user pages
+        // during syscall handling.
+        cx.sstatus = (1 << 5) | (1 << 18);
         cx
     }
 
