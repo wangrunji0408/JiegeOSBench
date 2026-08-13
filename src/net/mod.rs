@@ -81,6 +81,26 @@ pub fn socket_listen(handle: usize, port: u16) -> isize {
     }
 }
 
+/// Track bind() ports so listen() can use them (nginx binds then listens).
+static BOUND_PORTS: SpinLock<Vec<(usize, u16)>> = SpinLock::new(Vec::new());
+
+pub fn socket_bind(handle: usize, port: u16) -> isize {
+    let mut b = BOUND_PORTS.lock();
+    b.retain(|(h, _)| *h != handle);
+    b.push((handle, port));
+    0
+}
+
+pub fn socket_listen_stored(handle: usize) -> isize {
+    let port = BOUND_PORTS
+        .lock()
+        .iter()
+        .find(|(h, _)| *h == handle)
+        .map(|(_, p)| *p)
+        .unwrap_or(0);
+    socket_listen(handle, port)
+}
+
 pub fn socket_connect(handle: usize, a: u8, b: u8, c: u8, d: u8, port: u16) -> isize {
     let mut g = NET.lock();
     let net = g.as_mut().expect("net not initialized");
