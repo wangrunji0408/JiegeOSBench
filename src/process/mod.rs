@@ -98,7 +98,7 @@ impl Process {
         };
 
         // Set up kernel stack and trap context.
-        proc.kstack_top = Self::alloc_kstack();
+        proc.kstack_top = alloc_kstack();
         proc.trap_cx = proc.kstack_top - core::mem::size_of::<TrapContext>();
 
         // Build user stack.
