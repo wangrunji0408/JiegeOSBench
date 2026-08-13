@@ -19,7 +19,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | 🥈 | GPT 5.6 Sol | High | Codex | 36min¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | Fast Jiege |
 | 🥉 | Claude Opus 5 | High | CC | 67min² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | Smart Jiege |
 | 4 | Claude Opus 4.7 | — | CC | 65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Smart Jiege |
-| 5 | DeepSeek V4 Pro | High | DSH | 108min | 503K | $0.77 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | Smart Jiege |
+| 5 | DeepSeek V4 Pro | High | DSH | 108min | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | Smart Jiege |
 | 6 | Kimi K3 | High | CC | 2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Smart Jiege |
 | 7 | GPT 5.6 Luna | xHigh | Codex | 2h 45min⁴ | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | Smart Jiege |
 | 8 | Claude Opus 4.6 | — | CC | 2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Smart Jiege |
@@ -248,7 +248,7 @@ Ran for **~6h 35min**. First HTTP 200 at 6h30min. 1,088 tool calls (898 bash), 3
 
 ![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
 
-Ran for **~108min** of active time. First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.77** — the cheapest successful run, edging out DeepSeek V4 Flash's $1.60. Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
+Ran for **~108min** of active time. First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.86** — the cheapest successful run, edging out DeepSeek V4 Flash's $1.60. Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent (DeepSeek V4 Flash, 11.7M tokens, $0.09) while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
 
 | Time | Milestone |
 |------|-----------|
