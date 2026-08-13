@@ -56,8 +56,8 @@ pub enum FileKind {
     Stderr,
     /// A regular file or directory.
     Inode(Arc<INode>),
-    /// A networking socket (implemented later).
-    Socket(usize),
+    /// A networking socket.
+    Socket(smoltcp::iface::SocketHandle),
 }
 
 #[derive(Clone)]
