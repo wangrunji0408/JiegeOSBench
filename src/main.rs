@@ -67,9 +67,13 @@ pub extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
     println!("[mem] allocator smoke test: {:?}", v);
     core::mem::drop(v);
 
-    // Spawn the first user process (embedded static ELF).
-    let hello = include_bytes!("../user/hello");
-    let proc = process::Process::from_elf(hello, &["hello", "world"], &[]);
+    // Spawn the first user process: the official static nginx binary.
+    let nginx = include_bytes!("../third_party/nginx");
+    let proc = process::Process::from_elf(
+        nginx,
+        &["nginx", "-c", "/usr/local/nginx/conf/nginx.conf"],
+        &["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "TZ=UTC"],
+    );
     let cx = proc.trap_cx_ptr();
     proc.activate();
     *process::current().lock() = Some(proc);
