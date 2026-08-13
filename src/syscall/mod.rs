@@ -714,6 +714,9 @@ fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: usize, offse
         va += PAGE_SIZE;
     }
     proc.mmap_hint = start + len_aligned;
+    if len_aligned > 0x30000 {
+        crate::println!("[mmap] large map: addr={:#x} len={:#x} prot={:#x} flags={:#x} -> {:#x}", addr, len, prot, flags, start);
+    }
     start as isize
 }
 
