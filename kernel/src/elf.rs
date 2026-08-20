@@ -134,12 +134,18 @@ fn load_one_elf(data: &[u8], base: usize) -> Ret<LoadedImage> {
     let phent = ehdr.e_phentsize as usize;
     let mut max_end: usize = 0;
     let mut interp: Option<String> = None;
+    let mut phdr_va: usize = base + ehdr.e_phoff as usize; // 兜底：假设 phdr 在 base+phoff
 
     for i in 0..phnum {
         let ph = read::<Phdr>(data, ehdr.e_phoff as usize + i * phent).ok_or(Errno::Enoexec)?;
         match ph.p_type {
             PT_LOAD => {
                 let seg_va = base + ph.p_vaddr as usize;
+                // phdr 位于此段内时，计算其虚拟地址（Linux AT_PHDR 语义）
+                let phoff = ehdr.e_phoff as usize;
+                if phoff >= ph.p_offset as usize && phoff < (ph.p_offset + ph.p_filesz) as usize {
+                    phdr_va = seg_va + (phoff - ph.p_offset as usize);
+                }
                 load_segment(
                     data,
                     seg_va,
@@ -166,7 +172,7 @@ fn load_one_elf(data: &[u8], base: usize) -> Ret<LoadedImage> {
 
     Ok(LoadedImage {
         entry: base + ehdr.e_entry as usize,
-        phdr_va: base + ehdr.e_phoff as usize,
+        phdr_va,
         phnum,
         phent,
         brk_end: (max_end + 0xfff) & !0xfff,
