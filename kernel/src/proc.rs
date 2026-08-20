@@ -6,7 +6,7 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 use crate::errno::{Errno, Ret};
-use crate::page::{self, PTE_A, PTE_D, PTE_R, PTE_U, PTE_W, PTE_X};
+use crate::page::{self, PTE_A, PTE_D, PTE_R, PTE_U, PTE_V, PTE_W, PTE_X};
 use crate::pmm;
 use crate::pmm::spin::Mutex;
 use crate::{kprintln, net, vfs};
