@@ -142,7 +142,8 @@ trap_entry:
     # 切到内核栈（trap 只来自用户态）
     ld sp, 552(sp)
 
-    mv a0, sp
+    # a0 = trapframe 指针（sscratch 当前保存的就是它）
+    csrr a0, sscratch
     call trap_handler
     # trap_handler 返回 trapframe 指针, 直接落入 trap_return
 
