@@ -128,11 +128,10 @@ pub fn init(virtio: Option<VirtioNet>) {
     let mac = v.mac();
     crate::kprintln!("net: virtio-net at MAC {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
-    let device = SmolDevice { net: v };
+    let mut device = SmolDevice { net: v };
     let now = Instant::from_millis(crate::trap::now_ms() as i64);
-    let config = IfaceConfig::new(Medium::Ethernet);
-    let mut iface = Interface::new(config, &mut SmolShadow(&device), now);
-    iface.set_hardware_addr(HardwareAddress::Ethernet(EthernetAddress(mac)));
+    let config = IfaceConfig::new(HardwareAddress::Ethernet(EthernetAddress(mac)));
+    let mut iface = Interface::new(config, &mut device, now);
     iface.update_ip_addrs(|addrs| {
         addrs.push(IpCidr::new(IpAddress::v4(GUEST_IP[0], GUEST_IP[1], GUEST_IP[2], GUEST_IP[3]), 24));
     });
