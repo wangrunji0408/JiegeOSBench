@@ -37,6 +37,12 @@ SECTIONS
     . = ALIGN(0x1000);
     __kernel_end = .;
 
+    .bootstack (NOLOAD) : {
+        _boot_stack_bottom = .;
+        . += 0x10000;
+        _boot_stack_top = .;
+    }
+
     /DISCARD/ : {
         *(.eh_frame .eh_frame_hdr)
         *(.note .note.*)
