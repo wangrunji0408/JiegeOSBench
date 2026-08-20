@@ -265,9 +265,16 @@ extern "C" fn trap_handler(frame: *mut TrapFrame) -> *mut TrapFrame {
     let cause_code = cause & 0xfff_ffff_ffff_ffff;
     if cause_code == 13 || cause_code == 15 || cause_code == 12 {
         let root = proc::current_page_table_root();
+        let cpu_satp = crate::page::read_satp();
         let page = f.stval as usize & !0xfff;
         let lk = crate::page::lookup(root, page);
-        kprintln!("[trap]   page {:#x} lookup={:?}", page, lk);
+        kprintln!(
+            "[trap]   page {:#x} lookup={:?} cpu_satp={:#x} expect_root={:#x}",
+            page,
+            lk.map(|(pa, f)| (pa, f)),
+            cpu_satp,
+            root
+        );
     }
     let interrupt = cause >> 63 == 1;
     let code = cause & 0xfff_ffff_ffff_ffff;
