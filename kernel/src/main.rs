@@ -31,6 +31,7 @@ extern "C" {
     static __kernel_end: u8;
     static __bss_start: u8;
     static __bss_end: u8;
+    static _boot_stack_top: u8;
 }
 
 /// 全局 UART 输出器
