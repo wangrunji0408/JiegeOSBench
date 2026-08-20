@@ -284,7 +284,7 @@ fn dispatch_inner(n: usize, a: [usize; 6]) -> Ret {
         nr::ACCEPT | nr::ACCEPT4 => sys_accept4(a[0], a[1], a[2], a[3]),
         nr::CONNECT => sys_connect(a[0], a[1], a[2]),
         nr::SENDTO => sys_sendto(a[0], a[1], a[2], a[3]),
-        nr::RECVFROM => sys_recvfrom(a[0], a[1], a[2]),
+        nr::RECVFROM => sys_recvfrom(a[0], a[1], a[2], a[3]),
         nr::SETSOCKOPT => sys_setsockopt(a[0], a[1], a[2], a[3]),
         nr::GETSOCKOPT => sys_getsockopt(a[0], a[1], a[2], a[3]),
         nr::SHUTDOWN => sys_shutdown(a[0], a[1]),
