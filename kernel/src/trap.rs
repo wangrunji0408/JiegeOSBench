@@ -272,7 +272,7 @@ pub fn user_mode_smoke_test() {
         p.add(2).write_volatile(0x00000073); // ecall
         p.add(3).write_volatile(0x00000073); // ecall（兜底）
     }
-    let stack_top = 0x7F_FFFF_F000usize;
+    let stack_top = 0x7_0000_0000usize; // 低地址栈（VPN[2]=28），排除高位 VA 问题
     let stack_pa = crate::pmm::alloc_page().expect("smoke: stack page");
     crate::page::map_4k(root, stack_top - 0x1000, stack_pa, PTE_R | PTE_W | PTE_U | PTE_A | PTE_D | PTE_V);
     let frame = trapframe_addr() as *mut TrapFrame;
