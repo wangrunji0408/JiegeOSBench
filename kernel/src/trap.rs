@@ -297,6 +297,17 @@ extern "C" fn trap_handler(frame: *mut TrapFrame) -> *mut TrapFrame {
     let f = unsafe { &mut *frame };
     let cause = f.scause;
     kprintln!("[trap] scause={:#x} sepc={:#x} stval={:#x} a7={:#x} a0={:#x} a1={:#x} sp={:#x} s2={:#x}", cause, f.sepc, f.stval, f.x[17], f.x[10], f.x[11], f.x[2], f.x[18]);
+    if cause_code == 13 || cause_code == 15 {
+        // dump 初始栈区（sp 向上 0x100）
+        let sp = f.x[2] as usize & !0xf;
+        let mut dump = alloc::string::String::new();
+        use core::fmt::Write;
+        for i in 0..16 {
+            let v = unsafe { ((sp + i * 8) as *const u64).read_volatile() };
+            let _ = write!(dump, " {:016x}", v);
+        }
+        kprintln!("[trap] stack @ {:#x}:{}", sp, dump);
+    }
     let cause_code = cause & 0xfff_ffff_ffff_ffff;
     if cause_code == 13 || cause_code == 15 || cause_code == 12 {
         let root = proc::current_page_table_root();
