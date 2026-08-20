@@ -51,7 +51,7 @@ pub fn map_zero_page(va: usize) -> bool {
     }
     let vma = proc.vmas.iter().find(|v| va >= v.start && va < v.end).unwrap();
     if let Some(pa) = pmm::alloc_page() {
-        page::map_4k(proc.root, va, pa, vma.flags | PTE_A | PTE_D | PTE_V_ALL);
+        page::map_4k(proc.root, va, pa, vma.flags | PTE_A | PTE_D | PTE_V);
         true
     } else {
         false
