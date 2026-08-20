@@ -395,5 +395,18 @@ fn build_user_stack(argv: &[&str], envp: &[&str], main: &LoadedImage, ld_base: u
 
     let _ = execfn_off_place;
     let _ = cursor;
+    // 打印初始栈布局（前 24 个 u64 + 字符串区头）
+    {
+        let mut dump = alloc::string::String::new();
+        use core::fmt::Write;
+        unsafe {
+            let pa = va_to_pa(sp0);
+            for i in 0..24 {
+                let v = (pa as *const u64).add(i).read_volatile();
+                let _ = write!(dump, " {:x}", v);
+            }
+        }
+        crate::kprintln!("[elf] initial stack @ {:#x}:{}", sp0, dump);
+    }
     Ok(sp0)
 }
