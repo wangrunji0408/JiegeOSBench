@@ -11,10 +11,6 @@ use crate::pmm;
 use crate::pmm::spin::Mutex;
 use crate::{kprintln, net, vfs};
 
-pub fn trap_entry_addr() -> usize {
-    unsafe { core::mem::transmute::<*const u8, usize>(&crate::trap::__trap_entry_sym() as *const u8) }
-}
-
 pub struct Vma {
     pub start: usize,
     pub end: usize,
