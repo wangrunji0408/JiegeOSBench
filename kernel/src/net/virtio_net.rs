@@ -142,19 +142,14 @@ fn alloc_aligned_block(bytes: usize, align: usize) -> *mut u8 {
 
 /// 探测并初始化 virtio-net。找不到返回 None。
 pub fn probe() -> Option<VirtioNet> {
-    // QEMU virt: virtio-mmio 从 0x10001000 开始，间隔 0x200，共 32 个槽位
-    let mut base = 0usize;
-    for i in 0..32 {
-        let b = 0x1000_1000 + i * 0x200;
-        if mmio_read(b, MMIO_MAGIC) == 0x7472_6976 && mmio_read(b, MMIO_VERSION) == 2 {
-            if mmio_read(b, MMIO_DEVICE_ID) == 1 {
-                base = b;
-                break;
-            }
-        }
-    }
-    if base == 0 {
+    // QEMU virt: virtio-mmio 槽 0 位于 0x10001000。
+    // 注意：不能扫描空槽位——读未实现的 MMIO 区域会触发 access fault。
+    let base = 0x1000_1000;
+    if mmio_read(base, MMIO_MAGIC) != 0x7472_6976 || mmio_read(base, MMIO_VERSION) != 2 {
         return None;
+    }
+    if mmio_read(base, MMIO_DEVICE_ID) != 1 {
+        return None; // 槽 0 不是网卡
     }
 
     // 复位
