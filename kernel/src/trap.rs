@@ -244,7 +244,7 @@ extern "C" fn trap_handler(frame: *mut TrapFrame) -> *mut TrapFrame {
         }
         2 => {
             kprintln!("\n[illegal instruction] sepc={:#x} stval={:#x}", f.sepc, f.stval);
-            proc::die(crate::errno::Errno::Sigill);
+            proc::die(crate::errno::SIGILL);
         }
         _ => {
             kprintln!(
