@@ -1,11 +1,10 @@
 //! smoltcp TCP/IP 栈集成（virtio-net 设备 + 10.0.2.15/24 静态配置）
 
-use alloc::boxed::Box;
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
-use smoltcp::iface::{Config as IfaceConfig, Interface, SocketHandle};
+use smoltcp::iface::{Config as IfaceConfig, Interface, SocketHandle, SocketSet};
 use smoltcp::phy::{Device, DeviceCapabilities, Medium, RxToken, TxToken};
-use smoltcp::socket::{tcp, SocketSet};
+use smoltcp::socket::tcp;
 use smoltcp::time::Instant;
 use smoltcp::wire::{EthernetAddress, HardwareAddress, IpAddress, IpCidr, Ipv4Address};
 
