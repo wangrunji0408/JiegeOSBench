@@ -436,14 +436,6 @@ fn sys_openat(_dirfd: usize, path_ptr: usize, flags: usize, _mode: usize) -> Ret
             Err(Errno::Eacces)
         }
     }
-    .map(|fd| {
-        let _ = mode_unused();
-        fd
-    })
-}
-
-fn mode_unused() -> u32 {
-    0
 }
 
 fn sys_close(fd: usize) -> Ret {
