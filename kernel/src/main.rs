@@ -93,7 +93,7 @@ extern "C" fn rust_main(hartid: usize, dtb_paddr: usize) -> ! {
 
     // 5. 挂载 rootfs 并启动第一个用户程序
     vfs::init();
-    let argv: [&str; 1] = ["/usr/sbin/nginx"];
+    let argv: [&str; 3] = ["/bin/busybox.static", "echo", "hello from busybox static"];
     proc::spawn(&argv).expect("failed to spawn init process");
 
     unreachable!("spawn returned")
