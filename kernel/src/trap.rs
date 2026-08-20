@@ -46,22 +46,6 @@ static mut KERNEL_STACK: Aligned<{ 128 * 1024 }> = Aligned([0; 128 * 1024]);
 
 global_asm!(
     r#"
-.altmacro
-.macro SAVE_FP base
-    .set n, 0
-    .rept 32
-        fsd f%n, (256 + 8*n)(\base)
-        .set n, n+1
-    .endr
-.endm
-.macro LOAD_FP base
-    .set n, 0
-    .rept 32
-        fld f%n, (256 + 8*n)(\base)
-        .set n, n+1
-    .endr
-.endm
-
 .section .text
 .align 4
 .globl trap_entry
