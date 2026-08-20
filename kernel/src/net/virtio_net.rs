@@ -220,6 +220,7 @@ pub fn probe() -> Option<VirtioNet> {
     let _ = VIRTIO_FAILED;
 
     // RX 缓冲
+    crate::kprintln!("[net] queues set up, allocating buffers...");
     let mut rx_buffers: Vec<&'static mut [u8]> = Vec::new();
     for _ in 0..QUEUE_SIZE {
         let p = crate::pmm::alloc_page().expect("oom rx buf");
