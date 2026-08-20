@@ -114,7 +114,7 @@ pub fn lookup(root: usize, va: usize) -> Option<(usize, u64)> {
             }
             if v & (PTE_R | PTE_W | PTE_X) != 0 {
                 // 大页
-                let base = (v >> 10) as usize << 12;
+                let base = ((v >> 10) as usize) << 12;
                 let mask = (1usize << (12 + level * 9)) - 1;
                 return Some((base | (va & mask), v));
             }
