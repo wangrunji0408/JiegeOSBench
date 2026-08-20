@@ -95,6 +95,7 @@ pub struct VirtioNet {
     rx_free: Vec<usize>,                // 空闲 desc 索引
     rx_used_seen: u16,
     // TX
+    tx_buffers: Vec<&'static mut [u8]>,
     tx_free: Vec<usize>,
     tx_used_seen: u16,
 }
