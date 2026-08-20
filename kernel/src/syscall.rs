@@ -231,7 +231,7 @@ fn dispatch_inner(n: usize, a: [usize; 6]) -> Ret {
         nr::CHDIR => sys_chdir(a[1]),
         nr::UNLINKAT => sys_unlinkat(a[1]),
         nr::MKDIRAT => sys_mkdirat(a[1]),
-        nr::RENAMEAT => Ok(0), // 不支持
+        nr::RENAMEAT2 => Ok(0),
         nr::FCNTL => sys_fcntl(a[0], a[1], a[2]),
         nr::DUP => sys_dup(a[0]),
         nr::DUP3 => sys_dup3(a[0], a[1]),
