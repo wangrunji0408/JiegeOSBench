@@ -59,12 +59,11 @@ pub fn map_zero_page(va: usize) -> bool {
 }
 
 /// 处理用户态 page fault
-pub fn handle_page_fault(va: usize, _code: u64) -> Result<(), Errno> {
+pub fn handle_page_fault(va: usize, _code: u64) -> Result<(), i32> {
     if map_zero_page(va) {
         Ok(())
     } else {
-        // 栈向下增长：栈 VMA 应已覆盖；不覆盖则非法
-        Err(Errno::Sigsegv)
+        Err(crate::errno::SIGSEGV)
     }
 }
 
