@@ -130,7 +130,7 @@ fn load_one_elf(data: &[u8], base: usize) -> Ret<LoadedImage> {
     let mut interp: Option<String> = None;
 
     for i in 0..phnum {
-        let ph = read::<Phdr>(data, ehdr.e_phoff as usize + i * phent).ok_or(Errno::Enoexec))?;
+        let ph = read::<Phdr>(data, ehdr.e_phoff as usize + i * phent).ok_or(Errno::Enoexec)?;
         match ph.p_type {
             PT_LOAD => {
                 let seg_va = base + ph.p_vaddr as usize;
