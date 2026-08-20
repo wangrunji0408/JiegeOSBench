@@ -262,6 +262,12 @@ extern "C" fn trap_handler(frame: *mut TrapFrame) -> *mut TrapFrame {
     let f = unsafe { &mut *frame };
     let cause = f.scause;
     kprintln!("[trap] scause={:#x} sepc={:#x} stval={:#x} a7={:#x}", cause, f.sepc, f.stval, f.x[17]);
+    if code == 13 || code == 15 || code == 12 {
+        let root = proc::current_page_table_root();
+        let page = f.stval as usize & !0xfff;
+        let lk = crate::page::lookup(root, page);
+        kprintln!("[trap]   page {:#x} lookup={:?}", page, lk);
+    }
     let interrupt = cause >> 63 == 1;
     let code = cause & 0xfff_ffff_ffff_ffff;
 
