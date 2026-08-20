@@ -251,7 +251,7 @@ extern "C" fn trap_handler(frame: *mut TrapFrame) -> *mut TrapFrame {
                 "\n[trap] unhandled exception scause={:#x} sepc={:#x} stval={:#x}",
                 cause, f.sepc, f.stval
             );
-            proc::die(crate::errno::Errno::Sigsegv);
+            proc::die(crate::errno::SIGSEGV);
         }
     }
     frame
