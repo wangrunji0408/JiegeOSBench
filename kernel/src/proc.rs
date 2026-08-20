@@ -112,12 +112,15 @@ pub fn alloc_fd() -> usize {
     proc.fds.len() - 1
 }
 
-pub fn get_fd(fd: usize) -> Option<&mut crate::net::socket::FdEntry> {
+pub fn get_fd(fd: usize) -> Option<&'static mut crate::net::socket::FdEntry> {
     let proc = current();
     if fd >= proc.fds.len() {
         return None;
     }
-    proc.fds[fd].as_mut()
+    // PROCESS 是 static mut，借用可以视作 'static（单线程访问）
+    proc.fds[fd]
+        .as_mut()
+        .map(|e| unsafe { core::mem::transmute::<&mut _, &'static mut _>(e) })
 }
 
 /// 进程死亡：打印并关机
