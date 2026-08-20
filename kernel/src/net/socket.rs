@@ -102,17 +102,11 @@ pub fn sys_bind(fd: usize, addr: &[u8]) -> Ret {
     let entry = crate::proc::get_fd(fd).ok_or(Errno::Ebadf)?;
     match entry {
         FdEntry::Socket(s) => {
-            // 记录端口（bind 0.0.0.0:80）
             let mut st = s.borrow_mut();
-            match &st.state {
-                SockState::Idle => {
-                    st.state = SockState::Idle; // 端口在 listen 时生效
-                    core::mem::replace(&mut st.state, SockState::Idle);
-                    // 存到全局? 简化：Idle 但记住 port → 直接进入 Listening 延迟到 listen()
-                    // 我们这里什么也不做，端口由 listen() 使用
-                }
-                _ => return Err(Errno::Einval),
+            if !matches!(st.state, SockState::Idle) {
+                return Err(Errno::Einval);
             }
+            st.bind_port = Some(port);
             Ok(0)
         }
         _ => Err(Errno::Enotsock),
@@ -121,28 +115,6 @@ pub fn sys_bind(fd: usize, addr: &[u8]) -> Ret {
 
 pub fn sys_listen(fd: usize, backlog: usize) -> Ret {
     let _ = backlog;
-    let port = {
-        let entry = crate::proc::get_fd(fd).ok_or(Errno::Ebadf)?;
-        match entry {
-            FdEntry::Socket(s) => {
-                let st = s.borrow();
-                match &st.state {
-                    // nginx 顺序: socket -> setsockopt -> bind -> listen
-                    // bind 没记录端口…… 需要从 bind 传来。改用 bind 直接记录:
-                    SockState::Idle => return Err(Errno::Edestaddrreq),
-                    SockState::Listening { port } => *port,
-                    SockState::Connected { .. } => return Err(Errno::Einval),
-                }
-            }
-            _ => return Err(Errno::Enotsock),
-        }
-    };
-    let _ = port;
-    Err(Errno::Edestaddrreq)
-}
-
-/// 带端口的 listen（bind+listen 组合，供内部使用）
-pub fn sys_bind_listen(fd: usize, port: u16) -> Ret {
     let entry = crate::proc::get_fd(fd).ok_or(Errno::Ebadf)?;
     match entry {
         FdEntry::Socket(s) => {
@@ -152,6 +124,7 @@ pub fn sys_bind_listen(fd: usize, port: u16) -> Ret {
                     return Err(Errno::Einval);
                 }
             }
+            let port = s.borrow().bind_port.ok_or(Errno::Edestaddrreq)?;
             if !stack::listen(port) {
                 return Err(Errno::Eaddrinuse);
             }
