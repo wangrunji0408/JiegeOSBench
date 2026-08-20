@@ -86,8 +86,9 @@ pub mod spin {
         }
     }
 
-    unsafe impl<T: Send> Send for Mutex<T> {}
-    unsafe impl<T: Send> Sync for Mutex<T> {}
+    // 单核内核：无条件 Send/Sync（无真正的并发访问）
+    unsafe impl<T> Send for Mutex<T> {}
+    unsafe impl<T> Sync for Mutex<T> {}
 
     pub struct MutexGuard<'a, T> {
         lock: &'a Mutex<T>,
