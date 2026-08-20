@@ -110,34 +110,12 @@ fn mmio_write(base: usize, off: usize, v: u32) {
     unsafe { ((base + off) as *mut u32).write_volatile(v) }
 }
 
-/// 分配对齐的大块静态内存（物理页拼接）
+/// 分配一块 DMA 内存（单页即可容纳；desc 2K / avail ~260B / used ~1K）
 fn alloc_aligned_block(bytes: usize, align: usize) -> *mut u8 {
-    let pages = (bytes + align + 0xfff) / 0x1000 + 1;
-    let mut first = 0usize;
-    let mut chain: Vec<usize> = Vec::new();
-    for _ in 0..pages {
-        let p = crate::pmm::alloc_page().expect("oom for virtio");
-        chain.push(p);
-    }
-    // 找一个 align 对齐的起点（页内偏移为 0 的页天然 4096 对齐；>= 4096 的对齐取页号对齐）
-    let need_pages = (bytes + 0xfff) / 0x1000;
-    let mut start_idx = 0usize;
-    if align > 0x1000 {
-        // 找到第一个 align 对齐的页
-        for (i, &p) in chain.iter().enumerate() {
-            if p % align == 0 && i + need_pages <= chain.len() {
-                start_idx = i;
-                break;
-            }
-        }
-    }
-    first = chain[start_idx];
-    let _ = first;
-    // 校验连续性
-    for i in 0..need_pages {
-        assert_eq!(chain[start_idx + i], chain[start_idx] + i * 0x1000, "phys pages not contiguous");
-    }
-    chain[start_idx] as *mut u8
+    assert!(bytes <= 0x1000, "virtio struct too large for single page");
+    let _ = align;
+    let p = crate::pmm::alloc_page().expect("oom for virtio");
+    p as *mut u8
 }
 
 /// 探测并初始化 virtio-net。找不到返回 None。
