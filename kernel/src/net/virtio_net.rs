@@ -328,26 +328,22 @@ impl VirtioNet {
             return;
         }
         // 确保 TX desc 可用
+        let mut spins = 0;
         while self.tx_free.is_empty() {
             self.reap_tx();
             if self.tx_free.is_empty() {
-                // 等待设备消费：简单自旋（QEMU 即刻完成）
+                spins += 1;
+                if spins > 100 {
+                    return; // 放弃（TCP 会重传）
+                }
                 for _ in 0..1000 {
                     core::hint::spin_loop();
-                }
-                self.reap_tx();
-                if self.tx_free.is_empty() {
-                    return; // 放弃（TCP 会重传）
                 }
             }
         }
         let idx = self.tx_free.pop().unwrap();
-        let buf_ptr = self.rx_buffers[idx].as_mut_ptr(); // 复用 rx_buffer? 不行，单独 TX 缓冲
-        let _ = buf_ptr;
-        // TX 使用静态发送缓冲
-        static mut TX_BUF: [u8; NET_HDR_SIZE + FRAME_SIZE] = [0; NET_HDR_SIZE + FRAME_SIZE];
         unsafe {
-            let buf = &mut *core::ptr::addr_of_mut!(TX_BUF);
+            let buf = &mut self.tx_buffers[idx][..];
             buf[..NET_HDR_SIZE].fill(0);
             buf[NET_HDR_SIZE..NET_HDR_SIZE + frame.len()].copy_from_slice(frame);
             let addr = buf.as_ptr() as u64;
