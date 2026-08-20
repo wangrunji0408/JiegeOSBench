@@ -268,8 +268,9 @@ pub fn user_mode_smoke_test() {
     unsafe {
         let p = code_pa as *mut u32;
         p.write_volatile(0x05d00893); // li a7, 93 (exit_group)
-        p.add(1).write_volatile(0x00000073); // ecall
-        p.add(2).write_volatile(0x00000073); // ecall（兜底）
+        p.add(1).write_volatile(0xff410583); // ld a1, -12(sp) ← 测试栈 load
+        p.add(2).write_volatile(0x00000073); // ecall
+        p.add(3).write_volatile(0x00000073); // ecall（兜底）
     }
     let stack_top = 0x7F_FFFF_F000usize;
     let stack_pa = crate::pmm::alloc_page().expect("smoke: stack page");
