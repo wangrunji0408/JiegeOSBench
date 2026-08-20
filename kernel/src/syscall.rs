@@ -847,6 +847,8 @@ fn sys_mmap(addr: usize, len: usize, prot: usize, flags: usize, fd: usize, off: 
     let proc = proc::current();
     // 选择映射地址
     let start = if flags & MAP_FIXED != 0 && addr != 0 {
+        // MAP_FIXED：覆盖语义 —— 先清除该范围内的既有映射
+        proc::remove_vma_range(addr, addr + len);
         addr & !0xfff
     } else if addr != 0 && !proc.vmas.iter().any(|v| addr + len > v.start && addr < v.end) {
         addr & !0xfff
