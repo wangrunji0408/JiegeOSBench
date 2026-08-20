@@ -2,6 +2,7 @@
 #![no_main]
 #![allow(clippy::missing_safety_doc)]
 
+#[macro_use]
 extern crate alloc;
 
 mod dtb;
