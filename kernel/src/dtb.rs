@@ -71,6 +71,7 @@ pub fn parse_memory(dtb_paddr: usize) -> (usize, usize) {
                 let len = u32_at(base, pos - base + 4) as usize;
                 let nameoff = u32_at(base, pos - base + 8) as usize;
                 let pname = string_at(base, off_strings + nameoff);
+                crate::kprintln!("[dtb] node='{}' prop='{}' len={}", cur_name, pname, len);
                 let data_off = pos + 12;
                 if pname == "reg" && (cur_name.starts_with("memory@") || cur_name == "memory") {
                     // riscv virt: reg = <u64 start, u64 size>
