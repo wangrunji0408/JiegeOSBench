@@ -292,7 +292,6 @@ fn dispatch_inner(n: usize, a: [usize; 6]) -> Ret {
         nr::EPOLL_CREATE1 => socket::sys_epoll_create1(),
         nr::EPOLL_CTL => sys_epoll_ctl(a[0], a[1], a[2], a[3]),
         nr::EPOLL_PWAIT | nr::EPOLL_WAIT => sys_epoll_wait(a[0], a[1], a[2], a[3] as i64),
-        nr::WRITE => sys_write(a[0], a[1], a[2]),
         _ => {
             kprintln!("[sys] unimplemented syscall {} ({:#x})", n, n);
             Err(Errno::Enosys)
