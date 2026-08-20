@@ -83,10 +83,16 @@ pub fn add_vma(start: usize, end: usize, flags: u64) -> bool {
     let proc = current();
     let start = start & !0xfff;
     let end = (end + 0xfff) & !0xfff;
-    // 与内核区冲突检查（内核 VA=PA 从 0x80000000 起）
-    if end > 0x7000_0000 && start < 0x9000_0000 {
-        // 内核在 0x80200000 起。允许低地址不冲突
-        if start >= 0x7000_0000 {
+    if start >= end {
+        return false;
+    }
+    // 禁止用户 VMA 进入内核恒等映射区（MMIO 0x10000000 附近 + RAM 0x80000000+）
+    if start < 0x8800_0000 && end > 0x0800_0000 {
+        return false;
+    }
+    // 与既有 VMA 重叠检查
+    for v in proc.vmas.iter() {
+        if start < v.end && end > v.start {
             return false;
         }
     }
