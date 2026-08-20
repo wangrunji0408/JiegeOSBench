@@ -157,22 +157,6 @@ pub fn init(virtio: Option<VirtioNet>) {
     crate::kprintln!("net: interface up at 10.0.2.15/24 gw 10.0.2.2");
 }
 
-/// Interface::new 需要 &mut Device —— 用一个借用包装（构造期间用）
-struct SmolShadow<'a>(&'a SmolDevice);
-impl Device for SmolShadow<'_> {
-    type RxToken<'a2> = SmolRxToken where Self: 'a2;
-    type TxToken<'a2> = SmolTxToken where Self: 'a2;
-    fn receive(&mut self, _t: Instant) -> Option<(Self::RxToken<'_>, Self::TxToken<'_>)> {
-        None
-    }
-    fn transmit(&mut self, _t: Instant) -> Option<Self::TxToken<'_>> {
-        None
-    }
-    fn capabilities(&self) -> DeviceCapabilities {
-        self.0.capabilities()
-    }
-}
-
 fn new_tcp_socket() -> tcp::Socket<'static> {
     tcp::Socket::new(
         tcp::SocketBuffer::new(vec![0u8; TCP_BUF_SIZE]),
