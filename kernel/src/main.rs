@@ -67,7 +67,26 @@ macro_rules! kprint {
 extern "C" fn rust_main(hartid: usize, dtb_paddr: usize) -> ! {
     // 清 BSS（start.asm 已做，但保险再判一次）
     uart::early_init();
-    kprintln!("ijiege kernel booting, hartid={}, dtb={:#x}", hartid, dtb_paddr);
+    static mut ENTER_COUNT: u32 = 0;
+    unsafe {
+        ENTER_COUNT += 1;
+        let ec = ENTER_COUNT;
+        core::ptr::write_volatile(core::ptr::addr_of_mut!(ENTER_COUNT), ec);
+    }
+    let ec = unsafe { core::ptr::read_volatile(core::ptr::addr_of!(ENTER_COUNT)) };
+    kprintln!("ijiege kernel booting, hartid={}, dtb={:#x}, enter={}", hartid, dtb_paddr, ec);
+    if ec > 1 {
+        // 打印 dtb 前 32 字节帮助诊断
+        let mut i = 0;
+        let mut line = alloc::string::String::from("dtb bytes:");
+        while i < 32 {
+            let b = unsafe { ((dtb_paddr + i) as *const u8).read_volatile() };
+            use core::fmt::Write;
+            let _ = write!(line, " {:02x}", b);
+            i += 1;
+        }
+        kprintln!("{}", line);
+    }
 
     // 1. 解析设备树：内存大小
     let (mem_start, mem_size) = dtb::parse_memory(dtb_paddr);
