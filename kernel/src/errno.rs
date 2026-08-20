@@ -70,14 +70,15 @@ pub enum Errno {
     Einprogress = 115,
     Edquot = 122,
     Estale = 116,
-    // 信号值（用于 die）
-    Sigkill = 9,
-    Sigsegv = 11,
-    Sigill = 4,
-    Sigbus = 7,
-    Sigfpe = 8,
-    Sigabrt = 6,
 }
+
+// 信号值（proc::die 用）
+pub const SIGILL: i32 = 4;
+pub const SIGABRT: i32 = 6;
+pub const SIGBUS: i32 = 7;
+pub const SIGFPE: i32 = 8;
+pub const SIGKILL: i32 = 9;
+pub const SIGSEGV: i32 = 11;
 
 impl Errno {
     pub fn code(&self) -> i64 {
