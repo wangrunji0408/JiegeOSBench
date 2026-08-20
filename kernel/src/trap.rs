@@ -259,7 +259,7 @@ extern "C" fn trap_handler(frame: *mut TrapFrame) -> *mut TrapFrame {
 
 pub fn init() {
     unsafe {
-        TRAPFRAME.kernel_sp = (KERNEL_STACK.as_ptr() as usize) + KERNEL_STACK.len();
+        TRAPFRAME.kernel_sp = (KERNEL_STACK.0.as_ptr() as usize) + KERNEL_STACK.0.len();
         TRAPFRAME.sstatus = SSTATUS_SPIE | SSTATUS_SUM | SSTATUS_FS_INITIAL;
         core::arch::asm!("csrw stvec, {}", in(reg) trap_entry as usize);
         // 开启浮点（sstatus.FS = Initial）
