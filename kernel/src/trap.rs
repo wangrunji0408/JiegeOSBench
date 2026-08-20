@@ -46,6 +46,7 @@ static mut KERNEL_STACK: Aligned<{ 128 * 1024 }> = Aligned([0; 128 * 1024]);
 
 global_asm!(
     r#"
+.attribute arch, "rv64gc"
 .section .text
 .align 4
 .globl trap_entry
