@@ -21,9 +21,9 @@ pub struct TrapFrame {
     pub kernel_sp: u64, // 552  内核栈顶
 }
 
-// sstatus 位
+// sstatus 位（注意：FS 在 bits 13-14，与 mstatus 同位置）
 pub const SSTATUS_SUM: u64 = 1 << 18;
-pub const SSTATUS_FS_INITIAL: u64 = 1 << 33;
+pub const SSTATUS_FS_INITIAL: u64 = 1 << 13;
 pub const SSTATUS_SPIE: u64 = 1 << 5;
 
 pub const TRAPFRAME_ADDR: usize = core::ptr::addr_of!(TRAPFRAME) as usize;
