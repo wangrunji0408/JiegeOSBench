@@ -51,11 +51,6 @@ global_asm!(
 .align 4
 .globl trap_entry
 trap_entry:
-    # 调试: 直接向 UART 写 'T'（绕过一切，证明 trap 发生）
-    li t0, 0x10000000
-    li t1, 0x54
-    sb t1, 0(t0)
-
     # sp <-> sscratch: sp = trapframe, sscratch = 旧 sp
     csrrw sp, sscratch, sp
 
