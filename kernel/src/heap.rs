@@ -44,7 +44,9 @@ unsafe impl GlobalAlloc for KernelAlloc {
         let total = need + core::mem::size_of::<Node>();
         let hdr = core::mem::size_of::<Node>();
         if total > 0x10000 {
-            crate::kprintln!("[heap] big alloc {} bytes (align {})", layout.size(), layout.align());
+            let ra: usize;
+            unsafe { core::arch::asm!("mv {}, ra", out(reg) ra) };
+            crate::kprintln!("[heap] big alloc {} bytes (align {}) caller ra={:#x}", layout.size(), layout.align(), ra);
         }
 
         lock_heap();
