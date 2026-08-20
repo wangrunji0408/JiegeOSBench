@@ -329,7 +329,7 @@ pub fn next_poll_delay_ms() -> Option<u64> {
     let n = net();
     let now = Instant::from_millis(crate::trap::now_ms() as i64);
     n.iface
-        .poll_at(now, &mut n.sockets)
+        .poll_at(now, &n.sockets)
         .map(|t| {
             let ms = t.total_millis() as u64;
             ms.saturating_sub(crate::trap::now_ms()).max(1)
