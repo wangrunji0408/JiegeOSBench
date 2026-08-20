@@ -7,6 +7,7 @@
 
 use crate::syscall;
 use crate::{kprintln, proc};
+use core::arch::global_asm;
 
 #[repr(C)]
 pub struct TrapFrame {
