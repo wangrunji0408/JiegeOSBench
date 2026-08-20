@@ -257,6 +257,40 @@ pub fn enter_user(frame: *mut TrapFrame) -> ! {
     }
 }
 
+/// 最小用户态冒烟测试：一页代码（li a7,93; ecall）+ 一页栈
+pub fn user_mode_smoke_test() {
+    use crate::page::{PTE_A, PTE_D, PTE_R, PTE_U, PTE_V, PTE_W, PTE_X};
+    let root = crate::page::alloc_table().expect("smoke: alloc root");
+    crate::page::map_kernel_regions(root);
+    let code_va = 0x10_0000_0000usize;
+    let code_pa = crate::pmm::alloc_page().expect("smoke: code page");
+    crate::page::map_4k(root, code_va, code_pa, PTE_R | PTE_X | PTE_U | PTE_A | PTE_D | PTE_V);
+    unsafe {
+        let p = code_pa as *mut u32;
+        p.write_volatile(0x05d00893); // li a7, 93 (exit_group)
+        p.add(1).write_volatile(0x00000073); // ecall
+        p.add(2).write_volatile(0x00000073); // ecall（兜底）
+    }
+    let stack_top = 0x7F_FFFF_F000usize;
+    let stack_pa = crate::pmm::alloc_page().expect("smoke: stack page");
+    crate::page::map_4k(root, stack_top - 0x1000, stack_pa, PTE_R | PTE_W | PTE_U | PTE_A | PTE_D | PTE_V);
+    let frame = trapframe_addr() as *mut TrapFrame;
+    unsafe {
+        (*frame).x = [0; 32];
+        (*frame).f = [0; 32];
+        (*frame).fcsr = 0;
+        (*frame).sepc = code_va as u64;
+        (*frame).x[2] = stack_top as u64;
+        (*frame).sstatus = SSTATUS_SPIE | SSTATUS_SUM | SSTATUS_FS_INITIAL;
+    }
+    kprintln!("[smoke] entering user: code={:#x} stack={:#x}", code_va, stack_top);
+    unsafe {
+        crate::page::load_satp(root);
+        core::arch::asm!("csrw sscratch, {}", in(reg) frame as usize);
+        trap_return(frame)
+    }
+}
+
 #[no_mangle]
 extern "C" fn trap_handler(frame: *mut TrapFrame) -> *mut TrapFrame {
     let f = unsafe { &mut *frame };
