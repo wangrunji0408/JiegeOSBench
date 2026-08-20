@@ -310,10 +310,10 @@ pub fn init() {
         TRAPFRAME.kernel_sp = (KERNEL_STACK.0.as_ptr() as usize) + KERNEL_STACK.0.len();
         TRAPFRAME.sstatus = SSTATUS_SPIE | SSTATUS_SUM | SSTATUS_FS_INITIAL;
         core::arch::asm!("csrw stvec, {}", in(reg) trap_entry as usize);
-        // 开启浮点（sstatus.FS = Initial）
+        // 开启浮点（sstatus.FS = Initial, bits 13-14）
         let mut ss: u64;
         core::arch::asm!("csrr {}, sstatus", out(reg) ss);
-        ss = (ss & !0x6000_0000) | SSTATUS_FS_INITIAL;
+        ss = (ss & !0x6000) | SSTATUS_FS_INITIAL;
         core::arch::asm!("csrw sstatus, {}", in(reg) ss);
     }
 }
