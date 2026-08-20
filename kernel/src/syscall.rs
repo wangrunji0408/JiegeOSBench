@@ -214,7 +214,7 @@ pub fn fill_random(buf: &mut [u8]) {
 
 fn dispatch_inner(n: usize, a: [usize; 6]) -> Ret {
     match n {
-        nr::IOCTL => sys_ioctl(a[0], a[1], a[2]),
+        nr::IOCTL => socket::sys_ioctl(a[0], a[1], a[2]),
         nr::OPENAT => sys_openat(a[0], a[1], a[2], a[3]),
         nr::CLOSE => sys_close(a[0]),
         nr::READ => sys_read(a[0], a[1], a[2]),
