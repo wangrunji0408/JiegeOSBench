@@ -123,7 +123,11 @@ pub fn probe() -> Option<VirtioNet> {
     // QEMU virt: virtio-mmio 槽 0 位于 0x10001000。
     // 注意：不能扫描空槽位——读未实现的 MMIO 区域会触发 access fault。
     let base = 0x1000_1000;
-    if mmio_read(base, MMIO_MAGIC) != 0x7472_6976 || mmio_read(base, MMIO_VERSION) != 2 {
+    let magic = mmio_read(base, MMIO_MAGIC);
+    let ver = mmio_read(base, MMIO_VERSION);
+    let did = mmio_read(base, MMIO_DEVICE_ID);
+    crate::kprintln!("[net] slot0: magic={:#x} ver={:#x} id={:#x}", magic, ver, did);
+    if magic != 0x7472_6976 || ver != 2 {
         return None;
     }
     if mmio_read(base, MMIO_DEVICE_ID) != 1 {
