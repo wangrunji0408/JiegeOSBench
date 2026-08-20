@@ -62,7 +62,7 @@ unsafe impl GlobalAlloc for KernelAlloc {
                     (*rn).free = true;
                 }
                 (*node).free = false;
-                result = p.add(hdr) as *mut u8;
+                result = (p + hdr) as *mut u8;
                 break;
             }
             p += node_size;
