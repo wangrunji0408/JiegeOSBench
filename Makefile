@@ -11,8 +11,9 @@ kernel: rootfs
 	cd kernel && cargo build --release
 
 run: kernel
-	qemu-system-riscv64 -machine virt -cpu rv64 -smp 1 -m 512M -nographic \
+	qemu-system-riscv64 -machine virt -cpu rv64 -smp 1 -m 512M -nographic -no-reboot \
 		-bios default -kernel $(KERNEL) \
+		-global virtio-mmio.force-legacy=false \
 		-netdev user,id=n0,hostfwd=tcp::8080-:80 -device virtio-net-device,netdev=n0
 
 clean:
