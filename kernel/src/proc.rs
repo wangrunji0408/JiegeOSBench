@@ -110,6 +110,36 @@ pub fn add_vma(start: usize, end: usize, flags: u64) -> bool {
     true
 }
 
+/// 移除 [start, end) 范围内的 VMA（截断保留边缘部分）并解除页表映射（MAP_FIXED / munmap 语义）
+pub fn remove_vma_range(start: usize, end: usize) {
+    let proc = current();
+    let root = proc.root;
+    let start = start & !0xfff;
+    let end = (end + 0xfff) & !0xfff;
+    // 解除页表映射
+    let mut va = start;
+    while va < end {
+        page::unmap(root, va);
+        va += 0x1000;
+    }
+    page::sfence_vma();
+    // 裁剪 VMA
+    let mut new_vmas: Vec<Vma> = Vec::new();
+    for v in proc.vmas.drain(..) {
+        if v.end <= start || v.start >= end {
+            new_vmas.push(v);
+        } else {
+            if v.start < start {
+                new_vmas.push(Vma { start: v.start, end: start, flags: v.flags });
+            }
+            if v.end > end {
+                new_vmas.push(Vma { start: end, end: v.end, flags: v.flags });
+            }
+        }
+    }
+    proc.vmas = new_vmas;
+}
+
 /// 分配一个 fd
 pub fn alloc_fd() -> usize {
     let proc = current();
