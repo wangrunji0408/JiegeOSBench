@@ -32,6 +32,7 @@ pub enum SockState {
 
 pub struct TcpSock {
     pub state: SockState,
+    pub bind_port: Option<u16>,
     pub nonblocking: bool,
     pub nodelay: bool,
     /// 记录 EOF 已上报
@@ -42,6 +43,7 @@ impl TcpSock {
     pub fn new() -> Self {
         TcpSock {
             state: SockState::Idle,
+            bind_port: None,
             nonblocking: false,
             nodelay: false,
             rclosed: false,
