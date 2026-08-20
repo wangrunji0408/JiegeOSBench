@@ -111,7 +111,10 @@ extern "C" fn rust_main(hartid: usize, dtb_paddr: usize) -> ! {
     // 4. 初始化网络（virtio-net + smoltcp）
     net::init();
 
-    // 5. 挂载 rootfs 并启动第一个用户程序
+    // 5. 记录内核映射区（所有用户页表会恒等映射这些区域，供 trap 后内核运行）
+    page::record_kernel_regions(mem_start, mem_end, 0x1000_0000, 0x1000_a000);
+
+    // 6. 挂载 rootfs 并启动第一个用户程序
     vfs::init();
     let argv: [&str; 3] = ["/bin/busybox.static", "echo", "hello from busybox static"];
     proc::spawn(&argv).expect("failed to spawn init process");
