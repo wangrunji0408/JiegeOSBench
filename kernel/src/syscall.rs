@@ -642,7 +642,8 @@ fn stat_meta_to_bytes(meta: &vfs::Meta, st: &mut [u8]) {
         0o100000 | (meta.mode & 0o777)
     };
     st[0..8].copy_from_slice(&0x801u64.to_le_bytes()); // dev
-    st[8..16].copy_from_slice(&1u64.to_le_bytes()); // ino
+    // ino：不同文件必须不同（musl ld.so 用 dev+ino 去重共享库）
+    st[8..16].copy_from_slice(&((meta.size as u64) ^ ((meta.mode as u64) << 32) ^ 0x1234_5678).to_le_bytes());
     st[16..20].copy_from_slice(&mode.to_le_bytes());
     st[20..24].copy_from_slice(&1u32.to_le_bytes()); // nlink
     st[24..28].copy_from_slice(&0u32.to_le_bytes()); // uid
