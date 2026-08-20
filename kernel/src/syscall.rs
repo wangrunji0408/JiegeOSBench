@@ -634,7 +634,7 @@ fn sys_lseek(fd: usize, off: i64, whence: usize) -> Ret {
             *pos = new as usize;
             Ok(*pos)
         }
-        _ => Err(Errno::EspiPE_PLACEHOLDER),
+        _ => Err(Errno::EspiPE),
     }
 }
 
