@@ -122,15 +122,9 @@ fn alloc_aligned_block(bytes: usize, align: usize) -> *mut u8 {
 pub fn probe() -> Option<VirtioNet> {
     // QEMU virt: virtio-mmio 槽 0 位于 0x10001000。
     // 注意：不能扫描空槽位——读未实现的 MMIO 区域会触发 access fault。
-    let base = 0x1000_1000;
-    // 诊断：扫描前 8 个槽位
-    for slot in 0..8 {
-        let b = 0x1000_1000 + slot * 0x200;
-        let magic = mmio_read(b, MMIO_MAGIC);
-        let ver = mmio_read(b, MMIO_VERSION);
-        let did = mmio_read(b, MMIO_DEVICE_ID);
-        crate::kprintln!("[net] slot{}: magic={:#x} ver={:#x} id={:#x}", slot, magic, ver, did);
-    }
+    // QEMU riscv virt: virtio-mmio 槽位从 0x10008000 倒序分配，
+    // 第一个 virtio 设备位于 0x10008000。需要 force-legacy=false（modern, version 2）。
+    let base = 0x1000_8000;
     if mmio_read(base, MMIO_MAGIC) != 0x7472_6976 || mmio_read(base, MMIO_VERSION) != 2 {
         return None;
     }
