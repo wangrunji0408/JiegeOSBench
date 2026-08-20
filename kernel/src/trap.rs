@@ -328,6 +328,10 @@ extern "C" {
     static trap_entry: u8;
 }
 
+pub fn trap_entry_addr() -> usize {
+    unsafe { core::ptr::addr_of!(trap_entry) as usize }
+}
+
 /// 读 mtime（QEMU virt: 10MHz）
 #[inline]
 pub fn time_ticks() -> u64 {
