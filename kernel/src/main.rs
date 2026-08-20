@@ -97,8 +97,8 @@ extern "C" fn rust_main(hartid: usize, dtb_paddr: usize) -> ! {
     let kernel_end = unsafe { &__kernel_end as *const u8 as usize };
     let heap_start = (kernel_end + 0xfff) & !0xfff;
     let heap_size = 32 << 20; // 32MB 内核堆
+    heap::init(heap_start, heap_size); // 堆必须先于任何 Vec 分配
     pmm::init(heap_start + heap_size, mem_end);
-    heap::init(heap_start, heap_size);
     kprintln!(
         "kernel image ends {:#x}, heap {:#x}-{:#x}, pages from {:#x}",
         kernel_end, heap_start, heap_start + heap_size, heap_start + heap_size
