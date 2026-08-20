@@ -61,20 +61,13 @@ impl Device for SmolDevice {
     type RxToken<'a> = SmolRxToken where Self: 'a;
     type TxToken<'a> = SmolTxToken where Self: 'a;
 
-    fn receive(&mut self, _timestamp: Instant) -> Option<(Self::RxToken<'_,>, Self::TxToken<'_>)> {
-        unsafe {
-            #[allow(static_mut_refs)]
-            {
-                if RX_PENDING.is_none() {
-                    RX_PENDING = self.net.receive();
-                }
-                if RX_PENDING.is_some() {
-                    Some((SmolRxToken { frame: RX_PENDING.take().unwrap() }, SmolTxToken))
-                } else {
-                    None
-                }
-            }
+    fn receive(&mut self, _timestamp: Instant) -> Option<(Self::RxToken<'_>, Self::TxToken<'_>)> {
+        if self.pending_rx.is_none() {
+            self.pending_rx = self.net.receive();
         }
+        self.pending_rx
+            .take()
+            .map(|frame| (SmolRxToken { frame }, SmolTxToken))
     }
 
     fn transmit(&mut self, _timestamp: Instant) -> Option<Self::TxToken<'_>> {
