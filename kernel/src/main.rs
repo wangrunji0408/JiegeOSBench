@@ -94,8 +94,8 @@ extern "C" fn rust_main(hartid: usize, dtb_paddr: usize) -> ! {
     let mem_end = mem_start + mem_size;
     kprintln!("memory: {:#x} - {:#x} ({} MB)", mem_start, mem_end, mem_size >> 20);
 
-    // 2. 物理内存管理器（跳过内核镜像占用的部分）
-    let kernel_end = unsafe { &__kernel_end as *const u8 as usize };
+    // 2. 物理内存管理器（跳过内核镜像 + 启动栈占用的部分）
+    let kernel_end = unsafe { &_boot_stack_top as *const u8 as usize }; // bootstack 之后
     let heap_start = (kernel_end + 0xfff) & !0xfff;
     let heap_size = 32 << 20; // 32MB 内核堆
     heap::init(heap_start, heap_size); // 堆必须先于任何 Vec 分配
