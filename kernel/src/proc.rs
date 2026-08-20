@@ -132,7 +132,11 @@ pub fn die(sig: i32) -> ! {
 /// 启动第一个用户进程（execve 语义）
 pub fn spawn(argv: &[&str]) -> Result<(), Errno> {
     let path = argv[0];
-    let (data, _mode) = vfs::open_read(path).ok_or(Errno::Enoent)?;
+    let (file_data, _mode) = vfs::open_read(path).ok_or(Errno::Enoent)?;
+    let data: alloc::vec::Vec<u8> = match file_data {
+        vfs::FileData::Static(b) => b.to_vec(),
+        vfs::FileData::Tmp(v) => v.borrow().clone(),
+    };
 
     // 创建用户页表
     let root = page::alloc_table().ok_or(Errno::Enomem)?;
