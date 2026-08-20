@@ -118,11 +118,9 @@ pub fn sys_listen(fd: usize, backlog: usize) -> Ret {
     let entry = crate::proc::get_fd(fd).ok_or(Errno::Ebadf)?;
     match entry {
         FdEntry::Socket(s) => {
-            {
-                let st = s.borrow();
-                if !matches!(st.state, SockState::Idle) {
-                    return Err(Errno::Einval);
-                }
+            // 已在监听：幂等返回（nginx 会二次 listen 调整 backlog）
+            if matches!(s.borrow().state, SockState::Listening { .. }) {
+                return Ok(0);
             }
             let port = s.borrow().bind_port.ok_or(Errno::Edestaddrreq)?;
             if !stack::listen(port) {
