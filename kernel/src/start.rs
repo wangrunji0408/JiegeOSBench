@@ -1,5 +1,7 @@
 //! 内核入口汇编
 
+use core::arch::global_asm;
+
 global_asm!(
     r#"
 .section .text.init
