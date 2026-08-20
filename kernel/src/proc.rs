@@ -52,7 +52,11 @@ pub fn map_zero_page(va: usize) -> bool {
     let vma = proc.vmas.iter().find(|v| va >= v.start && va < v.end).unwrap();
     if let Some(pa) = pmm::alloc_page() {
         page::map_4k(proc.root, va, pa, vma.flags | PTE_A | PTE_D | PTE_V);
-        // 动态修改 PTE 后必须刷新 TLB（QEMU 会缓存无效翻译）
+        // 动态修改 PTE 后必须刷新 TLB；重写 satp（同值）强制 QEMU 全量刷新
+        let satp = page::read_satp();
+        unsafe {
+            core::arch::asm!("csrw satp, {}", in(reg) satp);
+        }
         page::sfence_vma();
         true
     } else {
