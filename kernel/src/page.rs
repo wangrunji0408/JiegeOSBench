@@ -78,24 +78,26 @@ pub fn map_4k(root: usize, va: usize, pa: usize, flags: u64) -> bool {
 pub fn map_2m(root: usize, va: usize, pa: usize, flags: u64) -> bool {
     debug_assert!(va & 0x1f_ffff == 0 && pa & 0x1f_ffff == 0);
     unsafe {
-        // 手动走两级到 L1
-        let mut table = root as *mut PageTable;
-        for level in [2usize] {
-            let idx = (va >> (12 + level * 9)) & (ENTRIES - 1);
-            let pte = (*table).as_mut_ptr().add(idx);
-            let v = pte.read_volatile();
-            if v & PTE_V == 0 {
-                let pa_t = alloc_table().expect("oom alloc table");
-                pte.write_volatile(pa_to_ppn(pa_t) << 10 | PTE_V);
-            }
-            table = ppn_to_pa(v >> 10) as *mut PageTable;
-            // 注意：刚分配时 v 是旧值，重新读
-            let idx2 = (va >> (12 + level * 9)) & (ENTRIES - 1);
-            table = ppn_to_pa((*table).as_ptr().add(idx2).read_volatile() >> 10) as *mut PageTable;
+        // root 是 L2 级：索引 bits [38:30]
+        let l2_idx = (va >> 30) & (ENTRIES - 1);
+        let root_ptr = root as *mut PageTable;
+        let v = (*root_ptr).as_ptr().add(l2_idx).read_volatile();
+        let l1_table: *mut PageTable;
+        if v & PTE_V == 0 {
+            let t = alloc_table().expect("oom alloc L1 table");
+            (*root_ptr)
+                .as_mut_ptr()
+                .add(l2_idx)
+                .write_volatile(pa_to_ppn(t) << 10 | PTE_V);
+            l1_table = t as *mut PageTable;
+        } else {
+            l1_table = ppn_to_pa(v >> 10) as *mut PageTable;
         }
-        let idx = (va >> (12 + 9)) & (ENTRIES - 1);
-        let pte = (*table).as_mut_ptr().add(idx);
-        pte.write_volatile((pa_to_ppn(pa) << 10) | flags | PTE_V | PTE_A | PTE_D);
+        let l1_idx = (va >> 21) & (ENTRIES - 1);
+        (*l1_table)
+            .as_mut_ptr()
+            .add(l1_idx)
+            .write_volatile((pa_to_ppn(pa) << 10) | flags | PTE_V | PTE_A | PTE_D);
         true
     }
 }
