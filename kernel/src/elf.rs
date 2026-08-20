@@ -204,7 +204,9 @@ pub fn load_program(data: &[u8], argv: &[&str]) -> Ret<()> {
 
     let envp: [&str; 3] = ["HOME=/", "PATH=/usr/sbin:/usr/bin:/sbin:/bin", "LANG=C.UTF-8"];
 
+    crate::kprintln!("[elf] building user stack, ld_base={:#x}", ld_base);
     let sp = build_user_stack(argv, &envp, &main, ld_base, argv[0])?;
+    crate::kprintln!("[elf] stack built at sp={:#x}, entering user mode", sp);
 
     // 设置 brk
     {
