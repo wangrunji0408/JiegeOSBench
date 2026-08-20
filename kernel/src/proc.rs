@@ -124,22 +124,10 @@ pub fn get_fd(fd: usize) -> Option<&'static mut crate::net::socket::FdEntry> {
 }
 
 /// 进程死亡：打印并关机
-pub fn die(reason: Errno) -> ! {
-    kprintln!("[process] killed by signal {} ({})", reason.code(), reason_name(reason));
+pub fn die(sig: i32) -> ! {
+    kprintln!("[process] killed by signal {}", sig);
     net::poll_flush();
     crate::sbi::shutdown()
-}
-
-fn reason_name(e: Errno) -> &'static str {
-    match e {
-        Errno::Sigsegv => "SIGSEGV",
-        Errno::Sigill => "SIGILL",
-        Errno::Sigbus => "SIGBUS",
-        Errno::Sigfpe => "SIGFPE",
-        Errno::Sigkill => "SIGKILL",
-        Errno::Sigabrt => "SIGABRT",
-        _ => "unknown",
-    }
 }
 
 /// 启动第一个用户进程（execve 语义）
