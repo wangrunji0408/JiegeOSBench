@@ -78,14 +78,19 @@ fn load_segment(data: &[u8], seg_va: usize, seg_len: usize, file_off: usize, fil
         flags |= PTE_X;
     }
     if !proc::add_vma(start, end, flags) {
+        crate::kprintln!("[elf] add_vma FAILED for {:#x}-{:#x}", start, end);
         return Err(Errno::Enomem);
     }
     let root = proc::current_page_table_root();
+    crate::kprintln!("[elf] seg {:#x}-{:#x} (len {:#x}) root={:#x}", start, end, seg_len, root);
     // 逐页分配、映射、复制
     let mut va = start;
     while va < end {
         let pa = pmm::alloc_page().ok_or(Errno::Enomem)?;
-        page::map_4k(root, va, pa, flags | page::PTE_V);
+        if !page::map_4k(root, va, pa, flags | page::PTE_V) {
+            crate::kprintln!("[elf] map_4k FAILED at va={:#x}", va);
+            return Err(Errno::Enomem);
+        }
         va += 0x1000;
     }
     // 复制文件内容（物理地址写入，alloc_page 已清零 BSS）
