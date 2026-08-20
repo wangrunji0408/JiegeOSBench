@@ -67,6 +67,10 @@ pub fn map_zero_page(va: usize) -> bool {
 /// 处理用户态 page fault
 pub fn handle_page_fault(va: usize, _code: u64) -> Result<(), i32> {
     if map_zero_page(va) {
+        // 实验：内核态直接读该 VA（S 态 + SUM=1 可访问 U 页）
+        let page = va & !0xfff;
+        let v = unsafe { ((page + 0x10) as *const u64).read_volatile() };
+        kprintln!("[pf] kernel read-back of {:#x} ok: {:#x}", page, v);
         Ok(())
     } else {
         Err(crate::errno::SIGSEGV)
