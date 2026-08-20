@@ -40,7 +40,6 @@ pub fn alloc_table() -> Option<usize> {
 }
 
 /// 三级页表查找/建立。返回叶子 PTE 的指针（不存在则按需分配中间级）。
-/// leaf=true 时该函数返回目标叶子位置；写入由调用者负责。
 unsafe fn walk_alloc(root: usize, va: usize) -> Option<*mut u64> {
     let mut table = root as *mut PageTable;
     for level in (1..=2).rev() {
@@ -49,13 +48,14 @@ unsafe fn walk_alloc(root: usize, va: usize) -> Option<*mut u64> {
         let v = pte.read_volatile();
         if v & PTE_V == 0 {
             let pa = alloc_table()?;
-            let flags = PTE_V; // 中间节点：无 RWX
-            pte.write_volatile(pa_to_ppn(pa) << 10 | flags);
+            pte.write_volatile(pa_to_ppn(pa) << 10 | PTE_V);
+            table = pa as *mut PageTable;
         } else if v & (PTE_R | PTE_W | PTE_X) != 0 {
             // 已经是大页叶子
             return None;
+        } else {
+            table = ppn_to_pa(v >> 10) as *mut PageTable;
         }
-        table = ppn_to_pa(v >> 10) as *mut PageTable;
     }
     let idx = va >> 12 & (ENTRIES - 1);
     Some((*table).as_mut_ptr().add(idx))
