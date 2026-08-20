@@ -39,8 +39,10 @@ static mut TRAPFRAME: TrapFrame = TrapFrame {
     kernel_sp: 0,
 };
 
-#[repr(align(16))]
-static mut KERNEL_STACK: [u8; 128 * 1024] = [0; 128 * 1024];
+#[repr(C, align(16))]
+struct Aligned<const N: usize>([u8; N]);
+
+static mut KERNEL_STACK: Aligned<{ 128 * 1024 }> = Aligned([0; 128 * 1024]);
 
 global_asm!(
     r#"
