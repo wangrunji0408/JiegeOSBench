@@ -53,8 +53,8 @@ pub fn parse_memory(dtb_paddr: usize) -> (usize, usize) {
                 pos += 4;
                 let name = string_at(base, pos - base);
                 cur_name = name;
-                pos += name.len();
-                pos = (pos + 3) & !3usize; // 4 字节对齐（含结尾 NUL）
+                pos += name.len() + 1; // 含结尾 NUL
+                pos = (pos + 3) & !3usize; // 4 字节对齐
                 // name 包含 NUL 后需要对齐：先 +1 再对齐
                 depth += 1;
             }
