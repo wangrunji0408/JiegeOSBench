@@ -139,6 +139,11 @@ trap_entry:
     # sscratch 重置为 trapframe 地址（下次 trap 用）
     csrw sscratch, sp
 
+    # 调试打点：写 'T' 到 UART（此时所有寄存器已保存，t0/t1 可自由使用）
+    li t0, 0x10000000
+    li t1, 0x54
+    sb t1, 0(t0)
+
     # 切到内核栈（trap 只来自用户态）
     ld sp, 552(sp)
 
