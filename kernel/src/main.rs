@@ -13,6 +13,7 @@ mod page;
 mod pmm;
 mod proc;
 mod sbi;
+mod start;
 mod syscall;
 mod syscall_nr;
 mod trap;
