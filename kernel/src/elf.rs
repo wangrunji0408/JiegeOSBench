@@ -58,9 +58,10 @@ pub struct LoadedImage {
     pub brk_end: usize,
 }
 
-const PROG_BASE: usize = 0x1000_0000_00; // 主程序 PIE 基址
-const LD_BASE: usize = 0x2000_0000_00; // 动态链接器基址
-pub const STACK_TOP: usize = 0x3fff_ffff_f000;
+// SV39 用户地址空间为 39 位（0 - 0x7F_FFFF_FFFF，512GB）
+const PROG_BASE: usize = 0x10_0000_0000; // 主程序 PIE 基址 (64GB)
+const LD_BASE: usize = 0x20_0000_0000; // 动态链接器基址 (128GB)
+pub const STACK_TOP: usize = 0x7F_FFFF_F000; // 栈顶（39 位地址空间最高页）
 const STACK_SIZE: usize = 16 << 20; // 16MB 栈 VMA（lazy 分配）
 
 /// 把段映射进用户页表并复制内容。返回段尾（memsz 结束）VA。
