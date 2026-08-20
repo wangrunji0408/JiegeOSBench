@@ -105,11 +105,11 @@ extern "C" fn rust_main(hartid: usize, dtb_paddr: usize) -> ! {
         kernel_end, heap_start, heap_start + heap_size, heap_start + heap_size
     );
 
-    // 3. 初始化网络（virtio-net + smoltcp）
-    net::init();
-
-    // 4. 初始化 trap / 装载用户进程
+    // 3. 初始化 trap（先于任何可能触发异常的设备探测）
     trap::init();
+
+    // 4. 初始化网络（virtio-net + smoltcp）
+    net::init();
 
     // 5. 挂载 rootfs 并启动第一个用户程序
     vfs::init();
