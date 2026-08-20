@@ -225,6 +225,13 @@ pub fn probe() -> Option<VirtioNet> {
         let buf: &'static mut [u8] = unsafe { core::slice::from_raw_parts_mut(p as *mut u8, 0x1000) };
         rx_buffers.push(buf);
     }
+    // TX 缓冲（每 desc 独立）
+    let mut tx_buffers: Vec<&'static mut [u8]> = Vec::new();
+    for _ in 0..QUEUE_SIZE {
+        let p = crate::pmm::alloc_page().expect("oom tx buf");
+        let buf: &'static mut [u8] = unsafe { core::slice::from_raw_parts_mut(p as *mut u8, 0x1000) };
+        tx_buffers.push(buf);
+    }
 
     let mut net = VirtioNet {
         base,
@@ -238,6 +245,7 @@ pub fn probe() -> Option<VirtioNet> {
         rx_buffers,
         rx_free: (0..QUEUE_SIZE).collect(),
         rx_used_seen: 0,
+        tx_buffers,
         tx_free: (0..QUEUE_SIZE).collect(),
         tx_used_seen: 0,
     };
