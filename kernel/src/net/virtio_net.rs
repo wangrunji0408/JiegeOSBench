@@ -67,6 +67,7 @@ pub struct Avail {
 }
 
 #[repr(C, align(4))]
+#[derive(Clone, Copy)]
 pub struct UsedElem {
     pub id: u32,
     pub len: u32,
