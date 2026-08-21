@@ -18,9 +18,10 @@
 | 8 | Claude Opus 4.6 | — | CC | 2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 智能杰哥 |
 | 9 | GLM 5.2 | — | CC | 2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | 智能杰哥 |
 | 10 | Claude Sonnet 5 | 极高 | CC | 2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 智能杰哥 |
-| 11 | DeepSeek V4 Flash | 高 | DSH | 6小时35分³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 机器杰哥 |
-| 12 | Claude Sonnet 4.6 | — | CC | 16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 机器杰哥 |
-| 13 | DeepSeek V4 Pro 预览版 | 最高 | CC | >16小时 未完成 | — | — | — | 损坏杰哥 |
+| 11 | GLM 5.3 | 高 | CC | 3小时52分 | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | 机器杰哥 |
+| 12 | DeepSeek V4 Flash | 高 | DSH | 6小时35分³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 机器杰哥 |
+| 13 | Claude Sonnet 4.6 | — | CC | 16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 机器杰哥 |
+| 14 | DeepSeek V4 Pro 预览版 | 最高 | CC | >16小时 未完成 | — | — | — | 损坏杰哥 |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
 
@@ -200,6 +201,26 @@ Claude Code 运行约 **2小时49分钟**（有效活跃时间，扣除了 77 �
 | 01:27 | **77 分钟权限等待** |
 | 02:31 | QEMU 自写 kernel：nginx 200 OK 🎉 |
 | 02:48 | 第二次自写 kernel 成功，稳定响应 |
+
+### GLM 5.3 — 3小时52分
+
+![GLM 5.3 Timeline](figures/glm53-timeline.png)
+
+Claude Code 连续运行约 **3小时52分钟**（无空闲/断线间隙），355 次 API 请求（`zai`/`z-ai` 双别名）。走 **Alpine apk 解包路线**：官方 nginx 1.28.3 riscv64 包 + musl/openssl/pcre2/zlib 从 Alpine v3.22 解包，用官方 musl 动态链接器运行。总 token 1.17 亿（99.5% 缓存命中），上下文峰值 593K，零次上下文压缩。估算成本约 **$34**（GLM 5.3 官方 ¥8/¥2/¥28 每 M 定价）。6 次内核 panic 全部集中在前 78 分钟（dtb 解析 + 堆内存耗尽）。后半程主战场是网络栈：epoll 系统调用路由（nginx 实际走 nr=68）、epoll_event 16 字节 padding 错位解析、fd 关闭后未从 epoll 移除。首次 HTTP 200 于 3小时50分（不稳定），3小时52分稳定——4 次串行 + 3 次并发全部 200。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:10 | 下载 Alpine v3.22 nginx 1.28.3 apk 及 musl/openssl/pcre2/zlib 依赖 |
+| 00:44 | 编写 fd/socket/epoll 层 |
+| 00:56 | 首次 QEMU 启动 — PANIC at dtb.rs |
+| 01:17 | 6 次 panic 全部修复（dtb 解析 + alloc OOM）|
+| 02:44 | nginx 启动："using the epoll event method"，但网络不通 |
+| 03:12 | 破案：nginx 的 epoll 等待实际走 nr=68 |
+| 03:23 | TCP 握手 + HTTP GET 成功，但 epoll 不通知 nginx |
+| 03:47 | 修复 epoll_event 16 字节 padding 错位（data 在 offset 8）|
+| 03:50 | 首次 HTTP 200（34ms）；发现 fd 关闭未移除 bug |
+| 03:52 | 稳定：4 次串行 + 3 次并发全部 200 ✅ |
+| 03:53 | 写 README，目标达成 |
 
 ### Sonnet 4.6 — 16 小时
 

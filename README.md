@@ -25,9 +25,10 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | 8 | Claude Opus 4.6 | — | CC | 2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Smart Jiege |
 | 9 | GLM 5.2 | — | CC | 2h 42min | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | Smart Jiege |
 | 10 | Claude Sonnet 5 | xHigh | CC | 2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Smart Jiege |
-| 11 | DeepSeek V4 Flash | High | DSH | 6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
-| 12 | Claude Sonnet 4.6 | — | CC | 16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
-| 13 | DeepSeek V4 Pro Preview | Max | CC | >16h ❌ | — | — | — | Broken Jiege |
+| 11 | GLM 5.3 | High | CC | 3h 52min | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | Machine Jiege |
+| 12 | DeepSeek V4 Flash | High | DSH | 6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
+| 13 | Claude Sonnet 4.6 | — | CC | 16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
+| 14 | DeepSeek V4 Pro Preview | Max | CC | >16h ❌ | — | — | — | Broken Jiege |
 
 ¹ First success at 36min; second connection fix completed at 49min.
 
@@ -207,6 +208,26 @@ Claude Code ran for **~2h 49min** (active time, 77min permission gap excluded). 
 | 01:27 | **77min permission wait** |
 | 02:31 | QEMU self-written kernel: nginx 200 OK 🎉 |
 | 02:48 | Second self-kernel success, stable responses |
+
+### GLM 5.3 — 3h 52min
+
+![GLM 5.3 Timeline](figures/glm53-timeline.png)
+
+Claude Code ran for **~3h 52min** (continuous — no idle or API-retry gaps), 355 API requests (dual `zai`/`z-ai` GLM 5.3 aliases). Took the **Alpine apk unpack route**: official nginx 1.28.3 riscv64 package + musl/openssl/pcre2/zlib unpacked from Alpine v3.22, dynamically linked against the official musl loader. 117M tokens total (99.5% cache hit), peak context 593K, zero context compactions. Cost approximately **$34** (GLM 5.3 official ¥8/¥2/¥28 per MTok pricing). 6 kernel panics, all within the first 78min (dtb parse + heap OOM). The long tail was the network stack: epoll syscall routing (nginx's wait went through nr=68), a 16-byte `epoll_event` padding misparse, and fd-close-not-removed-from-epoll. First HTTP 200 at 3h50min (unstable); stable at 3h52min — 4 sequential + 3 concurrent requests all 200.
+
+| Time | Milestone |
+|------|-----------|
+| 00:10 | Alpine v3.22 nginx 1.28.3 apk + musl/openssl/pcre2/zlib deps downloaded |
+| 00:44 | fd/socket/epoll layer written |
+| 00:56 | First QEMU boot — PANIC at dtb.rs |
+| 01:17 | Last of 6 panics fixed (dtb parse + alloc OOM cluster) |
+| 02:44 | nginx starts: "using the epoll event method", but no network |
+| 03:12 | epoll syscall routing bug found: nginx waits on nr=68 |
+| 03:23 | TCP handshake + HTTP GET succeed; epoll not notifying nginx |
+| 03:47 | epoll_event 16-byte padding misparse fixed (data at offset 8) |
+| 03:50 | First HTTP 200 (34ms); fd-close-not-removed-from-epoll bug |
+| 03:52 | Stable: 4 sequential + 3 concurrent requests all 200 ✅ |
+| 03:53 | README written, goal complete |
 
 ### Sonnet 4.6 — 16 hours
 
