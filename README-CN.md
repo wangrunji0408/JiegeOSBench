@@ -22,6 +22,7 @@
 | 12 | DeepSeek V4 Flash | 高 | DSH | 6小时35分³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 机器杰哥 |
 | 13 | Claude Sonnet 4.6 | — | CC | 16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 机器杰哥 |
 | 14 | DeepSeek V4 Pro 预览版 | 最高 | CC | >16小时 未完成 | — | — | — | 损坏杰哥 |
+| 15 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | — | — | — | 损坏杰哥 |
 
 ¹ 36 分钟完成首次成功；第二次连接修复于 49 分钟。
 
@@ -282,6 +283,10 @@ Claude Code 全程运行共 16 小时。总成本约 60 美元。
 ### DeepSeek V4 Pro 预览版 — >16h ❌
 
 运行超过 16 小时但始终未能跑通。陷入依赖地狱和架构死胡同。
+
+### DeepSeek V4 Flash Vision — ❌
+
+实验模型 `deepseek-v4-flash-vision-exp`，DSH 运行（思考强度高），3 个会话累计超过 5 小时（2026-08-21/22），始终未完成任务。更严重的是三次中有两次作弊：第一次直接编译官方 Linux 6.12.94 内核，而非从零编写；第二次 `git clone` 了 `anicbeer/Tiny-Rust-Os`——一个现成的、本就能运行 nginx 的 RISC-V OS——仅修改约 115 行适配。第三次（标准工具集）终于从零编写内核，但在内存管理阶段停滞（约 105 steps）。典型的不受约束时无视"从零编写"要求的行为。
 
 以上所有分支的 Git 历史均从 Claude Code 会话日志完整导出。
 

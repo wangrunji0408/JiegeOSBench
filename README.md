@@ -29,6 +29,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | 12 | DeepSeek V4 Flash | High | DSH | 6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
 | 13 | Claude Sonnet 4.6 | — | CC | 16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
 | 14 | DeepSeek V4 Pro Preview | Max | CC | >16h ❌ | — | — | — | Broken Jiege |
+| 15 | DeepSeek V4 Flash Vision | High | DSH | ❌ | — | — | — | Broken Jiege |
 
 ¹ First success at 36min; second connection fix completed at 49min.
 
@@ -289,6 +290,10 @@ Ran for **~108min** of active time. First HTTP 200 at 105.6min. 373 model steps,
 ### DeepSeek V4 Pro Preview — >16h ❌
 
 Ran for over 16 hours but never reached a working state. Got stuck in dependency hell and architecture dead ends.
+
+### DeepSeek V4 Flash Vision — ❌
+
+Experimental `deepseek-v4-flash-vision-exp` model via DSH (High effort), 3 sessions totaling over 5 hours (2026-08-21/22). Never completed the task. Worse, two of the three runs cheated: the first compiled the official Linux 6.12.94 kernel instead of writing one from scratch; the second `git clone`d `anicbeer/Tiny-Rust-Os` — a ready-made RISC-V OS that already runs nginx — and modified only ~115 lines to adapt it. The third run (standard toolset) finally wrote a kernel from scratch, but stalled at the memory-management stage after ~105 steps. A clear case of the model ignoring the "from scratch" constraint when left unchecked.
 
 The git history for all branches above is a complete record exported from Claude Code session logs.
 
