@@ -26,10 +26,11 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | 9 | GLM 5.2 | — | CC | 2h 42min | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | Smart Jiege |
 | 10 | Claude Sonnet 5 | xHigh | CC | 2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Smart Jiege |
 | 11 | GLM 5.3 | High | CC | 3h 52min | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | Machine Jiege |
-| 12 | DeepSeek V4 Flash | High | DSH | 6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
-| 13 | Claude Sonnet 4.6 | — | CC | 16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
-| 14 | DeepSeek V4 Pro Preview | Max | CC | >16h ❌ | — | — | — | Broken Jiege |
-| 15 | DeepSeek V4 Flash Vision | High | DSH | ❌ | — | — | — | Broken Jiege |
+| 12 | GLM 5.3 Flash (fp8) | — | CC | 5h 50min⁵ | 967K | self-hosted | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | Machine Jiege |
+| 13 | DeepSeek V4 Flash | High | DSH | 6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
+| 14 | Claude Sonnet 4.6 | — | CC | 16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
+| 15 | DeepSeek V4 Pro Preview | Max | CC | >16h ❌ | — | — | — | Broken Jiege |
+| 16 | DeepSeek V4 Flash Vision | High | DSH | ❌ | — | — | — | Broken Jiege |
 
 ¹ First success at 36min; second connection fix completed at 49min.
 
@@ -38,6 +39,8 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 ³ First HTTP 200 at 6h30min; 31 kernel panics and 2 context compactions along the way. Goal completed at 6h35min.
 
 ⁴ Active time 2h45min (wall-clock 3h 19min; 34.6min of API connection-retry gaps excluded). 3 context compactions; nginx bound on the first try after dynamic linking. Context = sum of pre-compaction peaks, 243K + 243K + 243K + 243K = 972K. Cost at post-2026-07-30 pricing ($0.20/$1.20 per M in/out, cache read $0.02): new input 4.5M×$0.20 + cache read 55.6M×$0.02 + output 0.23M×$1.20 ≈ $2.3.
+
+⁵ Active time 5h50min (wall-clock 7h10min; 3 harness-resume gaps excluded, one caused by the agent `pkill -f nginx`-ing its own harness process whose argv contained the prompt). Self-hosted GLM-5.3-Flash-fp8 on sglang; client-side prompt caching disabled, so the 951.9M input-token count is an upper bound. Zero context compactions (967K peak vs 1M window).
 
 Harness: CC = Claude Code, DSH = DeepSeek Harness.
 
@@ -229,6 +232,25 @@ Claude Code ran for **~3h 52min** (continuous — no idle or API-retry gaps), 35
 | 03:50 | First HTTP 200 (34ms); fd-close-not-removed-from-epoll bug |
 | 03:52 | Stable: 4 sequential + 3 concurrent requests all 200 ✅ |
 | 03:53 | README written, goal complete |
+
+### GLM 5.3 Flash (fp8) — 5h 50min active (7h 10min wall)
+
+![GLM 5.3 Flash Timeline](figures/glm53-flash-timeline.png)
+
+Self-hosted **GLM-5.3-Flash-fp8** (sglang, 1M context) run with Claude Code against the original prompt. PASS: first HTTP 200 at 6h46min wall (6h02min active), stable at 7h09min — 8/8 sequential+concurrent requests 200, independently re-verified from the host. 2,134 API rounds, 1,473 tool calls, 951.9M input / 832K output tokens (client-side prompt caching disabled — an upper bound), peak context 967K with **zero compactions**. Took the **Ubuntu glibc deb route** (official nginx 1.18.0 riscv64 core package + libc6/libssl3/libpcre3/zlib1g, dynamically linked against the distribution glibc) — the same hardest route as GPT 5.6 Luna. Output: 12,863 lines of Rust — an 8,006-line kernel with no external kernel dependencies plus a ~4,600-line `netdev` TCP/IP stack (52 unit tests) and a GDB-RSP debugging client. The session needed 3 harness resumes (wall vs active gap): one was the agent killing its own harness via `pkill -f nginx` matching the prompt in the process argv; it also honestly reported failure twice mid-run before succeeding.
+
+| Time | Milestone |
+|------|-----------|
+| 00:02 | Recon: official nginx 1.18.0 riscv64 debs fetched; nginx verified under qemu-user + strace |
+| 00:29 | Kernel skeleton (main.rs, run.sh, initrd) |
+| 01:34 | Core kernel: Sv39 MMU, trap, scheduler, ~60 fs syscalls, signals |
+| 02:49 | ELF loader: PIE + dynamic linker + auxv (glibc) |
+| 03:39 | nginx enters epoll event loop (dynamic linking complete) |
+| 04:04 | Event-loop SIGSEGV hunt (page tables, FPU save, frame frees, clock epochs) |
+| 05:19 | GuestPageSize + blocked-syscall-return fixes; first SYN-ACK transmitted |
+| 06:19 | Final cluster: TCP checksum off-by-24, AF_UNIX EOF notification, trap register save |
+| 06:46 | First HTTP 200 from official nginx 🎉 |
+| 07:09 | Stable: 8/8 requests 200, README written ✅ |
 
 ### Sonnet 4.6 — 16 hours
 
