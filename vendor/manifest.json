@@ -1,0 +1,43 @@
+[
+  {
+    "name": "musl",
+    "version": "1.2.6-r3",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/edge/main/riscv64/musl-1.2.6-r3.apk",
+    "sha256": "d0de4bb4192385d0047d4764d4cd2f8f705d9e2993a6651f8e8869737beecf10"
+  },
+  {
+    "name": "libcrypto3",
+    "version": "3.5.8-r0",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/edge/main/riscv64/libcrypto3-3.5.8-r0.apk",
+    "sha256": "d1483cf8c8a8f6e8a4e8afe7b2095d51fd4bc26cb9a8a76a9229b9f83efc87f1"
+  },
+  {
+    "name": "libssl3",
+    "version": "3.5.8-r0",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/edge/main/riscv64/libssl3-3.5.8-r0.apk",
+    "sha256": "8dc1741c6e42f109a2d43fab80b2637eeed5decaf84280764bd017457698587b"
+  },
+  {
+    "name": "pcre2",
+    "version": "10.48-r0",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/edge/main/riscv64/pcre2-10.48-r0.apk",
+    "sha256": "af8dcefa9a6ab8badc74fb843680cd6b743a88ba6a0095761f3c82f7daa9f7eb"
+  },
+  {
+    "name": "zlib",
+    "version": "1.3.2-r0",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/edge/main/riscv64/zlib-1.3.2-r0.apk",
+    "sha256": "9d2e3b8f1a33a60f843960074fba747df5a795943eb084c22b15fcf6d8500ab4"
+  },
+  {
+    "name": "nginx",
+    "version": "1.30.4-r3",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/edge/main/riscv64/nginx-1.30.4-r3.apk",
+    "sha256": "e1f7b56e9c2e6e9eeac500cc4492ccdfb0444145bd9373d7ffb2c30d6d2c5954"
+  },
+  {
+    "file": "rootfs/usr/sbin/nginx",
+    "sha256": "f3b372c46e5c3a833defe85c8580219f15830ee502fbf41595f336cbcacc5898",
+    "modified": false
+  }
+]
