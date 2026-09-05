@@ -1121,7 +1121,23 @@ fn do_getrandom(buf: usize, len: usize) -> isize {
     len as isize
 }
 
+fn do_prlimit(resource: usize, _new: usize, old: usize) -> isize {
+    if old != 0 {
+        let (cur, max): (u64, u64) = match resource {
+            7 => (1024, 1024),          // RLIMIT_NOFILE
+            _ => (u64::MAX, u64::MAX),   // RLIM_INFINITY for everything else
+        };
+        unsafe {
+            write_val::<u64>(old, cur);
+            write_val::<u64>(old + 8, max);
+        }
+    }
+    0
+}
+
 fn do_statx(dirfd: usize, path: usize, _flags: usize, _mask: usize, statxbuf: usize) -> isize {
+    let p = read_cstr(path);
+    let full = abspath(&p);
     let (size, is_dir) = match fs::lookup(&full) {
         Some(n) => {
             let node = n.lock();
