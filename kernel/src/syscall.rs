@@ -1122,8 +1122,6 @@ fn do_getrandom(buf: usize, len: usize) -> isize {
 }
 
 fn do_statx(dirfd: usize, path: usize, _flags: usize, _mask: usize, statxbuf: usize) -> isize {
-    let p = read_cstr(path);
-    let full = abspath(&p);
     let (size, is_dir) = match fs::lookup(&full) {
         Some(n) => {
             let node = n.lock();
