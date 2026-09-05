@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "init: starting nginx"
+nginx
+echo "init: nginx started (pid $(cat /run/nginx.pid 2>/dev/null))"
+exec /bin/sh

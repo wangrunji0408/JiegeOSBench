@@ -1,0 +1,5 @@
+kernel/target/
+rootfs/stage/
+rootfs/root/
+rootfs.cpio
+*.pcap

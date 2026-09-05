@@ -1,0 +1,22 @@
+[package]
+name = "kernel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+buddy_system_allocator = "0.13"
+bitflags = "2"
+spin = { version = "0.10", default-features = false, features = ["spin_mutex", "once", "lazy"] }
+virtio-drivers = "0.13"
+smoltcp = { version = "0.14", default-features = false, features = ["alloc", "medium-ethernet", "proto-ipv4", "socket-tcp", "socket-udp", "socket-raw", "log"] }
+log = "0.4"
+
+[profile.dev]
+panic = "abort"
+opt-level = 1
+
+[profile.release]
+panic = "abort"
+debug = true
+lto = true
+codegen-units = 1
