@@ -208,6 +208,50 @@ struct IoVec {
     base: usize,
     len: usize,
 }
+
+fn do_pread(fd: usize, buf: usize, len: usize, offset: usize) -> isize {
+    let file = match task::current().fds.get(fd) {
+        Some(f) => f,
+        None => return EBADF,
+    };
+    let out = unsafe { uslice(buf, len) };
+    let f = file.lock();
+    if let FileKind::File(node) = &f.kind {
+        let n = node.lock();
+        if offset >= n.data.len() {
+            return 0;
+        }
+        let take = core::cmp::min(len, n.data.len() - offset);
+        out[..take].copy_from_slice(&n.data[offset..offset + take]);
+        take as isize
+    } else {
+        // Non-seekable: fall back to a normal read.
+        drop(f);
+        do_read(fd, buf, len)
+    }
+}
+
+fn do_pwrite(fd: usize, buf: usize, len: usize, offset: usize) -> isize {
+    let file = match task::current().fds.get(fd) {
+        Some(f) => f,
+        None => return EBADF,
+    };
+    let data = unsafe { uslice(buf, len) };
+    let f = file.lock();
+    if let FileKind::File(node) = &f.kind {
+        let mut n = node.lock();
+        if n.data.len() < offset + len {
+            n.data.resize(offset + len, 0);
+        }
+        n.data[offset..offset + len].copy_from_slice(data);
+        len as isize
+    } else {
+        drop(f);
+        do_write(fd, buf, len)
+    }
+}
+
+fn do_writev(fd: usize, iov: usize, cnt: usize) -> isize {
     let mut total = 0isize;
     for i in 0..cnt {
         let v = unsafe { &*((iov + i * 16) as *const IoVec) };
