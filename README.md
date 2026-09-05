@@ -15,30 +15,25 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 
 | # | Model | Effort | Harness | Duration | Context | Cost | Branch | Tier |
 |---|-------|--------|---------|----------|---------|------|--------|------|
-| 🏅 | Claude Fable 5 | High | CC | 38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Jiege |
-| 🥈 | GPT 5.6 Sol | High | Codex | 36min¹ | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | Fast Jiege |
-| 🥉 | Claude Opus 5 | High | CC | 67min² | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | Smart Jiege |
-| 4 | Claude Opus 4.7 | — | CC | 65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Smart Jiege |
-| 5 | DeepSeek V4 Pro | High | DSH | 108min | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | Smart Jiege |
-| 6 | Kimi K3 | High | CC | 2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Smart Jiege |
-| 7 | GPT 5.6 Luna | xHigh | Codex | 2h 45min⁴ | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | Smart Jiege |
-| 8 | Claude Opus 4.6 | — | CC | 2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Smart Jiege |
-| 9 | GLM 5.2 | — | CC | 2h 42min | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | Smart Jiege |
-| 10 | Claude Sonnet 5 | xHigh | CC | 2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Smart Jiege |
-| 11 | GLM 5.3 | High | CC | 3h 52min | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | Machine Jiege |
-| 12 | GLM 5.3 Flash (fp8) | — | CC | 5h 50min⁵ | 967K | self-hosted | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | Machine Jiege |
-| 13 | DeepSeek V4 Flash | High | DSH | 6h 35min³ | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
-| 14 | Claude Sonnet 4.6 | — | CC | 16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
-| 15 | DeepSeek V4 Pro Preview | Max | CC | >16h ❌ | — | — | — | Broken Jiege |
-| 16 | DeepSeek V4 Flash Vision | High | DSH | ❌ | — | — | — | Broken Jiege |
+| 🏅 | GPT-6 Astra | High | Codex | 6min | 83K | $3.98 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | Jiege |
+| 🥈 | Claude Fable 5 | High | CC | 38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Super Jiege |
+| 🥉 | GPT 5.6 Sol | High | Codex | 36min | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | Super Jiege |
+| 4 | Claude Opus 5 | High | CC | 67min | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | Smart Jiege |
+| 5 | Claude Opus 4.7 | — | CC | 65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Smart Jiege |
+| 6 | DeepSeek V4 Pro | High | DSH | 108min | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | Smart Jiege |
+| 7 | Kimi K3 | High | CC | 2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Smart Jiege |
+| 8 | GPT 5.6 Luna | xHigh | Codex | 2h 45min | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | Smart Jiege |
+| 9 | Claude Opus 4.6 | — | CC | 2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Smart Jiege |
+| 10 | GLM 5.2 | — | CC | 2h 42min | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | Smart Jiege |
+| 11 | Claude Sonnet 5 | xHigh | CC | 2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Smart Jiege |
+| 12 | GLM 5.3 | High | CC | 3h 52min | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | Machine Jiege |
+| 13 | GLM 5.3 Flash (fp8) | — | CC | 5h 50min⁵ | 967K | self-hosted | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | Machine Jiege |
+| 14 | DeepSeek V4 Flash | High | DSH | 6h 35min | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
+| 15 | Claude Sonnet 4.6 | — | CC | 16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
+| 16 | DeepSeek V4 Pro Preview | Max | CC | >16h ❌ | — | — | — | Broken Jiege |
+| 17 | DeepSeek V4 Flash Vision | High | DSH | ❌ | — | — | — | Broken Jiege |
 
-¹ First success at 36min; second connection fix completed at 49min.
-
-² First HTTP 200 at 67min (zero kernel panics); continued fixing TCP/epoll/VirtIO edge cases, fully stable at 125min.
-
-³ First HTTP 200 at 6h30min; 31 kernel panics and 2 context compactions along the way. Goal completed at 6h35min.
-
-⁴ Active time 2h45min (wall-clock 3h 19min; 34.6min of API connection-retry gaps excluded). 3 context compactions; nginx bound on the first try after dynamic linking. Context = sum of pre-compaction peaks, 243K + 243K + 243K + 243K = 972K. Cost at post-2026-07-30 pricing ($0.20/$1.20 per M in/out, cache read $0.02): new input 4.5M×$0.20 + cache read 55.6M×$0.02 + output 0.23M×$1.20 ≈ $2.3.
+Duration = time to first HTTP 200.
 
 ⁵ Active time 5h50min (wall-clock 7h10min; 3 harness-resume gaps excluded, one caused by the agent `pkill -f nginx`-ing its own harness process whose argv contained the prompt). Self-hosted GLM-5.3-Flash-fp8 on sglang; client-side prompt caching disabled, so the 951.9M input-token count is an upper bound. Zero context compactions (967K peak vs 1M window).
 
@@ -46,7 +41,25 @@ Harness: CC = Claude Code, DSH = DeepSeek Harness.
 
 ## Who is Jiege
 
-In 2019, Jiege ran nginx on [rCore](https://jia.je/programming/2019/03/08/running-nginx-on-rcore/), an OS written from scratch during his OS course. "Jiege" became the symbol of peak systems engineering in our community: hand-crafting an OS kernel, proof of uniquely human creativity and drive. Today, AI agents can build in half an hour what took us months to create — faster, cheaper, and calmer than we ever were. ~~OS is finished.~~ But what Jiege did back then, anyone can do today — dare to try, and anyone can be Jiege.
+In 2019, Jiege ran nginx on [rCore](https://jia.je/programming/2019/03/08/running-nginx-on-rcore/), an OS written from scratch during his OS course. "Jiege" became the symbol of peak systems engineering in our community: hand-crafting an OS kernel, proof of uniquely human creativity and drive. Today, with one casual kick, AI can finish in minutes what took us months to build. ~~OS is finished.~~ But what Jiege did back then, anyone can do today — dare to try, and anyone can be Jiege.
+
+## GPT-6 Astra — 6min
+
+![GPT-6 Astra Timeline](figures/gpt6-astra-timeline.png)
+
+OpenAI Codex (desktop) ran for **~6min** to first HTTP 200 — by far the fastest run on this board, ~6× quicker than the previous record (GPT 5.6 Sol, 36min). The kernel came out almost entirely in two first-pass writing bursts: **zero kernel panics, zero web searches** (pure black-box), zero context compactions, one uninterrupted turn (32 API requests, 31 bash tool calls, 1.74M tokens total, peak context 83K). Cost **$3.98**. Took the Alpine official-APK route — unmodified nginx 1.30.4 (riscv64) + musl/OpenSSL/PCRE2/zlib, byte-verified against the APK; acceptance suite green by ~8min, goal complete at 8.8min.
+
+| Time | Milestone |
+|------|-----------|
+| 00:01 | Official Alpine riscv64 nginx 1.30.4 APK + musl/OpenSSL/PCRE2/zlib fetch script (SHA-256 manifest) |
+| 00:02 | Kernel written in one pass: boot, Sv39, traps, ELF loader, VFS, syscalls, VirtIO net — compiles |
+| 00:03 | First QEMU boot; musl loader starts the original nginx ELF in user mode |
+| 00:04 | nginx init running; inode-uniqueness + directory syscall fixes |
+| 00:05 | ioctl/socket write-path fixes; host HTTP request reaches nginx |
+| 00:06 | First HTTP 200 OK from host — `Server: nginx/1.30.4` 🎉 |
+| 00:07 | io_setup/socketpair (native AIO); nginx log free of emerg/alert; ELF byte-compare vs APK |
+| 00:08 | Final acceptance: 8-way × 120 req, 24MiB, 25 keep-alive, 1MiB file ✅ |
+| 00:09 | Goal complete — README + make start/test/verify |
 
 ## Fable 5 — 38min
 
@@ -107,7 +120,7 @@ Claude Code ran for **~65 minutes**.
 
 ![Opus 5 Timeline](figures/opus5-timeline.png)
 
-Claude Code ran for **~67 minutes** to first HTTP 200, then spent another **58 minutes** fixing TCP/epoll/VirtIO edge cases until fully stable. **Zero kernel panics** — the only model to achieve this. 322 API requests. Cost approximately **$26** at the 67min mark. Peak context 334K.
+Claude Code ran for **~67 minutes** to first HTTP 200, then spent another **58 minutes** fixing TCP/epoll/VirtIO edge cases until fully stable. **Zero kernel panics** (matched later by GPT-6 Astra). 322 API requests. Cost approximately **$26** at the 67min mark. Peak context 334K.
 
 | Time | Milestone |
 |------|-----------|
@@ -317,7 +330,7 @@ Ran for over 16 hours but never reached a working state. Got stuck in dependency
 
 Experimental `deepseek-v4-flash-vision-exp` model via DSH (High effort), 3 sessions totaling over 5 hours (2026-08-21/22). Never completed the task. Worse, two of the three runs cheated: the first compiled the official Linux 6.12.94 kernel instead of writing one from scratch; the second `git clone`d `anicbeer/Tiny-Rust-Os` — a ready-made RISC-V OS that already runs nginx — and modified only ~115 lines to adapt it. The third run (standard toolset) finally wrote a kernel from scratch, but stalled at the memory-management stage after ~105 steps. A clear case of the model ignoring the "from scratch" constraint when left unchecked.
 
-The git history for all branches above is a complete record exported from Claude Code session logs.
+The git history for every branch above is a complete record exported from the agent's session log (Claude Code, Codex, or DeepSeek Harness).
 
 ## License
 
