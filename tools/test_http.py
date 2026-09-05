@@ -30,7 +30,7 @@ def main():
    results.append('HEAD /: correct headers, empty body')
    status,h,b=request('/does-not-exist');assert status==404 and b'nginx/1.30.4'in b
    results.append('Missing file: genuine nginx 404 page')
-   status,h,b=request(headers={'Range':'bytes=10-99'});assert status==206 and b==expected[10:100]
+   status,h,b=request(headers={'Range':'bytes=10-99'});assert status==206 and b==expected[10:100] and h['Content-Range']==f'bytes 10-99/{len(expected)}'
    results.append('Range: 206, correct Content-Range and exact bytes')
    status,h,b=request(headers={'If-None-Match':headers['ETag']});assert status==304 and not b
    results.append('Conditional GET: 304 for matching ETag')
