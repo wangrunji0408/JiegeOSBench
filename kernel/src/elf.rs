@@ -93,8 +93,7 @@ pub fn load(task: &mut Task, elf: &[u8], argv: &[&str], envp: &[&str]) -> (usize
         *sp -= bytes.len() + 1;
         unsafe {
             wr_bytes(*sp, bytes);
-            (*sp + bytes.len() as usize as usize as usize) as usize;
-            *(( *sp + bytes.len()) as *mut u8) = 0;
+            *((*sp + bytes.len()) as *mut u8) = 0;
         }
         *sp
     };
