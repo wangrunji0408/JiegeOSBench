@@ -128,7 +128,7 @@ impl NetDevice {
         }
     }
 
-    /// Take a received packet, if any: (buffer, packet range).
+    /// Take a received packet, if any: (buffer, header length, packet length).
     fn receive_packet(&mut self) -> Option<(Buf, usize, usize)> {
         let token = self.net.poll_receive()?;
         let mut buf = self.rx_bufs[token as usize].take()?;
@@ -278,7 +278,8 @@ impl phy::TxToken for VirtioTxToken<'_> {
         match result {
             Some(r) => r,
             None => {
-                // No buffer available: let smoltcp build into a scratch buffer.
+                // No buffer available (should not happen after can_transmit):
+                // let smoltcp build into a scratch buffer that is dropped.
                 let mut scratch = alloc::vec![0u8; len];
                 f(&mut scratch)
             }
