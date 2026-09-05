@@ -128,10 +128,6 @@ pub fn init() {
     }
 }
 
-fn read_csr(_name: &str) -> usize {
-    0
-}
-
 #[no_mangle]
 pub extern "C" fn trap_handler(cx: &mut TrapContext) -> *mut TrapContext {
     let scause: usize;
