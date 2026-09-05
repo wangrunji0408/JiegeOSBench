@@ -127,3 +127,44 @@ pub fn init() {
         core::arch::asm!("csrw sie, zero");
     }
 }
+
+fn read_csr(name: &str) -> usize {
+    let v: usize;
+    unsafe {
+        match name {
+            "scause" => core::arch::asm!("csrr {}, scause", out(reg) v),
+            "stval" => core::arch::asm!("csrr {}, stval", out(reg) v),
+            _ => v = 0,
+        }
+    }
+    v
+}
+
+#[no_mangle]
+pub extern "C" fn trap_handler(cx: &mut TrapContext) -> *mut TrapContext {
+    let scause: usize;
+    let stval: usize;
+    unsafe {
+        core::arch::asm!("csrr {}, scause", out(reg) scause);
+        core::arch::asm!("csrr {}, stval", out(reg) stval);
+    }
+    let is_interrupt = scause >> 63 == 1;
+    let code = scause & 0xfff;
+    if !is_interrupt && code == 8 {
+        // Environment call from U-mode (syscall).
+        cx.sepc += 4;
+        crate::syscall::dispatch(cx);
+    } else if is_interrupt {
+        // We run interrupt-free; ignore any spurious interrupt.
+    } else {
+        crate::println!(
+            "[kernel] FATAL trap: scause={:#x} stval={:#x} sepc={:#x}",
+            scause,
+            stval,
+            cx.sepc
+        );
+        crate::println!("[kernel] user faulted; shutting down");
+        crate::sbi::shutdown();
+    }
+    cx as *mut TrapContext
+}
