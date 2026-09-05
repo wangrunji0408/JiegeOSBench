@@ -9,22 +9,23 @@
 | # | 模型 | 思考强度 | Harness | 首次HTTP200时间 | 总时间 | 上下文 | 成本 | 分支 | 段位 |
 |:--|:------|:--------|:---------|:----------|:------|:------|:------|:------|:----|
 | 🏅 | GPT-6 Astra | 高 | Codex | 6分钟 | 9分钟 | 83K | $4 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | 杰哥 |
-| 🥈 | Claude Fable 5 | 高 | CC | 36分钟 | 38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | 超级杰哥 |
-| 🥉 | GPT 5.6 Sol | 高 | Codex | 36分钟 | 49分钟 | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | 超级杰哥 |
-| 4 | Claude Opus 4.7 | — | CC | 45分钟 | 48分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | 智能杰哥 |
-| 5 | Claude Fable 5.1 | 高 | CC | 58分钟 | 1小时45分 | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | 智能杰哥 |
-| 6 | Claude Opus 5 | 高 | CC | 1小时7分 | 2小时5分 | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | 智能杰哥 |
-| 7 | DeepSeek V4 Pro | 高 | DSH | 1小时46分 | 1小时48分 | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | 智能杰哥 |
-| 8 | Kimi K3 | 高 | CC | 1小时48分 | 2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | 智能杰哥 |
-| 9 | GPT 5.6 Luna | 极高 | Codex | 2小时44分 | 2小时45分 | 243K x4 | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | 机器杰哥 |
-| 10 | Claude Opus 4.6 | — | CC | 2小时46分 | 2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 机器杰哥 |
-| 11 | Claude Sonnet 5 | 极高 | CC | 2小时31分 | 2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 机器杰哥 |
-| 12 | GLM 5.3 | 高 | CC | 3小时50分 | 3小时52分 | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | 机器杰哥 |
-| 13 | GLM 5.3 Flash (fp8) | — | CC | 6小时46分 | 7小时10分 | 967K | 自部署 | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | 机器杰哥 |
-| 14 | DeepSeek V4 Flash | 高 | DSH | 6小时30分 | 6小时35分 | 792K x3 | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 机器杰哥 |
-| 15 | Claude Sonnet 4.6 | — | CC | 16小时 | 16小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 机器杰哥 |
-| 16 | DeepSeek V4 Pro 预览版 | 最高 | CC | ❌ | ❌ | — | — | — | 损坏杰哥 |
-| 17 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | ❌ | — | — | — | 损坏杰哥 |
+| 🥈 | Claude Fable 5 | 高 | CC | 36分钟 | 38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | 智能杰哥 |
+| 🥉 | GPT 5.6 Sol | 高 | Codex | 36分钟 | 49分钟 | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | 智能杰哥 |
+| 4 | Claude Opus 4.8 | 高 | CC | 40分钟 | 42分钟 | 230K | $12 | [opus-4.8](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.8) | 智能杰哥 |
+| 5 | Claude Opus 4.7 | — | CC | 45分钟 | 48分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | 智能杰哥 |
+| 6 | Claude Fable 5.1 | 高 | CC | 58分钟 | 1小时45分 | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | 智能杰哥 |
+| 7 | Claude Opus 5 | 高 | CC | 1小时7分 | 2小时5分 | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | 智能杰哥 |
+| 8 | DeepSeek V4 Pro | 高 | DSH | 1小时46分 | 1小时48分 | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | 智能杰哥 |
+| 9 | Kimi K3 | 高 | CC | 1小时48分 | 2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | 智能杰哥 |
+| 10 | GPT 5.6 Luna | 极高 | Codex | 2小时44分 | 2小时45分 | 243K x4 | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | 机器杰哥 |
+| 11 | Claude Opus 4.6 | — | CC | 2小时46分 | 2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 机器杰哥 |
+| 12 | Claude Sonnet 5 | 极高 | CC | 2小时31分 | 2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 机器杰哥 |
+| 13 | GLM 5.3 | 高 | CC | 3小时50分 | 3小时52分 | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | 机器杰哥 |
+| 14 | GLM 5.3 Flash (fp8) | — | CC | 6小时46分 | 7小时10分 | 967K | 自部署 | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | 机器杰哥 |
+| 15 | DeepSeek V4 Flash | 高 | DSH | 6小时30分 | 6小时35分 | 792K x3 | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 机器杰哥 |
+| 16 | Claude Sonnet 4.6 | — | CC | 16小时 | 16小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 机器杰哥 |
+| 17 | DeepSeek V4 Pro 预览版 | 最高 | CC | ❌ | ❌ | — | — | — | 损坏杰哥 |
+| 18 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | ❌ | — | — | — | 损坏杰哥 |
 
 
 
@@ -109,6 +110,26 @@ OpenAI Codex 运行 **~36 分钟** 达成首次成功，后在用户提醒下用
 | 00:36 | 初次宣称 PASS；第二次请求静默失败 |
 | 00:43 – 00:49 | 用户提示 → 修复 TCP FIN 生命周期 + virtio TX descriptor 池 |
 | 00:49 | 最终 PASS：连续两次 HTTP 200 ✅ |
+
+### Claude Opus 4.8 — 40分钟
+
+![Opus 4.8 Timeline](figures/opus48-timeline.png)
+
+Claude Code 运行 **约 40 分钟** 达成首次 HTTP 200（42 分钟完成）。走**静态编译路线**：riscv64 Alpine 容器里用官方源码编译 nginx 1.26.2，未修改。内核采用**协作式 + 轮询架构**（无中断/无抢占，内核轮询 virtio-net），trap 处理因此大幅简化。零内核 panic、零联网搜索、114 次 API 请求、0.23M 新输入 + 15.2M 缓存读 + 147K 输出 token、峰值上下文 230K、零压缩。成本 **$12**（Opus 4.8：输入/输出 $5/$25 每 M，缓存读取 $0.5/M）。一连串真实的 nginx 初始化坑：`geteuid()==0` 让 nginx 以为是 root 去降权而崩溃；时钟从 0 起使 `ngx_time_update` 误判"时间未变"跳过初始化；`getrlimit(RLIMIT_NOFILE)=0` 把连接数限制成 0；最后靠抓包定位 **双重 listen 产生孤儿监听 socket**——连接全被池外孤儿接走，nginx 永远轮询不到。+41 分钟稳定验证：连续请求、10 并发、404 语义、keepalive 复用全部通过。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:07 | 内核启动打印；帧分配器 + 堆 + Sv39 分页 |
+| 00:15 | 嵌入 nginx 配置与网页；poll 事件模型 |
+| 00:23 | trap 处理 + syscall 分发接入 main |
+| 00:25 | 用户态拉起 nginx！缺 pread64 → 补 pread64/pwrite64 |
+| 00:30 | `geteuid()==0` 降权崩溃（nginx 查 /etc/passwd）→ 返回非 root |
+| 00:33 | 时钟从 0 起 → `ngx_time_update` 误判跳过 → 返回真实 Unix 时间戳 |
+| 00:35 | `getrlimit(RLIMIT_NOFILE)=0` → 实现 prlimit64 |
+| 00:40 | TCP 全通但 nginx 不应答——抓包定位**双重 listen 孤儿 socket** → 修复 |
+| 00:40 | 宿主机首次 HTTP 200 OK——`Server: nginx/1.26.2` 🎉 |
+| 00:41 | 连续请求 / 10 并发 / 404 / keepalive 复用全过 ✅ |
+| 00:42 | 清理死代码 + 完成 |
 
 ### Claude Opus 4.7 — 65分钟
 
