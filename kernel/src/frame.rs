@@ -34,6 +34,17 @@ impl FrameAllocator {
     fn free(&mut self, pa: usize) {
         self.freed.push(pa);
     }
+
+    fn alloc_contig(&mut self, pages: usize) -> Option<usize> {
+        // Contiguous allocations come from the bump region only.
+        let start = self.next;
+        if start + pages * PAGE_SIZE <= self.end {
+            self.next = start + pages * PAGE_SIZE;
+            Some(start)
+        } else {
+            None
+        }
+    }
 }
 
 static ALLOCATOR: Mutex<FrameAllocator> = Mutex::new(FrameAllocator::new());
@@ -55,6 +66,18 @@ pub fn alloc() -> usize {
 
 pub fn free(pa: usize) {
     ALLOCATOR.lock().free(pa);
+}
+
+/// Allocate `pages` contiguous zeroed frames; returns the base physical address.
+pub fn alloc_contig(pages: usize) -> usize {
+    let pa = ALLOCATOR
+        .lock()
+        .alloc_contig(pages)
+        .expect("out of contiguous frames");
+    unsafe {
+        core::ptr::write_bytes(pa as *mut u8, 0, pages * PAGE_SIZE);
+    }
+    pa
 }
 
 pub fn free_count() -> usize {
