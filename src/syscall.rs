@@ -36,7 +36,7 @@ unsafe fn call(n:usize,a:[usize;6])->isize{let [a0,a1,a2,a3,a4,a5]=a;match n{
  23=>{match get(a0){Some(f)=>add(f) as isize,None=>-9}},
  24=>{if let Some(f)=get(a0){while fds().len()<=a1{fds().push(None)}fds()[a1]=Some(f);a1 as isize}else{-9}},
  25=>{match a1{0|1030=>match get(a0){Some(f)=>add(f)as isize,None=>-9},3=>match get(a0){Some(Fd::File{flags,..})=>flags as isize,_=>0},_=>0}},
- 29=>{if a1==0x541b{put32(a2,0);0}else{-25}},
+ 29=>{if a1==0x5421{0}else if a1==0x541b{put32(a2,0);0}else{-25}},
  34=>{fs::mkdir(&path_at(a0,a1));0},
  35|37|48|49|52|53|54|55=>0,
  46=>{if let Some(Fd::File{path,..})=get(a0){fs::VFS.as_mut().unwrap().get_mut(&path).unwrap().resize(a1,0);0}else{-9}},
