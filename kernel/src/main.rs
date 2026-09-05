@@ -34,17 +34,21 @@ global_asm!(
     ".section .text.entry",
     ".globl _start",
     "_start:",
-    "   la sp, boot_stack_top",
+    "   la sp, {boot_stack}",
+    "   li t0, {stack_size}",
+    "   add sp, sp, t0",
     "   call rust_main",
     "1: wfi",
     "   j 1b",
-    ".section .bss.stack",
-    ".globl boot_stack_lower",
-    "boot_stack_lower:",
-    "   .space 4096 * 64",
-    ".globl boot_stack_top",
-    "boot_stack_top:",
+    boot_stack = sym BOOT_STACK,
+    stack_size = const BOOT_STACK_SIZE,
 );
+
+const BOOT_STACK_SIZE: usize = 4096 * 64;
+
+#[repr(align(16))]
+struct BootStack([u8; BOOT_STACK_SIZE]);
+static mut BOOT_STACK: BootStack = BootStack([0; BOOT_STACK_SIZE]);
 
 fn clear_bss() {
     extern "C" {
