@@ -709,18 +709,22 @@ fn do_epoll_pwait(epfd: usize, events: usize, maxevents: usize, timeout: isize) 
             if count >= maxevents {
                 break;
             }
-            let re = fd_ready(fd as usize, want | EPOLLIN | EPOLLOUT) & (want | EPOLLERR | EPOLLHUP);
-            let re = re & (want | 0); // only report requested + err/hup handled below
             let mut revents = fd_ready(fd as usize, want);
-            let _ = re;
-            let _ = data;
+            // Report hangup so nginx notices closed connections.
+            if let Some(file) = task::current().fds.get(fd as usize) {
+                if let FileKind::Socket(sidx) = file.lock().kind {
+                    if net::readable(sidx) && !net::writable(sidx) {
+                        // may indicate closed; nginx will read and see EOF
+                        revents |= EPOLLIN & (want | EPOLLIN);
+                    }
+                }
+            }
             if revents != 0 {
                 unsafe {
                     write_val::<u32>(events + count * 16, revents);
                     write_val::<u64>(events + count * 16 + 8, data);
                 }
                 count += 1;
-                let _ = &mut revents;
             }
         }
         if count > 0 {
