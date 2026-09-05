@@ -1,0 +1,635 @@
++ apk add --no-cache build-base pcre2-dev linux-headers wget
++ cd /tmp
++ '[' -f nginx-1.26.2.tar.gz ]
++ wget -q https://nginx.org/download/nginx-1.26.2.tar.gz
++ rm -rf nginx-1.26.2
++ tar xzf nginx-1.26.2.tar.gz
++ cd nginx-1.26.2
++ ./configure '--prefix=/nginx' '--with-cc-opt=-static -fno-pie -O2' '--with-ld-opt=-static -no-pie' --without-http_gzip_module --without-http_rewrite_module --without-http-cache --with-poll_module --with-select_module
+checking for OS
+ + Linux 7.0.14-orbstack-00380-ga7e0a2dc9535 riscv64
+checking for C compiler ... found
+ + using GNU C compiler
+ + gcc version: 15.2.0 (Alpine 15.2.0) 
+checking for gcc -pipe switch ... found
+checking for --with-ld-opt="-static -no-pie" ... found
+checking for -Wl,-E switch ... found
+checking for gcc builtin atomic operations ... found
+checking for C99 variadic macros ... found
+checking for gcc variadic macros ... found
+checking for gcc builtin 64 bit byteswap ... found
+checking for unistd.h ... found
+checking for inttypes.h ... found
+checking for limits.h ... found
+checking for sys/filio.h ... not found
+checking for sys/param.h ... found
+checking for sys/mount.h ... found
+checking for sys/statvfs.h ... found
+checking for crypt.h ... found
+checking for Linux specific features
+checking for epoll ... found
+checking for EPOLLRDHUP ... found
+checking for EPOLLEXCLUSIVE ... found
+checking for eventfd() ... found
+checking for O_PATH ... found
+checking for sendfile() ... found
+checking for sendfile64() ... found
+checking for sys/prctl.h ... found
+checking for prctl(PR_SET_DUMPABLE) ... found
+checking for prctl(PR_SET_KEEPCAPS) ... found
+checking for capabilities ... found
+checking for crypt_r() ... found
+checking for sys/vfs.h ... found
+checking for BPF sockhash ... found
+checking for SO_COOKIE ... found
+checking for UDP_SEGMENT ... found
+checking for nobody group ... found
+checking for poll() ... found
+checking for /dev/poll ... not found
+checking for kqueue ... not found
+checking for crypt() ... found
+checking for F_READAHEAD ... not found
+checking for posix_fadvise() ... found
+checking for O_DIRECT ... found
+checking for F_NOCACHE ... not found
+checking for directio() ... not found
+checking for statfs() ... found
+checking for statvfs() ... found
+checking for dlopen() ... found
+checking for sched_yield() ... found
+checking for sched_setaffinity() ... found
+checking for SO_SETFIB ... not found
+checking for SO_REUSEPORT ... found
+checking for SO_ACCEPTFILTER ... not found
+checking for SO_BINDANY ... not found
+checking for IP_TRANSPARENT ... found
+checking for IP_BINDANY ... not found
+checking for IP_BIND_ADDRESS_NO_PORT ... found
+checking for IP_RECVDSTADDR ... not found
+checking for IP_SENDSRCADDR ... not found
+checking for IP_PKTINFO ... found
+checking for IPV6_RECVPKTINFO ... found
+checking for IP_MTU_DISCOVER ... found
+checking for IPV6_MTU_DISCOVER ... found
+checking for IP_DONTFRAG ... not found
+checking for IPV6_DONTFRAG ... found
+checking for TCP_DEFER_ACCEPT ... found
+checking for TCP_KEEPIDLE ... found
+checking for TCP_FASTOPEN ... found
+checking for TCP_INFO ... found
+checking for accept4() ... found
+checking for int size ... 4 bytes
+checking for long size ... 8 bytes
+checking for long long size ... 8 bytes
+checking for void * size ... 8 bytes
+checking for uint32_t ... found
+checking for uint64_t ... found
+checking for sig_atomic_t ... found
+checking for sig_atomic_t size ... 4 bytes
+checking for socklen_t ... found
+checking for in_addr_t ... found
+checking for in_port_t ... found
+checking for rlim_t ... found
+checking for uintptr_t ... uintptr_t found
+checking for system byte ordering ... little endian
+checking for size_t size ... 8 bytes
+checking for off_t size ... 8 bytes
+checking for time_t size ... 8 bytes
+checking for AF_INET6 ... found
+checking for setproctitle() ... not found
+checking for pread() ... found
+checking for pwrite() ... found
+checking for pwritev() ... found
+checking for strerrordesc_np() ... not found
+checking for sys_nerr ... not found
+checking for _sys_nerr ... not found
+checking for localtime_r() ... found
+checking for clock_gettime(CLOCK_MONOTONIC) ... found
+checking for posix_memalign() ... found
+checking for memalign() ... found
+checking for mmap(MAP_ANON|MAP_SHARED) ... found
+checking for mmap("/dev/zero", MAP_SHARED) ... found
+checking for System V shared memory ... found
+checking for POSIX semaphores ... found
+checking for struct msghdr.msg_control ... found
+checking for ioctl(FIONBIO) ... found
+checking for ioctl(FIONREAD) ... found
+checking for struct tm.tm_gmtoff ... found
+checking for struct dirent.d_namlen ... not found
+checking for struct dirent.d_type ... found
+checking for sysconf(_SC_NPROCESSORS_ONLN) ... found
+checking for sysconf(_SC_LEVEL1_DCACHE_LINESIZE) ... not found
+checking for openat(), fstatat() ... found
+checking for getaddrinfo() ... found
+creating objs/Makefile
+
+Configuration summary
+  + PCRE library is not used
+  + OpenSSL library is not used
+  + zlib library is not used
+
+  nginx path prefix: "/nginx"
+  nginx binary file: "/nginx/sbin/nginx"
+  nginx modules path: "/nginx/modules"
+  nginx configuration prefix: "/nginx/conf"
+  nginx configuration file: "/nginx/conf/nginx.conf"
+  nginx pid file: "/nginx/logs/nginx.pid"
+  nginx error log file: "/nginx/logs/error.log"
+  nginx http access log file: "/nginx/logs/access.log"
+  nginx http client request body temporary files: "client_body_temp"
+  nginx http proxy temporary files: "proxy_temp"
+  nginx http fastcgi temporary files: "fastcgi_temp"
+  nginx http uwsgi temporary files: "uwsgi_temp"
+  nginx http scgi temporary files: "scgi_temp"
+
++ make -j4
+make -f objs/Makefile
+make[1]: Entering directory '/tmp/nginx-1.26.2'
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/nginx.o \
+	src/core/nginx.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_log.o \
+	src/core/ngx_log.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_palloc.o \
+	src/core/ngx_palloc.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_array.o \
+	src/core/ngx_array.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_list.o \
+	src/core/ngx_list.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_hash.o \
+	src/core/ngx_hash.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_buf.o \
+	src/core/ngx_buf.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_queue.o \
+	src/core/ngx_queue.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_output_chain.o \
+	src/core/ngx_output_chain.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_string.o \
+	src/core/ngx_string.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_parse.o \
+	src/core/ngx_parse.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_parse_time.o \
+	src/core/ngx_parse_time.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_inet.o \
+	src/core/ngx_inet.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_file.o \
+	src/core/ngx_file.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_crc32.o \
+	src/core/ngx_crc32.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_murmurhash.o \
+	src/core/ngx_murmurhash.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_md5.o \
+	src/core/ngx_md5.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_sha1.o \
+	src/core/ngx_sha1.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_rbtree.o \
+	src/core/ngx_rbtree.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_radix_tree.o \
+	src/core/ngx_radix_tree.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_slab.o \
+	src/core/ngx_slab.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_times.o \
+	src/core/ngx_times.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_shmtx.o \
+	src/core/ngx_shmtx.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_connection.o \
+	src/core/ngx_connection.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_cycle.o \
+	src/core/ngx_cycle.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_spinlock.o \
+	src/core/ngx_spinlock.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_rwlock.o \
+	src/core/ngx_rwlock.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_cpuinfo.o \
+	src/core/ngx_cpuinfo.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_conf_file.o \
+	src/core/ngx_conf_file.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_module.o \
+	src/core/ngx_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_resolver.o \
+	src/core/ngx_resolver.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_open_file_cache.o \
+	src/core/ngx_open_file_cache.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_crypt.o \
+	src/core/ngx_crypt.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_proxy_protocol.o \
+	src/core/ngx_proxy_protocol.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_syslog.o \
+	src/core/ngx_syslog.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/event/ngx_event.o \
+	src/event/ngx_event.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/event/ngx_event_timer.o \
+	src/event/ngx_event_timer.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/event/ngx_event_posted.o \
+	src/event/ngx_event_posted.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/event/ngx_event_accept.o \
+	src/event/ngx_event_accept.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/event/ngx_event_udp.o \
+	src/event/ngx_event_udp.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/event/ngx_event_connect.o \
+	src/event/ngx_event_connect.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/event/ngx_event_pipe.o \
+	src/event/ngx_event_pipe.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_time.o \
+	src/os/unix/ngx_time.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_errno.o \
+	src/os/unix/ngx_errno.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_alloc.o \
+	src/os/unix/ngx_alloc.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_files.o \
+	src/os/unix/ngx_files.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_socket.o \
+	src/os/unix/ngx_socket.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_recv.o \
+	src/os/unix/ngx_recv.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_readv_chain.o \
+	src/os/unix/ngx_readv_chain.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_udp_recv.o \
+	src/os/unix/ngx_udp_recv.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_send.o \
+	src/os/unix/ngx_send.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_writev_chain.o \
+	src/os/unix/ngx_writev_chain.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_udp_send.o \
+	src/os/unix/ngx_udp_send.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_udp_sendmsg_chain.o \
+	src/os/unix/ngx_udp_sendmsg_chain.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_channel.o \
+	src/os/unix/ngx_channel.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_shmem.o \
+	src/os/unix/ngx_shmem.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_process.o \
+	src/os/unix/ngx_process.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_daemon.o \
+	src/os/unix/ngx_daemon.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_setaffinity.o \
+	src/os/unix/ngx_setaffinity.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_setproctitle.o \
+	src/os/unix/ngx_setproctitle.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_posix_init.o \
+	src/os/unix/ngx_posix_init.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_user.o \
+	src/os/unix/ngx_user.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_dlopen.o \
+	src/os/unix/ngx_dlopen.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_process_cycle.o \
+	src/os/unix/ngx_process_cycle.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_linux_init.o \
+	src/os/unix/ngx_linux_init.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/event/modules/ngx_epoll_module.o \
+	src/event/modules/ngx_epoll_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/os/unix/ngx_linux_sendfile_chain.o \
+	src/os/unix/ngx_linux_sendfile_chain.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/core/ngx_bpf.o \
+	src/core/ngx_bpf.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/event/modules/ngx_select_module.o \
+	src/event/modules/ngx_select_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/src/event/modules/ngx_poll_module.o \
+	src/event/modules/ngx_poll_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http.o \
+	src/http/ngx_http.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_core_module.o \
+	src/http/ngx_http_core_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_special_response.o \
+	src/http/ngx_http_special_response.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_request.o \
+	src/http/ngx_http_request.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_parse.o \
+	src/http/ngx_http_parse.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_log_module.o \
+	src/http/modules/ngx_http_log_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_request_body.o \
+	src/http/ngx_http_request_body.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_variables.o \
+	src/http/ngx_http_variables.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_script.o \
+	src/http/ngx_http_script.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_upstream.o \
+	src/http/ngx_http_upstream.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_upstream_round_robin.o \
+	src/http/ngx_http_upstream_round_robin.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_write_filter_module.o \
+	src/http/ngx_http_write_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_header_filter_module.o \
+	src/http/ngx_http_header_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_chunked_filter_module.o \
+	src/http/modules/ngx_http_chunked_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_range_filter_module.o \
+	src/http/modules/ngx_http_range_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_postpone_filter_module.o \
+	src/http/ngx_http_postpone_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_ssi_filter_module.o \
+	src/http/modules/ngx_http_ssi_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_charset_filter_module.o \
+	src/http/modules/ngx_http_charset_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_userid_filter_module.o \
+	src/http/modules/ngx_http_userid_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_headers_filter_module.o \
+	src/http/modules/ngx_http_headers_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/ngx_http_copy_filter_module.o \
+	src/http/ngx_http_copy_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_not_modified_filter_module.o \
+	src/http/modules/ngx_http_not_modified_filter_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_static_module.o \
+	src/http/modules/ngx_http_static_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_autoindex_module.o \
+	src/http/modules/ngx_http_autoindex_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_index_module.o \
+	src/http/modules/ngx_http_index_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_mirror_module.o \
+	src/http/modules/ngx_http_mirror_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_try_files_module.o \
+	src/http/modules/ngx_http_try_files_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_auth_basic_module.o \
+	src/http/modules/ngx_http_auth_basic_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_access_module.o \
+	src/http/modules/ngx_http_access_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_limit_conn_module.o \
+	src/http/modules/ngx_http_limit_conn_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_limit_req_module.o \
+	src/http/modules/ngx_http_limit_req_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_geo_module.o \
+	src/http/modules/ngx_http_geo_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_map_module.o \
+	src/http/modules/ngx_http_map_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_split_clients_module.o \
+	src/http/modules/ngx_http_split_clients_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_referer_module.o \
+	src/http/modules/ngx_http_referer_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_proxy_module.o \
+	src/http/modules/ngx_http_proxy_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_fastcgi_module.o \
+	src/http/modules/ngx_http_fastcgi_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_uwsgi_module.o \
+	src/http/modules/ngx_http_uwsgi_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_scgi_module.o \
+	src/http/modules/ngx_http_scgi_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_memcached_module.o \
+	src/http/modules/ngx_http_memcached_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_empty_gif_module.o \
+	src/http/modules/ngx_http_empty_gif_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_browser_module.o \
+	src/http/modules/ngx_http_browser_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_upstream_hash_module.o \
+	src/http/modules/ngx_http_upstream_hash_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_upstream_ip_hash_module.o \
+	src/http/modules/ngx_http_upstream_ip_hash_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_upstream_least_conn_module.o \
+	src/http/modules/ngx_http_upstream_least_conn_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_upstream_random_module.o \
+	src/http/modules/ngx_http_upstream_random_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_upstream_keepalive_module.o \
+	src/http/modules/ngx_http_upstream_keepalive_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs -I src/http -I src/http/modules \
+	-o objs/src/http/modules/ngx_http_upstream_zone_module.o \
+	src/http/modules/ngx_http_upstream_zone_module.c
+cc -c -pipe  -O -W -Wall -Wpointer-arith -Wno-unused-parameter -Werror -g -static -fno-pie -O2 -I src/core -I src/event -I src/event/modules -I src/event/quic -I src/os/unix -I objs \
+	-o objs/ngx_modules.o \
+	objs/ngx_modules.c
+sed -e "s|%%PREFIX%%|/nginx|" \
+	-e "s|%%PID_PATH%%|/nginx/logs/nginx.pid|" \
+	-e "s|%%CONF_PATH%%|/nginx/conf/nginx.conf|" \
+	-e "s|%%ERROR_LOG_PATH%%|/nginx/logs/error.log|" \
+	< man/nginx.8 > objs/nginx.8
+cc -o objs/nginx \
+objs/src/core/nginx.o \
+objs/src/core/ngx_log.o \
+objs/src/core/ngx_palloc.o \
+objs/src/core/ngx_array.o \
+objs/src/core/ngx_list.o \
+objs/src/core/ngx_hash.o \
+objs/src/core/ngx_buf.o \
+objs/src/core/ngx_queue.o \
+objs/src/core/ngx_output_chain.o \
+objs/src/core/ngx_string.o \
+objs/src/core/ngx_parse.o \
+objs/src/core/ngx_parse_time.o \
+objs/src/core/ngx_inet.o \
+objs/src/core/ngx_file.o \
+objs/src/core/ngx_crc32.o \
+objs/src/core/ngx_murmurhash.o \
+objs/src/core/ngx_md5.o \
+objs/src/core/ngx_sha1.o \
+objs/src/core/ngx_rbtree.o \
+objs/src/core/ngx_radix_tree.o \
+objs/src/core/ngx_slab.o \
+objs/src/core/ngx_times.o \
+objs/src/core/ngx_shmtx.o \
+objs/src/core/ngx_connection.o \
+objs/src/core/ngx_cycle.o \
+objs/src/core/ngx_spinlock.o \
+objs/src/core/ngx_rwlock.o \
+objs/src/core/ngx_cpuinfo.o \
+objs/src/core/ngx_conf_file.o \
+objs/src/core/ngx_module.o \
+objs/src/core/ngx_resolver.o \
+objs/src/core/ngx_open_file_cache.o \
+objs/src/core/ngx_crypt.o \
+objs/src/core/ngx_proxy_protocol.o \
+objs/src/core/ngx_syslog.o \
+objs/src/event/ngx_event.o \
+objs/src/event/ngx_event_timer.o \
+objs/src/event/ngx_event_posted.o \
+objs/src/event/ngx_event_accept.o \
+objs/src/event/ngx_event_udp.o \
+objs/src/event/ngx_event_connect.o \
+objs/src/event/ngx_event_pipe.o \
+objs/src/os/unix/ngx_time.o \
+objs/src/os/unix/ngx_errno.o \
+objs/src/os/unix/ngx_alloc.o \
+objs/src/os/unix/ngx_files.o \
+objs/src/os/unix/ngx_socket.o \
+objs/src/os/unix/ngx_recv.o \
+objs/src/os/unix/ngx_readv_chain.o \
+objs/src/os/unix/ngx_udp_recv.o \
+objs/src/os/unix/ngx_send.o \
+objs/src/os/unix/ngx_writev_chain.o \
+objs/src/os/unix/ngx_udp_send.o \
+objs/src/os/unix/ngx_udp_sendmsg_chain.o \
+objs/src/os/unix/ngx_channel.o \
+objs/src/os/unix/ngx_shmem.o \
+objs/src/os/unix/ngx_process.o \
+objs/src/os/unix/ngx_daemon.o \
+objs/src/os/unix/ngx_setaffinity.o \
+objs/src/os/unix/ngx_setproctitle.o \
+objs/src/os/unix/ngx_posix_init.o \
+objs/src/os/unix/ngx_user.o \
+objs/src/os/unix/ngx_dlopen.o \
+objs/src/os/unix/ngx_process_cycle.o \
+objs/src/os/unix/ngx_linux_init.o \
+objs/src/event/modules/ngx_epoll_module.o \
+objs/src/os/unix/ngx_linux_sendfile_chain.o \
+objs/src/core/ngx_bpf.o \
+objs/src/event/modules/ngx_select_module.o \
+objs/src/event/modules/ngx_poll_module.o \
+objs/src/http/ngx_http.o \
+objs/src/http/ngx_http_core_module.o \
+objs/src/http/ngx_http_special_response.o \
+objs/src/http/ngx_http_request.o \
+objs/src/http/ngx_http_parse.o \
+objs/src/http/modules/ngx_http_log_module.o \
+objs/src/http/ngx_http_request_body.o \
+objs/src/http/ngx_http_variables.o \
+objs/src/http/ngx_http_script.o \
+objs/src/http/ngx_http_upstream.o \
+objs/src/http/ngx_http_upstream_round_robin.o \
+objs/src/http/ngx_http_write_filter_module.o \
+objs/src/http/ngx_http_header_filter_module.o \
+objs/src/http/modules/ngx_http_chunked_filter_module.o \
+objs/src/http/modules/ngx_http_range_filter_module.o \
+objs/src/http/ngx_http_postpone_filter_module.o \
+objs/src/http/modules/ngx_http_ssi_filter_module.o \
+objs/src/http/modules/ngx_http_charset_filter_module.o \
+objs/src/http/modules/ngx_http_userid_filter_module.o \
+objs/src/http/modules/ngx_http_headers_filter_module.o \
+objs/src/http/ngx_http_copy_filter_module.o \
+objs/src/http/modules/ngx_http_not_modified_filter_module.o \
+objs/src/http/modules/ngx_http_static_module.o \
+objs/src/http/modules/ngx_http_autoindex_module.o \
+objs/src/http/modules/ngx_http_index_module.o \
+objs/src/http/modules/ngx_http_mirror_module.o \
+objs/src/http/modules/ngx_http_try_files_module.o \
+objs/src/http/modules/ngx_http_auth_basic_module.o \
+objs/src/http/modules/ngx_http_access_module.o \
+objs/src/http/modules/ngx_http_limit_conn_module.o \
+objs/src/http/modules/ngx_http_limit_req_module.o \
+objs/src/http/modules/ngx_http_geo_module.o \
+objs/src/http/modules/ngx_http_map_module.o \
+objs/src/http/modules/ngx_http_split_clients_module.o \
+objs/src/http/modules/ngx_http_referer_module.o \
+objs/src/http/modules/ngx_http_proxy_module.o \
+objs/src/http/modules/ngx_http_fastcgi_module.o \
+objs/src/http/modules/ngx_http_uwsgi_module.o \
+objs/src/http/modules/ngx_http_scgi_module.o \
+objs/src/http/modules/ngx_http_memcached_module.o \
+objs/src/http/modules/ngx_http_empty_gif_module.o \
+objs/src/http/modules/ngx_http_browser_module.o \
+objs/src/http/modules/ngx_http_upstream_hash_module.o \
+objs/src/http/modules/ngx_http_upstream_ip_hash_module.o \
+objs/src/http/modules/ngx_http_upstream_least_conn_module.o \
+objs/src/http/modules/ngx_http_upstream_random_module.o \
+objs/src/http/modules/ngx_http_upstream_keepalive_module.o \
+objs/src/http/modules/ngx_http_upstream_zone_module.o \
+objs/ngx_modules.o \
+-static -no-pie -lcrypt \
+-Wl,-E
+make[1]: Leaving directory '/tmp/nginx-1.26.2'
++ file objs/nginx
+objs/nginx: ELF 64-bit LSB executable, UCB RISC-V, RVC, double-float ABI, version 1 (SYSV), statically linked, BuildID[sha1]=4421c5607a37a2da3c28d2295f3f22b0266ca63b, with debug_info, not stripped
++ cp objs/nginx /out/nginx.nopie
