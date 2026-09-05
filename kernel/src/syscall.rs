@@ -208,8 +208,6 @@ struct IoVec {
     base: usize,
     len: usize,
 }
-
-fn do_writev(fd: usize, iov: usize, cnt: usize) -> isize {
     let mut total = 0isize;
     for i in 0..cnt {
         let v = unsafe { &*((iov + i * 16) as *const IoVec) };
@@ -579,6 +577,8 @@ pub fn dispatch(cx: &mut TrapContext) {
         64 => do_write(a0, a1, a2),
         65 => do_readv(a0, a1, a2),
         66 => do_writev(a0, a1, a2),
+        67 => do_pread(a0, a1, a2, a3),
+        68 => do_pwrite(a0, a1, a2, a3),
         73 => do_ppoll(a0, a1, a2),
         78 => ENOSYS, // readlinkat
         79 => do_fstatat(a0 as isize, a1, a2, a3 as i32),
