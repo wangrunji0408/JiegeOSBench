@@ -128,16 +128,8 @@ pub fn init() {
     }
 }
 
-fn read_csr(name: &str) -> usize {
-    let v: usize;
-    unsafe {
-        match name {
-            "scause" => core::arch::asm!("csrr {}, scause", out(reg) v),
-            "stval" => core::arch::asm!("csrr {}, stval", out(reg) v),
-            _ => v = 0,
-        }
-    }
-    v
+fn read_csr(_name: &str) -> usize {
+    0
 }
 
 #[no_mangle]

@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(alloc_error_handler)]
 #![allow(dead_code)]
+#![allow(static_mut_refs)]
 
 extern crate alloc;
 
@@ -11,11 +12,23 @@ use core::panic::PanicInfo;
 #[macro_use]
 mod uart;
 mod config;
+mod elf;
+mod file;
 mod frame;
+mod fs;
 mod heap;
 mod memory;
+mod net;
 mod page_table;
 mod sbi;
+mod syscall;
+mod task;
+mod time;
+mod trap;
+
+use alloc::sync::Arc;
+use file::{FileDesc, FileKind};
+use spin::Mutex;
 
 global_asm!(
     ".section .text.entry",
@@ -53,24 +66,72 @@ fn clear_bss() {
     }
 }
 
+static NGINX_ELF: &[u8] = include_bytes!("../embed/nginx");
+static NGINX_CONF: &[u8] = include_bytes!("../embed/nginx.conf");
+static INDEX_HTML: &[u8] = include_bytes!("../embed/index.html");
+
+fn setup_fs() {
+    fs::init();
+    fs::mkdir_p("/nginx/conf");
+    fs::mkdir_p("/nginx/logs");
+    fs::mkdir_p("/nginx/html");
+    fs::mkdir_p("/tmp");
+    fs::mkdir_p("/nginx/client_body_temp");
+    fs::mkdir_p("/nginx/proxy_temp");
+    fs::mkdir_p("/nginx/fastcgi_temp");
+    fs::mkdir_p("/nginx/uwsgi_temp");
+    fs::mkdir_p("/nginx/scgi_temp");
+    fs::write_file("/nginx/conf/nginx.conf", NGINX_CONF);
+    fs::write_file("/nginx/html/index.html", INDEX_HTML);
+    fs::write_file("/nginx/html/50x.html", INDEX_HTML);
+}
+
+fn console_fd(readable: bool, writable: bool) -> Arc<Mutex<FileDesc>> {
+    Arc::new(Mutex::new(FileDesc {
+        kind: FileKind::Console,
+        offset: 0,
+        flags: 0,
+        readable,
+        writable,
+    }))
+}
+
 #[no_mangle]
-pub extern "C" fn rust_main(hartid: usize, dtb: usize) -> ! {
+pub extern "C" fn rust_main(hartid: usize, _dtb: usize) -> ! {
     clear_bss();
     uart::init();
     println!();
-    println!("[kernel] booted: hartid={} dtb={:#x}", hartid, dtb);
+    println!("[kernel] boot hart {}", hartid);
     memory::init();
-    println!("[kernel] paging enabled, free frames: {}", frame::free_count());
+    println!("[kernel] paging on, free frames: {}", frame::free_count());
+    trap::init();
+    setup_fs();
+    println!("[kernel] ramfs ready");
+    net::init();
 
-    // Smoke test the heap.
-    let mut v = alloc::vec::Vec::new();
-    for i in 0..1000 {
-        v.push(i);
+    // Build the user address space.
+    let pt = page_table::PageTable::new();
+    memory::map_kernel(&pt);
+    unsafe {
+        memory::activate(pt.satp());
     }
-    println!("[kernel] heap ok, vec sum = {}", v.iter().sum::<i32>());
+    let t = task::Task::new(pt);
+    task::install(t);
 
-    println!("[kernel] init complete");
-    sbi::shutdown();
+    // stdin/stdout/stderr
+    {
+        let t = task::current();
+        t.fds.set(0, console_fd(true, false), false);
+        t.fds.set(1, console_fd(false, true), false);
+        t.fds.set(2, console_fd(false, true), false);
+    }
+
+    let argv = ["nginx", "-c", "/nginx/conf/nginx.conf"];
+    let envp = ["TZ=UTC"];
+    let (entry, sp) = elf::load(task::current(), NGINX_ELF, &argv, &envp);
+    println!("[kernel] loaded nginx: entry={:#x} sp={:#x}", entry, sp);
+    println!("[kernel] entering user mode");
+    task::current().enter_user(entry, sp);
 }
 
 #[panic_handler]
