@@ -188,11 +188,12 @@ impl AddressSpace {
         }
         let mut right = v.clone();
         let old_end = v.end;
+        let vstart = v.start;
         v.end = at;
         right.start = at;
         right.end = old_end;
         if let Some((_, off)) = &mut right.file {
-            *off += (at - self.find_vma(at - 1).unwrap().start) as u64;
+            *off += (at - vstart) as u64;
         }
         self.vmas.insert(at, right);
     }
