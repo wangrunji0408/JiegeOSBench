@@ -154,6 +154,7 @@ impl Task {
                 sigaltstack: StackT::default(),
                 rlimits: default_rlimits(),
                 interrupted: false,
+                syscall_restart: None,
                 exe_path: String::new(),
             }),
             in_kernel_since: AtomicUsize::new(0),
