@@ -657,7 +657,6 @@ pub fn dispatch(cx: &mut TrapContext) {
         260 => 0,      // wait4
         261 => 0,      // prlimit64
         278 => do_getrandom(a0, a1),
-        233 => 0,
         291 => do_statx(a0, a1, a2, a3, a4),
         _ => {
             crate::println!("[kernel] UNIMPLEMENTED syscall {} (a0={:#x})", no, a0);
