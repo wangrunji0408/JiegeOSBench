@@ -6,7 +6,7 @@ use alloc::sync::Arc;
 use alloc::vec;
 use spin::Mutex;
 
-const TRACE: bool = true;
+const TRACE: bool = false;
 
 // errno
 const EPERM: isize = -1;
@@ -902,7 +902,9 @@ pub fn dispatch(cx: &mut TrapContext) {
         233 => 0,      // madvise
         242 => do_accept(a0, a1, a2, a3),
         260 => 0,      // wait4
-        261 => 0,      // prlimit64
+        261 => do_prlimit(a1, a2, a3),
+        286 => do_readv(a0, a1, a2),   // preadv2 -> treat like readv (offset ignored)
+        287 => do_writev(a0, a1, a2),  // pwritev2 -> treat like writev
         278 => do_getrandom(a0, a1),
         291 => do_statx(a0, a1, a2, a3, a4),
         _ => {
