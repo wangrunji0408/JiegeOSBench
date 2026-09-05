@@ -48,6 +48,7 @@ unsafe fn call(n:usize,a:[usize;6])->isize{let [a0,a1,a2,a3,a4,a5]=a;match n{
  63=>read(a0,a1,a2),64=>write(a0,a1,a2),
  65|66=>{let mut total=0;for i in 0..a2{let p=get64(a1+i*16)as usize;let len=get64(a1+i*16+8)as usize;let r=if n==65{read(a0,p,len)}else{write(a0,p,len)};if r<0{return if total==0{r}else{total}}total+=r;if r<(len as isize){break}}total},
  67=>{if let Some(Fd::File{path,..})=get(a0){if let Some(d)=fs::file_data(&path){let start=a3.min(d.len());let count=a2.min(d.len()-start);buf(a1,count).copy_from_slice(&d[start..start+count]);count as isize}else{-9}}else{-9}},
+ 68=>{if let Some(Fd::File{path,..})=get(a0){fs::write(&path,a3,bytes(a1,a2));a2 as isize}else{-9}},
  71=>{let Some(Fd::File{path,pos,flags})=get(a1)else{return -9};let d=fs::file_data(&path).unwrap();let off=if a2!=0{get64(a2)as usize}else{pos};let count=a3.min(d.len().saturating_sub(off));let r=write(a0,d[off..off+count].as_ptr()as usize,count);if r>0{if a2!=0{put64(a2,(off+r as usize)as u64)}else{fds()[a1]=Some(Fd::File{path,pos:off+r as usize,flags})}}r},
  73=>{crate::net::poll();0},
  78=>{let path=path_at(a0,a1);let target=if path=="/proc/self/exe"{"/usr/sbin/nginx"}else{return -2};let l=target.len().min(a3);buf(a2,l).copy_from_slice(&target.as_bytes()[..l]);l as isize},
