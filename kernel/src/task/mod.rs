@@ -63,6 +63,8 @@ pub struct TaskInner {
     pub rlimits: [Rlimit; 16],
     /// Set when the task was woken by a signal while blocked.
     pub interrupted: bool,
+    /// Interrupted syscall awaiting restart decision: (original a0, kind).
+    pub syscall_restart: Option<(usize, signal::RestartKind)>,
     pub exe_path: String,
 }
 
