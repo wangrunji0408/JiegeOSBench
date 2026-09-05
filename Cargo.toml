@@ -1,0 +1,14 @@
+[package]
+name = "ijiege"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+
+[dependencies]
+buddy_system_allocator = "0.11"
+smoltcp = { version = "0.12", default-features = false, features = ["alloc", "medium-ethernet", "proto-ipv4", "socket-tcp"] }
+
+[profile.release]
+panic = "abort"
+opt-level = 2
+debug = true
