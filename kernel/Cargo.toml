@@ -18,3 +18,5 @@ debug = true
 lto = false
 
 [dependencies]
+spin = "0.9"
+linked_list_allocator = "0.10"
