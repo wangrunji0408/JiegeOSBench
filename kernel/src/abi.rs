@@ -347,8 +347,8 @@ pub struct UContext {
     pub uc_link: usize,
     pub uc_stack: StackT,
     pub uc_sigmask: u64,
-    pub _unused: [u8; 128 - 8],
-    // struct sigcontext (16-aligned): 32 gregs (pc, ra, sp, ...), then fp state
+    pub _unused: [u8; 128],
+    // struct sigcontext at offset 176 (16-aligned): 32 gregs (pc, ra, sp, ...), then fp state
     pub sc_regs: [usize; 32],
     pub sc_fpregs: [u64; 32],
     pub sc_fcsr: u32,
