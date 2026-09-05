@@ -6,6 +6,8 @@ use alloc::sync::Arc;
 use alloc::vec;
 use spin::Mutex;
 
+const TRACE: bool = true;
+
 // errno
 const EPERM: isize = -1;
 const ENOENT: isize = -2;
@@ -751,6 +753,12 @@ pub fn dispatch(cx: &mut TrapContext) {
     let a4 = cx.a(4);
     let a5 = cx.a(5);
     let no = cx.syscall_no();
+    if TRACE {
+        crate::println!(
+            "[sc] no={} a0={:#x} a1={:#x} a2={:#x} a3={:#x}",
+            no, a0, a1, a2, a3
+        );
+    }
     let ret: isize = match no {
         17 => {
             // getcwd
