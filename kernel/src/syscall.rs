@@ -867,10 +867,10 @@ pub fn dispatch(cx: &mut TrapContext) {
         169 => do_gettimeofday(a0),
         172 => 1,  // getpid
         173 => 1,  // getppid
-        174 => 0,  // getuid
-        175 => 0,  // geteuid
-        176 => 0,  // getgid
-        177 => 0,  // getegid
+        174 => 1000, // getuid (non-root: skip privilege dropping)
+        175 => 1000, // geteuid
+        176 => 1000, // getgid
+        177 => 1000, // getegid
         178 => 1,  // gettid
         179 => 0,  // sysinfo
         198 => do_socket(a0, a1, a2),
