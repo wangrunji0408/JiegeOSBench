@@ -73,12 +73,14 @@ impl PageTable {
             gb += 1 << 30;
         }
         // MMIO: 2 MiB leaves in region 0 for PLIC (0x0c00_0000..0x0c60_0000) and
-        // UART/virtio/RTC (0x1000_0000..0x1020_0000, 0x0010_0000..0x0030_0000 goldfish rtc/test).
+        // UART/virtio (0x1000_0000..0x1020_0000). The goldfish RTC at 0x10_1000 is
+        // only touched during boot (paging off) so it stays unmapped here, leaving
+        // low addresses free for non-PIE user executables.
         let l1 = Frame::alloc();
         root[0] = Pte::new(l1.pa(), PteFlags::V);
         let l1t = table_of(l1.pa());
         let io = PteFlags::V | PteFlags::R | PteFlags::W | PteFlags::A | PteFlags::D | PteFlags::G;
-        for base in [0x0000_0000usize, 0x0c00_0000, 0x0c20_0000, 0x0c40_0000, 0x1000_0000] {
+        for base in [0x0c00_0000usize, 0x0c20_0000, 0x0c40_0000, 0x1000_0000] {
             l1t[vpn(base, 1)] = Pte::new(base, io);
         }
         pt.tables.push(l1);
