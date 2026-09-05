@@ -155,6 +155,10 @@ pub extern "C" fn trap_handler(cx: &mut TrapContext) -> *mut TrapContext {
             stval,
             cx.sepc
         );
+        crate::println!(
+            "[kernel] ra={:#x} sp={:#x} a0={:#x} a1={:#x} a2={:#x} a3={:#x}",
+            cx.x[1], cx.x[2], cx.x[10], cx.x[11], cx.x[12], cx.x[13]
+        );
         crate::println!("[kernel] user faulted; shutting down");
         crate::sbi::shutdown();
     }
