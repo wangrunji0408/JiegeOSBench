@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 build = "build.rs"
 
+[features]
+trace = []
+
 [dependencies]
 buddy_system_allocator = "0.11"
 smoltcp = { version = "0.12", default-features = false, features = ["alloc", "medium-ethernet", "proto-ipv4", "socket-tcp"] }
