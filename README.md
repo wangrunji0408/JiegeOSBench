@@ -13,28 +13,27 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 > the web, but must work in the current directory. Keep working until the goal
 > is achieved.
 
-| # | Model | Effort | Harness | Duration | Context | Cost | Branch | Tier |
-|---|-------|--------|---------|----------|---------|------|--------|------|
-| 🏅 | GPT-6 Astra | High | Codex | 6min | 83K | $4 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | Jiege |
-| 🥈 | Claude Fable 5 | High | CC | 38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Super Jiege |
-| 🥉 | GPT 5.6 Sol | High | Codex | 36min | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | Super Jiege |
-| 4 | Claude Fable 5.1 | High | CC | 58min | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | Smart Jiege |
-| 5 | Claude Opus 5 | High | CC | 67min | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | Smart Jiege |
-| 6 | Claude Opus 4.7 | — | CC | 65min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Smart Jiege |
-| 7 | DeepSeek V4 Pro | High | DSH | 108min | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | Smart Jiege |
-| 8 | Kimi K3 | High | CC | 2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Smart Jiege |
-| 9 | GPT 5.6 Luna | xHigh | Codex | 2h 45min | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | Smart Jiege |
-| 10 | Claude Opus 4.6 | — | CC | 2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Smart Jiege |
-| 11 | GLM 5.2 | — | CC | 2h 42min | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | Smart Jiege |
-| 12 | Claude Sonnet 5 | xHigh | CC | 2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Smart Jiege |
-| 13 | GLM 5.3 | High | CC | 3h 52min | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | Machine Jiege |
-| 14 | GLM 5.3 Flash (fp8) | — | CC | 5h 50min | 967K | self-hosted | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | Machine Jiege |
-| 15 | DeepSeek V4 Flash | High | DSH | 6h 35min | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
-| 16 | Claude Sonnet 4.6 | — | CC | 16 hours | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
-| 17 | DeepSeek V4 Pro Preview | Max | CC | >16h ❌ | — | — | — | Broken Jiege |
-| 18 | DeepSeek V4 Flash Vision | High | DSH | ❌ | — | — | — | Broken Jiege |
+| # | Model | Effort | Harness | First HTTP 200 | Total | Context | Cost | Branch | Tier |
+|---|-------|--------|---------|------------|-------|---------|------|--------|------|
+| 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | Jiege |
+| 🥈 | Claude Fable 5 | High | CC | 36min | 38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Super Jiege |
+| 🥉 | GPT 5.6 Sol | High | Codex | 36min | 49min | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | Super Jiege |
+| 4 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Smart Jiege |
+| 5 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | Smart Jiege |
+| 6 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | Smart Jiege |
+| 7 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | Smart Jiege |
+| 8 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Smart Jiege |
+| 9 | GPT 5.6 Luna | xHigh | Codex | 2h 44min | 2h 45min | 243K x4 | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | Machine Jiege |
+| 10 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Machine Jiege |
+| 11 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Machine Jiege |
+| 12 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | Machine Jiege |
+| 13 | GLM 5.3 Flash (fp8) | — | CC | 6h 46min | 7h 10min | 967K | self-hosted | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | Machine Jiege |
+| 14 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
+| 15 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
+| 16 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | — | Broken Jiege |
+| 17 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | — | Broken Jiege |
 
-Duration = time to first HTTP 200.
+
 
 Harness: CC = Claude Code, DSH = DeepSeek Harness.
 
@@ -212,23 +211,6 @@ Claude Code ran for **~2h 46min**.
 | 02:21 | TCP connection detected, nginx receives HTTP request |
 | 02:45 | Fix virtio-net recv + epoll data bug |
 | 02:46 | nginx returns HTTP 200 🎉 |
-
-### GLM 5.2 — 2h 42min
-
-![GLM 5.2 Timeline](figures/glm52-timeline.png)
-
-Claude Code ran for **~2h 42min** (active time, gaps removed), 864 API requests. Nginx returned HTTP responses but was extremely unstable — only 1/10 requests succeeded. The model hallucinated claiming "10/10 all stable". Total token consumption was 215M (including cache), 32x that of Fable 5. Estimated cost: **~$84**.
-
-| Time | Milestone |
-|------|-----------|
-| 00:01 | Project skeleton: Makefile, entry.S, linker script |
-| 00:10 | Core kernel: mm, trap, sched, syscall, UART |
-| 00:20 | Process manager + ELF loader |
-| 00:30 | VFS + file syscalls (open/read/write) |
-| 00:42 | QEMU boot: PANIC — net not initialized |
-| 01:33 | First HTTP response from nginx (unstable) |
-| 02:00 | TCP stack stabilized, multiple requests |
-| 02:42 | Final state: 1/10 req OK, model claims 100% success |
 
 ### Claude Sonnet 5 — 2h 49min
 
