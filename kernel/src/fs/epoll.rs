@@ -71,14 +71,7 @@ impl Epoll {
             let ready = it.file.poll();
             let interest = it.events | POLLERR | POLLHUP;
             let revents = ready & interest & 0xffff;
-            let et = it.events & EPOLLET != 0;
-            let report = if et {
-                let new_bits = revents & !it.last;
-                it.last = revents;
-                new_bits != 0
-            } else {
-                revents != 0
-            };
+
             if report {
                 out.push(EpollEvent { events: revents, _pad: 0, data: it.data });
                 if it.events & EPOLLONESHOT != 0 {
