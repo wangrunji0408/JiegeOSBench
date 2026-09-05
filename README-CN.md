@@ -8,27 +8,26 @@
 
 | # | 模型 | 思考强度 | Harness | 耗时 | 上下文 | 成本 | 分支 | 段位 |
 |:--|:------|:--------|:---------|:----|:------|:------|:------|:----|
-| 🏅 | GPT-6 Astra | 高 | Codex | 6分钟 | 83K | $3.98 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | 杰哥 |
+| 🏅 | GPT-6 Astra | 高 | Codex | 6分钟 | 83K | $4 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | 杰哥 |
 | 🥈 | Claude Fable 5 | 高 | CC | 38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | 超级杰哥 |
 | 🥉 | GPT 5.6 Sol | 高 | Codex | 36分钟 | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | 超级杰哥 |
-| 4 | Claude Opus 5 | 高 | CC | 67分钟 | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | 智能杰哥 |
-| 5 | Claude Opus 4.7 | — | CC | 65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | 智能杰哥 |
-| 6 | DeepSeek V4 Pro | 高 | DSH | 108分钟 | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | 智能杰哥 |
-| 7 | Kimi K3 | 高 | CC | 2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | 智能杰哥 |
-| 8 | GPT 5.6 Luna | 极高 | Codex | 2小时45分 | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | 智能杰哥 |
-| 9 | Claude Opus 4.6 | — | CC | 2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 智能杰哥 |
-| 10 | GLM 5.2 | — | CC | 2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | 智能杰哥 |
-| 11 | Claude Sonnet 5 | 极高 | CC | 2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 智能杰哥 |
-| 12 | GLM 5.3 | 高 | CC | 3小时52分 | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | 机器杰哥 |
-| 13 | GLM 5.3 Flash (fp8) | — | CC | 5小时50分⁵ | 967K | 自部署 | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | 机器杰哥 |
-| 14 | DeepSeek V4 Flash | 高 | DSH | 6小时35分 | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 机器杰哥 |
-| 15 | Claude Sonnet 4.6 | — | CC | 16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 机器杰哥 |
-| 16 | DeepSeek V4 Pro 预览版 | 最高 | CC | >16小时 未完成 | — | — | — | 损坏杰哥 |
-| 17 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | — | — | — | 损坏杰哥 |
+| 4 | Claude Fable 5.1 | 高 | CC | 58分钟 | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | 智能杰哥 |
+| 5 | Claude Opus 5 | 高 | CC | 67分钟 | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | 智能杰哥 |
+| 6 | Claude Opus 4.7 | — | CC | 65分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | 智能杰哥 |
+| 7 | DeepSeek V4 Pro | 高 | DSH | 108分钟 | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | 智能杰哥 |
+| 8 | Kimi K3 | 高 | CC | 2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | 智能杰哥 |
+| 9 | GPT 5.6 Luna | 极高 | Codex | 2小时45分 | 972K | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | 智能杰哥 |
+| 10 | Claude Opus 4.6 | — | CC | 2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 智能杰哥 |
+| 11 | GLM 5.2 | — | CC | 2小时42分 | 392K | $84 | [glm-5.2](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.2) | 智能杰哥 |
+| 12 | Claude Sonnet 5 | 极高 | CC | 2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 智能杰哥 |
+| 13 | GLM 5.3 | 高 | CC | 3小时52分 | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | 机器杰哥 |
+| 14 | GLM 5.3 Flash (fp8) | — | CC | 5小时50分 | 967K | 自部署 | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | 机器杰哥 |
+| 15 | DeepSeek V4 Flash | 高 | DSH | 6小时35分 | 792K | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 机器杰哥 |
+| 16 | Claude Sonnet 4.6 | — | CC | 16 小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 机器杰哥 |
+| 17 | DeepSeek V4 Pro 预览版 | 最高 | CC | >16小时 未完成 | — | — | — | 损坏杰哥 |
+| 18 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | — | — | — | 损坏杰哥 |
 
 耗时：以首次 HTTP 200 为准。
-
-⁵ 有效时间 5小时50分（墙钟 7小时10分；剔除 3 次 harness 中断续命间隙，其中一次是 agent 执行 `pkill -f nginx` 时匹配到自身 harness 进程命令行中的 prompt 导致自杀）。自部署 GLM-5.3-Flash-fp8（sglang）；关闭了客户端前缀缓存，9.519 亿输入 token 为上界值。零次上下文压缩（峰值 967K / 1M 窗口）。
 
 Harness 说明：CC = Claude Code，DSH = DeepSeek Harness。
 
@@ -40,7 +39,7 @@ Harness 说明：CC = Claude Code，DSH = DeepSeek Harness。
 
 ![GPT-6 Astra Timeline](figures/gpt6-astra-timeline.png)
 
-OpenAI Codex（桌面版）运行 **约 6 分钟** 即拿到首次 HTTP 200——本榜最快纪录，约为原纪录（GPT 5.6 Sol 36 分钟）的 1/6。内核几乎分两次大段一次写成：**零内核 panic、零联网搜索**（纯黑盒）、零上下文压缩，单一回合无中断（32 次 API 请求、31 次 bash 工具调用、共 1.74M token、峰值上下文 83K）。成本 **$3.98**。采用 Alpine 官方 APK 路线——未修改的 nginx 1.30.4（riscv64）+ musl/OpenSSL/PCRE2/zlib，与 APK 逐字节校验；约 8 分钟完整验收全绿，8.8 分钟宣告完成。
+OpenAI Codex（桌面版）运行 **约 6 分钟** 即拿到首次 HTTP 200——本榜最快纪录，约为原纪录（GPT 5.6 Sol 36 分钟）的 1/6。内核几乎分两次大段一次写成：**零内核 panic、零联网搜索**（纯黑盒）、零上下文压缩，单一回合无中断（32 次 API 请求、31 次 bash 工具调用、共 1.74M token、峰值上下文 83K）。成本 **$4**。采用 Alpine 官方 APK 路线——未修改的 nginx 1.30.4（riscv64）+ musl/OpenSSL/PCRE2/zlib，与 APK 逐字节校验；约 8 分钟完整验收全绿，8.8 分钟宣告完成。
 
 | 时间 | 里程碑 |
 |------|--------|
@@ -54,9 +53,9 @@ OpenAI Codex（桌面版）运行 **约 6 分钟** 即拿到首次 HTTP 200—�
 | 00:08 | 完整验收通过：8 路并发 ×120 请求、24MiB、25 次 keep-alive、1MiB 文件 ✅ |
 | 00:09 | Goal complete（README + make start/test/verify） |
 
-## Fable 5 — 38分钟
+## Claude Fable 5 — 38分钟
 
-![Fable 5 Timeline](figures/fable5-timeline.png)
+![Claude Fable 5 Timeline](figures/fable5-timeline.png)
 
 Claude Code 运行时长约 **38分钟**，65 次 API 请求。总成本约 **$21**。几乎是一次默写成功——凭记忆写出整个内核，几乎没怎么调试。
 
@@ -69,6 +68,28 @@ Claude Code 运行时长约 **38分钟**，65 次 API 请求。总成本约 **$2
 | 00:32 | QEMU 启动：PANIC at trap.rs — 页错误 |
 | 00:34 | QEMU 启动：nginx listening on port 80 🎉 |
 | 00:37 | 收尾修复（sendfile 等 syscall, README） |
+
+### Claude Fable 5.1 — 58分钟
+
+![Claude Fable 5.1 Timeline](figures/fable51-timeline.png)
+
+Claude Code 运行 **约 58 分钟** 达成首次 HTTP 200（105 分钟全部完成）——目前所有跑次里工程量最深的内核：真正 **fork 出两个 nginx worker 进程**（信号 + CoW）、AF_UNIX + SCM_RIGHTS、epoll、smoltcp TCP、busybox sh 作 init。途中 1 次内核 panic（+49 分钟，VMA 区间不空闲），一次修复即通过。163 次 API 请求、共 49.5M token（98.7% 缓存命中）、峰值上下文 516K、零压缩、零联网搜索。成本 **$34**（Fable 5.1：输入/输出 $10/$50 每 M，缓存读取 $0.25/M）。走 Alpine 官方 APK 路线（nginx 1.28.3，动态链接）；`io_setup` 未实现——nginx 启动打一条 `[emerg]` 后照常服务。功能套件（index/404/HEAD/sendfile 4MiB/keep-alive）62 分钟全绿；信号/并发/泄漏/吞吐套件 + README + git 提交于 105 分钟完成。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:01 | 环境勘察 + 整体规划 |
+| 00:06 | 官方 Alpine riscv64 nginx 1.28.3 + musl/OpenSSL/PCRE2/zlib 就位 |
+| 00:08 | 内核骨架：Cargo、链接脚本、entry.S、UART、panic 处理 |
+| 00:17 | trap 处理 + 任务/调度核心 |
+| 00:22 | VFS + 文件描述符/fd 表 |
+| 00:31 | smoltcp TCP 粘合 + socket syscall |
+| 00:42 | 进程/fork/信号/futex syscall |
+| 00:47 | 主入口接好；首次编译仅 11 个 error |
+| 00:49 | KERNEL PANIC #1（VMA 区间不空闲）→ 修复；busybox sh 首启即跑——fork/exec/wait 全通 |
+| 00:55 | `nginx -t` 通过（getpwnam//dev/stderr 修复） |
+| 00:58 | 宿主机首次 HTTP 200 OK——`Server: nginx/1.28.3` 🎉 |
+| 01:02 | 套件全绿：index/404/HEAD/sendfile 4MiB/keep-alive |
+| 01:45 | 信号/并发/泄漏/吞吐套件、README、git 提交 ✅ |
 
 ### GPT 5.6 Sol — 36分钟（+13分钟修复）
 
@@ -90,9 +111,9 @@ OpenAI Codex 运行 **~36 分钟** 达成首次成功，后在用户提醒下用
 | 00:43 – 00:49 | 用户提示 → 修复 TCP FIN 生命周期 + virtio TX descriptor 池 |
 | 00:49 | 最终 PASS：连续两次 HTTP 200 ✅ |
 
-### Opus 4.7 — 65分钟
+### Claude Opus 4.7 — 65分钟
 
-![Opus 4.7 Timeline](figures/opus47-timeline.png)
+![Claude Opus 4.7 Timeline](figures/opus47-timeline.png)
 
 Claude Code 运行时长约 **65分钟**。
 
@@ -109,9 +130,9 @@ Claude Code 运行时长约 **65分钟**。
 | 00:43 | nginx bind + listen 成功 |
 | 00:45 | nginx 官方 binary 返回 HTTP 200 🎉 |
 
-### Opus 5 — 67分钟（125分钟完全稳定）
+### Claude Opus 5 — 67分钟（125分钟完全稳定）
 
-![Opus 5 Timeline](figures/opus5-timeline.png)
+![Claude Opus 5 Timeline](figures/opus5-timeline.png)
 
 Claude Code 运行约 **67 分钟**拿到首次 HTTP 200，后续又花了 **58 分钟**修复 TCP/epoll/VirtIO 边界问题直到完全稳定。**零内核 panic**（后被 GPT-6 Astra 追平）。322 次 API 请求。67 分钟时成本约 **$26**。Context 峰值 334K。
 
@@ -170,9 +191,9 @@ OpenAI Codex（桌面版）有效运行 **~2小时45分**（墙钟 3小时19分�
 | 164:07 | nginx 从宿主返回 200 OK 🎉 |
 | 164:50 | 最终验证 + 目标完成 |
 
-### Opus 4.6 — 2小时46分
+### Claude Opus 4.6 — 2小时46分
 
-![Opus Timeline](figures/opus-timeline.jpeg)
+![Claude Opus 4.6 Timeline](figures/opus-timeline.jpeg)
 
 Claude Code 全程运行约 **2小时46分钟**。
 
@@ -202,9 +223,9 @@ Claude Code 运行约 **2小时42分钟**（有效活跃时间，已去掉空隙
 | 02:00 | TCP 栈稳定，多请求处理 |
 | 02:42 | 最终状态：1/10 请求成功，模型声称 100% |
 
-### Sonnet 5 — 2小时49分
+### Claude Sonnet 5 — 2小时49分
 
-![Sonnet 5 Timeline](figures/sonnet5-timeline.png)
+![Claude Sonnet 5 Timeline](figures/sonnet5-timeline.png)
 
 Claude Code 运行约 **2小时49分钟**（有效活跃时间，扣除了 77 分钟权限等待）。616 次 API 请求。会话从 Docker + qemu-riscv64-static 快速验证 nginx 行为开始，随后转向自写 Rust kernel。QEMU 自写内核两次成功返回 HTTP 200。总 token 消耗 2.79 亿（几乎全为缓存命中），峰值上下文 804K。成本约 **$64**。
 
@@ -258,7 +279,7 @@ Claude Code 连续运行约 **3小时52分钟**（无空闲/断线间隙），35
 | 06:46 | 官方 nginx 首次 HTTP 200 🎉 |
 | 07:09 | 稳定：8/8 请求 200，README 完成 ✅ |
 
-### Sonnet 4.6 — 16 小时
+### Claude Sonnet 4.6 — 16 小时
 
 Claude Code 全程运行共 16 小时。总成本约 60 美元。
 
