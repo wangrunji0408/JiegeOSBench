@@ -37,7 +37,8 @@ unsafe fn call(n:usize,a:[usize;6])->isize{let [a0,a1,a2,a3,a4,a5]=a;match n{
  24=>{if let Some(f)=get(a0){while fds().len()<=a1{fds().push(None)}fds()[a1]=Some(f);a1 as isize}else{-9}},
  25=>{match a1{0|1030=>match get(a0){Some(f)=>add(f)as isize,None=>-9},3=>match get(a0){Some(Fd::File{flags,..})=>flags as isize,_=>0},_=>0}},
  29=>{if a1==0x541b{put32(a2,0);0}else{-25}},
- 34|35|37|48|49|52|53|54|55=>0,
+ 34=>{fs::mkdir(&path_at(a0,a1));0},
+ 35|37|48|49|52|53|54|55=>0,
  46=>{if let Some(Fd::File{path,..})=get(a0){fs::VFS.as_mut().unwrap().get_mut(&path).unwrap().resize(a1,0);0}else{-9}},
  56=>{let path=path_at(a0,a1);crate::println!("[open] {} flags={:#x}",path,a2);if path=="/dev/stdout"||path=="/dev/stderr"{return add(Fd::Console) as isize;}if !fs::exists(&path)&&!path.starts_with("/dev/"){if a2&64!=0{fs::create(&path);}else{return -2}}
  let pos=if a2&1024!=0{fs::file_data(&path).map(|f|f.len()).unwrap_or(0)}else{0};add(Fd::File{path,pos,flags:a2}) as isize},
