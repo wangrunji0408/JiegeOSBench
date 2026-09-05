@@ -550,6 +550,193 @@ fn do_ppoll(fds: usize, nfds: usize, tmo: usize) -> isize {
     }
 }
 
+// ---------- epoll ----------
+
+struct EpollInst {
+    interest: alloc::vec::Vec<(u32, u32, u64)>, // (fd, events, data)
+}
+
+static mut EPOLLS: Option<alloc::vec::Vec<Option<EpollInst>>> = None;
+
+fn epolls() -> &'static mut alloc::vec::Vec<Option<EpollInst>> {
+    unsafe {
+        let e = &mut *core::ptr::addr_of_mut!(EPOLLS);
+        if e.is_none() {
+            *e = Some(alloc::vec::Vec::new());
+        }
+        e.as_mut().unwrap()
+    }
+}
+
+fn do_eventfd(_init: usize) -> isize {
+    let fd = FileDesc {
+        kind: FileKind::Eventfd(0),
+        offset: 0,
+        flags: 0,
+        readable: true,
+        writable: true,
+    };
+    task::current().fds.alloc(Arc::new(Mutex::new(fd)), false) as isize
+}
+
+fn do_epoll_create() -> isize {
+    let table = epolls();
+    let mut idx = table.len();
+    for (i, s) in table.iter().enumerate() {
+        if s.is_none() {
+            idx = i;
+            break;
+        }
+    }
+    let inst = EpollInst {
+        interest: alloc::vec::Vec::new(),
+    };
+    if idx == table.len() {
+        table.push(Some(inst));
+    } else {
+        table[idx] = Some(inst);
+    }
+    let fd = FileDesc {
+        kind: FileKind::Epoll(idx),
+        offset: 0,
+        flags: 0,
+        readable: true,
+        writable: true,
+    };
+    task::current().fds.alloc(Arc::new(Mutex::new(fd)), false) as isize
+}
+
+fn epoll_idx(epfd: usize) -> Option<usize> {
+    let file = task::current().fds.get(epfd)?;
+    let f = file.lock();
+    if let FileKind::Epoll(i) = f.kind {
+        Some(i)
+    } else {
+        None
+    }
+}
+
+fn do_epoll_ctl(epfd: usize, op: usize, fd: usize, ev: usize) -> isize {
+    let idx = match epoll_idx(epfd) {
+        Some(i) => i,
+        None => return EBADF,
+    };
+    let (events, data) = if ev != 0 {
+        unsafe {
+            let events = *(ev as *const u32);
+            let data = *((ev + 8) as *const u64);
+            (events, data)
+        }
+    } else {
+        (0, 0)
+    };
+    let inst = match epolls().get_mut(idx).and_then(|e| e.as_mut()) {
+        Some(i) => i,
+        None => return EBADF,
+    };
+    match op {
+        1 => {
+            // EPOLL_CTL_ADD
+            inst.interest.retain(|e| e.0 != fd as u32);
+            inst.interest.push((fd as u32, events, data));
+        }
+        2 => {
+            // EPOLL_CTL_DEL
+            inst.interest.retain(|e| e.0 != fd as u32);
+        }
+        3 => {
+            // EPOLL_CTL_MOD
+            for e in inst.interest.iter_mut() {
+                if e.0 == fd as u32 {
+                    e.1 = events;
+                    e.2 = data;
+                }
+            }
+        }
+        _ => return EINVAL,
+    }
+    0
+}
+
+const EPOLLIN: u32 = 0x001;
+const EPOLLOUT: u32 = 0x004;
+const EPOLLERR: u32 = 0x008;
+const EPOLLHUP: u32 = 0x010;
+const EPOLLRDHUP: u32 = 0x2000;
+
+fn fd_ready(fd: usize, want: u32) -> u32 {
+    let file = match task::current().fds.get(fd) {
+        Some(f) => f,
+        None => return 0,
+    };
+    let f = file.lock();
+    let (r, w) = match f.kind {
+        FileKind::Socket(idx) => (net::readable(idx), net::writable(idx)),
+        FileKind::Console => (false, true),
+        FileKind::Epoll(_) | FileKind::Eventfd(_) => (false, false),
+        _ => (true, true),
+    };
+    let mut revents = 0;
+    if r && want & EPOLLIN != 0 {
+        revents |= EPOLLIN;
+    }
+    if w && want & EPOLLOUT != 0 {
+        revents |= EPOLLOUT;
+    }
+    revents
+}
+
+fn do_epoll_pwait(epfd: usize, events: usize, maxevents: usize, timeout: isize) -> isize {
+    let idx = match epoll_idx(epfd) {
+        Some(i) => i,
+        None => return EBADF,
+    };
+    let deadline = if timeout < 0 {
+        None
+    } else {
+        Some(time::now_ms() + timeout as u64)
+    };
+    loop {
+        net::poll();
+        let mut count = 0usize;
+        // Snapshot interest to avoid borrow issues.
+        let snapshot: alloc::vec::Vec<(u32, u32, u64)> =
+            match epolls().get(idx).and_then(|e| e.as_ref()) {
+                Some(i) => i.interest.clone(),
+                None => return EBADF,
+            };
+        for (fd, want, data) in snapshot {
+            if count >= maxevents {
+                break;
+            }
+            let re = fd_ready(fd as usize, want | EPOLLIN | EPOLLOUT) & (want | EPOLLERR | EPOLLHUP);
+            let re = re & (want | 0); // only report requested + err/hup handled below
+            let mut revents = fd_ready(fd as usize, want);
+            let _ = re;
+            let _ = data;
+            if revents != 0 {
+                unsafe {
+                    write_val::<u32>(events + count * 16, revents);
+                    write_val::<u64>(events + count * 16 + 8, data);
+                }
+                count += 1;
+                let _ = &mut revents;
+            }
+        }
+        if count > 0 {
+            return count as isize;
+        }
+        if timeout == 0 {
+            return 0;
+        }
+        if let Some(d) = deadline {
+            if time::now_ms() >= d {
+                return 0;
+            }
+        }
+    }
+}
+
 // ---------- dispatch ----------
 
 pub fn dispatch(cx: &mut TrapContext) {
@@ -624,6 +811,10 @@ pub fn dispatch(cx: &mut TrapContext) {
         67 => do_pread(a0, a1, a2, a3),
         68 => do_pwrite(a0, a1, a2, a3),
         73 => do_ppoll(a0, a1, a2),
+        20 => do_epoll_create(),
+        21 => do_epoll_ctl(a0, a1, a2, a3),
+        22 => do_epoll_pwait(a0, a1, a2, a3 as isize),
+        19 => do_eventfd(a0),
         78 => ENOSYS, // readlinkat
         79 => do_fstatat(a0 as isize, a1, a2, a3 as i32),
         80 => do_fstat(a0, a1),
