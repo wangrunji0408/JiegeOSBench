@@ -862,7 +862,7 @@ pub fn dispatch(cx: &mut TrapContext) {
         134 => 0,  // rt_sigaction
         135 => 0,  // rt_sigprocmask
         160 => do_uname(a0),
-        163 => 0,  // getrlimit (old)
+        163 => do_prlimit(a0, 0, a1),  // getrlimit(resource, rlimit*)
         165 => 0,  // getrusage
         169 => do_gettimeofday(a0),
         172 => 1,  // getpid
