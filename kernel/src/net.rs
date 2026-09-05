@@ -262,6 +262,16 @@ pub fn listen(idx: usize, backlog: usize) -> isize {
         Some(e) => e.port,
         None => return EBADF,
     };
+    // Tear down any pre-existing listen pool (nginx may call listen() twice on
+    // the same socket; orphaned listeners would otherwise steal connections).
+    let old: Vec<SocketHandle> = match entry(idx) {
+        Some(e) => core::mem::take(&mut e.pool),
+        None => Vec::new(),
+    };
+    for h in old {
+        tcp_mut(h).abort();
+        net().sockets.remove(h);
+    }
     let n = backlog.clamp(4, QS - 2);
     let mut pool = Vec::new();
     for _ in 0..n {
