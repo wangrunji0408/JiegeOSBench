@@ -15,7 +15,7 @@ pub unsafe fn get64(p:usize)->u64{core::ptr::read_unaligned(p as *const u64)}
 pub unsafe fn put32(p:usize,x:u32){core::ptr::write_unaligned(p as *mut u32,x)}
 pub unsafe fn get32(p:usize)->u32{core::ptr::read_unaligned(p as *const u32)}
 unsafe fn path_at(fd:usize,p:usize)->String{let s=cstr(p);if s.starts_with('/')||fd==(-100isize as usize){fs::normalize(&s)}else{match get(fd){Some(Fd::File{path,..})=>fs::normalize(&alloc::format!("{}/{}",path,s)),_=>fs::normalize(&s)}}}
-unsafe fn stat(path:&str,p:usize)->isize{if !fs::exists(path)&&!path.starts_with("/dev/"){return -2}buf(p,128).fill(0);put64(p,1);put64(p+8,42);put32(p+16,if fs::is_dir(path){0o040755}else{0o100644});put32(p+20,1);let size=fs::file_data(path).map(|f|f.len()).unwrap_or(0);put64(p+48,size as u64);put32(p+56,4096);put64(p+64,((size+511)/512)as u64);put64(p+88,1788579000);0}
+unsafe fn stat(path:&str,p:usize)->isize{if !fs::exists(path)&&!path.starts_with("/dev/"){return -2}buf(p,128).fill(0);put64(p,1);put64(p+8,path.bytes().fold(5381u64,|h,b|h.wrapping_mul(33).wrapping_add(b as u64)));put32(p+16,if fs::is_dir(path){0o040755}else{0o100644});put32(p+20,1);let size=fs::file_data(path).map(|f|f.len()).unwrap_or(0);put64(p+48,size as u64);put32(p+56,4096);put64(p+64,((size+511)/512)as u64);put64(p+88,1788579000);0}
 unsafe fn read(fd:usize,p:usize,n:usize)->isize{match get(fd){
  Some(Fd::File{path,pos,flags})=>{if path=="/dev/urandom"||path=="/dev/random"{return random(p,n)}let Some(d)=fs::file_data(&path)else{return -21};let count=n.min(d.len().saturating_sub(pos));buf(p,count).copy_from_slice(&d[pos.min(d.len())..pos.min(d.len())+count]);fds()[fd]=Some(Fd::File{path,pos:pos+count,flags});count as isize},
  Some(Fd::Socket(s))=>crate::net::recv(s,buf(p,n)),Some(Fd::Event(_))=>-11,Some(Fd::Console)=>0,_=>-9}}
@@ -56,7 +56,7 @@ unsafe fn call(n:usize,a:[usize;6])->isize{let [a0,a1,a2,a3,a4,a5]=a;match n{
  101|115=>{crate::net::poll();0},
  113=>{let ms=crate::millis()as u64;let epoch=if a0==0{1788579000}else{0};put64(a1,epoch+ms/1000);put64(a1+8,(ms%1000)*1000000);0},
  114=>{put64(a1,0);put64(a1+8,100);0},
- 123=>{buf(a1,a0).fill(0);buf(a1,1)[0]=1;8},
+ 123=>{buf(a2,a1).fill(0);buf(a2,1)[0]=1;8},
  124|129|130|131|132|134|135|136|137|138|140|144|146|147|149|159|164|167=>0,
  160=>{buf(a0,390).fill(0);for(i,s)in ["Linux","ijiege","6.6.0-ijiege","Rust kernel","riscv64","localdomain"].iter().enumerate(){buf(a0+i*65,s.len()).copy_from_slice(s.as_bytes());}0},
  163=>{put64(a1,1024);put64(a1+8,1024);0},

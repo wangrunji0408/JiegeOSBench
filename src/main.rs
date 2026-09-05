@@ -12,8 +12,8 @@ global_asm!(include_str!("entry.S"));
 #[global_allocator]
 static HEAP: buddy_system_allocator::LockedHeap<32> = buddy_system_allocator::LockedHeap::empty();
 #[repr(align(4096))]
-struct HeapSpace([u8; 16*1024*1024]);
-static mut HEAP_SPACE: HeapSpace = HeapSpace([0;16*1024*1024]);
+struct HeapSpace([u8; 32*1024*1024]);
+static mut HEAP_SPACE: HeapSpace = HeapSpace([0;32*1024*1024]);
 pub struct Console;
 impl Write for Console {
  fn write_str(&mut self,s:&str)->fmt::Result { for b in s.bytes(){putchar(b);} Ok(()) }
@@ -28,8 +28,8 @@ pub fn millis()->i64{(ticks()/10000) as i64}
 #[repr(C)] pub struct Context {pub x:[usize;32],pub pc:usize,pub status:usize}
 extern "C" {fn enter_user(c:*mut Context)->!;fn kernel_trap();}
 #[no_mangle] fn kmain()->!{unsafe{
- asm!("csrw stvec, {}",in(reg)kernel_trap as usize);
- HEAP.lock().init(core::ptr::addr_of_mut!(HEAP_SPACE.0) as usize,16*1024*1024);
+ asm!("csrw stvec, {}",in(reg)kernel_trap as *const () as usize);
+ HEAP.lock().init(core::ptr::addr_of_mut!(HEAP_SPACE.0) as usize,32*1024*1024);
  println!("\n智能杰哥 iJiege — Rust RISC-V Linux ABI kernel");
  memory::init();fs::init();net::init();
  let (pc,sp)=elf::load_program("/usr/sbin/nginx",&["nginx","-p","/","-c","/etc/nginx/ijiege.conf"]);
