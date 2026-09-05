@@ -1,11 +1,14 @@
-//! virtio-net over virtio-mmio (QEMU virt) using the `virtio-drivers` crate,
-//! exposed as a smoltcp `Device`.
+//! virtio-net over virtio-mmio (QEMU virt) using the `virtio-drivers` raw API,
+//! exposed as a smoltcp `Device`. Transmission is asynchronous: packets are
+//! queued to the device and completed buffers are reclaimed lazily.
+use alloc::boxed::Box;
+use alloc::vec::Vec;
 use core::ptr::NonNull;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
 use smoltcp::phy::{self, Device, DeviceCapabilities, Medium};
 use smoltcp::time::Instant;
-use virtio_drivers::device::net::{RxBuffer, VirtIONet};
+use virtio_drivers::device::net::VirtIONetRaw;
 use virtio_drivers::transport::mmio::{MmioTransport, VirtIOHeader};
 use virtio_drivers::transport::{DeviceType, Transport};
 use virtio_drivers::{BufferDirection, Hal, PhysAddr};
@@ -20,7 +23,7 @@ unsafe impl Hal for KernelHal {
         let layout = core::alloc::Layout::from_size_align(pages * PAGE_SIZE, PAGE_SIZE).unwrap();
         let p = unsafe { alloc::alloc::alloc_zeroed(layout) };
         assert!(!p.is_null(), "dma_alloc failed");
-        (p as usize, NonNull::new(p).unwrap())
+        (p as usize as PhysAddr, NonNull::new(p).unwrap())
     }
 
     unsafe fn dma_dealloc(_paddr: PhysAddr, vaddr: NonNull<u8>, pages: usize) -> i32 {
@@ -34,19 +37,32 @@ unsafe impl Hal for KernelHal {
     }
 
     unsafe fn share(buffer: NonNull<[u8]>, _direction: BufferDirection) -> PhysAddr {
-        buffer.as_ptr() as *mut u8 as usize
+        buffer.as_ptr() as *mut u8 as usize as PhysAddr
     }
 
     unsafe fn unshare(_paddr: PhysAddr, _buffer: NonNull<[u8]>, _direction: BufferDirection) {}
 }
 
-const QUEUE_SIZE: usize = 32;
+const QUEUE_SIZE: usize = 64;
 const BUF_LEN: usize = 2048;
 
-pub type Net = VirtIONet<KernelHal, MmioTransport<'static>, QUEUE_SIZE>;
+pub type Net = VirtIONetRaw<KernelHal, MmioTransport<'static>, QUEUE_SIZE>;
+
+type Buf = Box<[u8; BUF_LEN]>;
+
+fn new_buf() -> Buf {
+    Box::new([0u8; BUF_LEN])
+}
 
 pub struct NetDevice {
-    pub net: Net,
+    net: Net,
+    /// Receive buffers currently owned by the device, indexed by token.
+    rx_bufs: Vec<Option<Buf>>,
+    /// Transmit buffers currently owned by the device, indexed by token.
+    tx_bufs: Vec<Option<Buf>>,
+    /// Spare buffers for transmission.
+    tx_pool: Vec<Buf>,
+    hdr_len: usize,
 }
 
 static IRQ: AtomicUsize = AtomicUsize::new(0);
@@ -55,6 +71,97 @@ pub static DEVICE: Global<NetDevice> = Global::new();
 pub fn irq() -> usize {
     IRQ.load(Ordering::Relaxed)
 }
+
+impl NetDevice {
+    fn new(mut net: Net) -> Self {
+        let mut probe = [0u8; 64];
+        let hdr_len = net.fill_buffer_header(&mut probe).unwrap();
+        let mut rx_bufs: Vec<Option<Buf>> = (0..QUEUE_SIZE).map(|_| None).collect();
+        // Fill the receive queue (leave a couple of descriptors spare).
+        for _ in 0..QUEUE_SIZE - 2 {
+            let mut b = new_buf();
+            match unsafe { net.receive_begin(&mut b[..]) } {
+                Ok(token) => rx_bufs[token as usize] = Some(b),
+                Err(_) => break,
+            }
+        }
+        let tx_pool = (0..QUEUE_SIZE).map(|_| new_buf()).collect();
+        NetDevice { net, rx_bufs, tx_bufs: (0..QUEUE_SIZE).map(|_| None).collect(), tx_pool, hdr_len }
+    }
+
+    /// Return completed transmit buffers to the pool.
+    fn reclaim_tx(&mut self) {
+        while let Some(token) = self.net.poll_transmit() {
+            let Some(buf) = self.tx_bufs[token as usize].take() else {
+                klog!("virtio-net: tx completion for unknown token {}", token);
+                break;
+            };
+            let _ = unsafe { self.net.transmit_complete(token, &buf[..]) };
+            self.tx_pool.push(buf);
+        }
+    }
+
+    fn can_transmit(&mut self) -> bool {
+        if self.net.can_send() && !self.tx_pool.is_empty() {
+            return true;
+        }
+        self.reclaim_tx();
+        self.net.can_send() && !self.tx_pool.is_empty()
+    }
+
+    fn transmit_packet(&mut self, len: usize, f: impl FnOnce(&mut [u8])) {
+        let Some(mut buf) = self.tx_pool.pop() else { return };
+        let total = self.hdr_len + len;
+        if total > BUF_LEN {
+            klog!("virtio-net: dropping oversized packet ({} bytes)", len);
+            self.tx_pool.push(buf);
+            return;
+        }
+        self.net.fill_buffer_header(&mut buf[..]).unwrap();
+        f(&mut buf[self.hdr_len..total]);
+        match unsafe { self.net.transmit_begin(&buf[..total]) } {
+            Ok(token) => self.tx_bufs[token as usize] = Some(buf),
+            Err(e) => {
+                klog!("virtio-net: transmit_begin failed: {:?}", e);
+                self.tx_pool.push(buf);
+            }
+        }
+    }
+
+    /// Take a received packet, if any: (buffer, packet range).
+    fn receive_packet(&mut self) -> Option<(Buf, usize, usize)> {
+        let token = self.net.poll_receive()?;
+        let mut buf = self.rx_bufs[token as usize].take()?;
+        match unsafe { self.net.receive_complete(token, &mut buf[..]) } {
+            Ok((hdr, len)) => Some((buf, hdr, len)),
+            Err(e) => {
+                klog!("virtio-net: receive_complete failed: {:?}", e);
+                self.recycle_rx(buf);
+                None
+            }
+        }
+    }
+
+    fn recycle_rx(&mut self, mut buf: Buf) {
+        match unsafe { self.net.receive_begin(&mut buf[..]) } {
+            Ok(token) => self.rx_bufs[token as usize] = Some(buf),
+            Err(e) => klog!("virtio-net: receive_begin failed: {:?}", e),
+        }
+    }
+
+    fn recycle_pending(&mut self) {
+        let bufs: Vec<Buf> = core::mem::take(&mut *RECYCLE.lock());
+        for b in bufs {
+            self.recycle_rx(b);
+        }
+    }
+
+    pub fn mac_address(&self) -> [u8; 6] {
+        self.net.mac_address()
+    }
+}
+
+static RECYCLE: crate::sync::SpinLock<Vec<Buf>> = crate::sync::SpinLock::new(Vec::new());
 
 /// Probe the 8 virtio-mmio slots of the virt machine for a network device.
 pub fn init() -> bool {
@@ -68,12 +175,12 @@ pub fn init() -> bool {
         if transport.device_type() != DeviceType::Network {
             continue;
         }
-        match VirtIONet::<KernelHal, _, QUEUE_SIZE>::new(transport, BUF_LEN) {
+        match VirtIONetRaw::<KernelHal, _, QUEUE_SIZE>::new(transport) {
             Ok(net) => {
                 let irq = i + 1;
                 IRQ.store(irq, Ordering::Relaxed);
                 klog!("virtio-net at {:#x}, irq {}, mac {:02x?}", base, irq, net.mac_address());
-                DEVICE.init(NetDevice { net });
+                DEVICE.init(NetDevice::new(net));
                 super::plic::enable(irq);
                 return true;
             }
@@ -94,13 +201,26 @@ pub fn handle_irq() {
 }
 
 pub fn mac() -> [u8; 6] {
-    DEVICE.get().net.mac_address()
+    DEVICE.get().mac_address()
 }
 
 // ---- smoltcp Device impl ----
 
-pub struct VirtioRxToken(RxBuffer);
-pub struct VirtioTxToken<'a>(&'a mut Net);
+pub struct VirtioRxToken {
+    buf: Option<Buf>,
+    hdr: usize,
+    len: usize,
+}
+
+impl Drop for VirtioRxToken {
+    fn drop(&mut self) {
+        if let Some(b) = self.buf.take() {
+            RECYCLE.lock().push(b);
+        }
+    }
+}
+
+pub struct VirtioTxToken<'a>(&'a mut NetDevice);
 
 impl Device for NetDevice {
     type RxToken<'a> = VirtioRxToken
@@ -111,15 +231,14 @@ impl Device for NetDevice {
         Self: 'a;
 
     fn receive(&mut self, _timestamp: Instant) -> Option<(Self::RxToken<'_>, Self::TxToken<'_>)> {
-        match self.net.receive() {
-            Ok(buf) => Some((VirtioRxToken(buf), VirtioTxToken(&mut self.net))),
-            Err(_) => None,
-        }
+        self.recycle_pending();
+        let (buf, hdr, len) = self.receive_packet()?;
+        Some((VirtioRxToken { buf: Some(buf), hdr, len }, VirtioTxToken(self)))
     }
 
     fn transmit(&mut self, _timestamp: Instant) -> Option<Self::TxToken<'_>> {
-        if self.net.can_send() {
-            Some(VirtioTxToken(&mut self.net))
+        if self.can_transmit() {
+            Some(VirtioTxToken(self))
         } else {
             None
         }
@@ -139,13 +258,10 @@ impl phy::RxToken for VirtioRxToken {
     where
         F: FnOnce(&[u8]) -> R,
     {
-        let mut buf = self.0;
-        let r = f(buf.packet_mut());
-        // recycle
-        let dev = DEVICE.get();
-        if let Err(e) = dev.net.recycle_rx_buffer(buf) {
-            klog!("recycle_rx_buffer failed: {:?}", e);
-        }
+        let mut this = self;
+        let buf = this.buf.take().unwrap();
+        let r = f(&buf[this.hdr..this.hdr + this.len]);
+        RECYCLE.lock().push(buf);
         r
     }
 }
@@ -155,11 +271,17 @@ impl phy::TxToken for VirtioTxToken<'_> {
     where
         F: FnOnce(&mut [u8]) -> R,
     {
-        let mut tx = self.0.new_tx_buffer(len);
-        let r = f(tx.packet_mut());
-        if let Err(e) = self.0.send(tx) {
-            klog!("virtio-net send failed: {:?}", e);
+        let mut result = None;
+        self.0.transmit_packet(len, |pkt| {
+            result = Some(f(pkt));
+        });
+        match result {
+            Some(r) => r,
+            None => {
+                // No buffer available: let smoltcp build into a scratch buffer.
+                let mut scratch = alloc::vec![0u8; len];
+                f(&mut scratch)
+            }
         }
-        r
     }
 }
