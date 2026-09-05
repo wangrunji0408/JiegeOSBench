@@ -7,6 +7,7 @@ use core::{
     fmt::{self, Write},
     panic::PanicInfo,
 };
+mod aio;
 mod elf;
 mod fs;
 mod memory;

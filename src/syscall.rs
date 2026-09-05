@@ -215,14 +215,7 @@ pub fn dispatch(n: usize, a: [usize; 6]) -> isize {
 unsafe fn call(n: usize, a: [usize; 6]) -> isize {
     let [a0, a1, a2, a3, a4, a5] = a;
     match n {
-        0 => {
-            if a0 == 0 || a0 > 4096 || get64(a1) != 0 {
-                return -22;
-            }
-            put64(a1, 1);
-            0
-        }
-        1 => 0,
+        0..=4 => crate::aio::dispatch(n, a),
         17 => {
             buf(a0, 2).copy_from_slice(b"/\0");
             a0 as isize
