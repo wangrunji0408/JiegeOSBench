@@ -33,7 +33,13 @@ fn open_exec(cwd: &Arc<Dentry>, path: &str) -> Result<Arc<File>, i32> {
 }
 
 /// Prepare an executable image. Handles `#!` scripts by recursion.
-pub fn load_image(cwd: &Arc<Dentry>, path: &str, argv: Vec<Vec<u8>>, envp: Vec<Vec<u8>>, depth: usize) -> Result<ExecImage, i32> {
+pub fn load_image(
+    cwd: &Arc<Dentry>,
+    path: &str,
+    argv: Vec<Vec<u8>>,
+    envp: Vec<Vec<u8>>,
+    depth: usize,
+) -> Result<ExecImage, i32> {
     if depth > 4 {
         return Err(ELOOP);
     }
@@ -102,14 +108,18 @@ pub fn load_image(cwd: &Arc<Dentry>, path: &str, argv: Vec<Vec<u8>>, envp: Vec<V
     mm.lock().mprotect(SIGRET_TRAMPOLINE, PAGE_SIZE, Prot::R | Prot::X)?;
 
     // Build the initial stack.
-    let task = super::current();
-    let uid = task.uid.load(core::sync::atomic::Ordering::Relaxed) as usize;
-    let gid = task.gid.load(core::sync::atomic::Ordering::Relaxed) as usize;
+    let (uid, gid) = match super::try_current() {
+        Some(t) => (
+            t.uid.load(core::sync::atomic::Ordering::Relaxed) as usize,
+            t.gid.load(core::sync::atomic::Ordering::Relaxed) as usize,
+        ),
+        None => (0, 0),
+    };
     let mut random = [0u8; 16];
     crate::fs::devices::fill_random(&mut random);
 
     let mut sp = USER_STACK_TOP;
-    let mut push_bytes = |mm: &Arc<SpinLock<AddressSpace>>, sp: &mut usize, data: &[u8]| -> Result<usize, i32> {
+    let push_bytes = |mm: &Arc<SpinLock<AddressSpace>>, sp: &mut usize, data: &[u8]| -> Result<usize, i32> {
         *sp -= data.len();
         copy_to_user_mm(mm, *sp, data)?;
         Ok(*sp)

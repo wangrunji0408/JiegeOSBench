@@ -165,7 +165,7 @@ const IRQ_S_TIMER: usize = 5;
 const IRQ_S_EXT: usize = 9;
 
 pub fn init() {
-    csr::write_stvec(__kernelvec as usize);
+    csr::write_stvec(__kernelvec as *const () as usize);
     csr::set_fs_initial();
     csr::set_sie_bits(SIE_STIE | SIE_SEIE);
 }

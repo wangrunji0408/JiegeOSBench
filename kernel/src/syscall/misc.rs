@@ -14,7 +14,8 @@ pub fn sys_clock_gettime(clk: i32, tp: usize) -> SysResult {
         CLOCK_MONOTONIC | CLOCK_MONOTONIC_RAW | CLOCK_MONOTONIC_COARSE | CLOCK_BOOTTIME => monotonic_ns(),
         CLOCK_PROCESS_CPUTIME_ID | CLOCK_THREAD_CPUTIME_ID => {
             let c = current();
-            (c.utime.load(core::sync::atomic::Ordering::Relaxed) + c.stime.load(core::sync::atomic::Ordering::Relaxed)) as u64
+            (c.utime.load(core::sync::atomic::Ordering::Relaxed) + c.stime.load(core::sync::atomic::Ordering::Relaxed))
+                as u64
         }
         _ => return Err(EINVAL),
     };

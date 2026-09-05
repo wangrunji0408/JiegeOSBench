@@ -220,7 +220,7 @@ pub const RLIMIT_AS: u32 = 9;
 pub const RLIM_INFINITY: u64 = !0;
 
 #[repr(C)]
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 pub struct Utsname {
     pub sysname: [u8; 65],
     pub nodename: [u8; 65],
@@ -228,6 +228,19 @@ pub struct Utsname {
     pub version: [u8; 65],
     pub machine: [u8; 65],
     pub domainname: [u8; 65],
+}
+
+impl Default for Utsname {
+    fn default() -> Self {
+        Utsname {
+            sysname: [0; 65],
+            nodename: [0; 65],
+            release: [0; 65],
+            version: [0; 65],
+            machine: [0; 65],
+            domainname: [0; 65],
+        }
+    }
 }
 
 // ---- mmap ----
@@ -330,7 +343,17 @@ pub struct SigInfo {
 
 impl Default for SigInfo {
     fn default() -> Self {
-        SigInfo { si_signo: 0, si_errno: 0, si_code: 0, _pad0: 0, si_pid: 0, si_uid: 0, si_status: 0, _pad1: 0, _rest: [0; 12] }
+        SigInfo {
+            si_signo: 0,
+            si_errno: 0,
+            si_code: 0,
+            _pad0: 0,
+            si_pid: 0,
+            si_uid: 0,
+            si_status: 0,
+            _pad1: 0,
+            _rest: [0; 12],
+        }
     }
 }
 
@@ -412,6 +435,7 @@ pub const TIOCGWINSZ: u32 = 0x5413;
 pub const TIOCSWINSZ: u32 = 0x5414;
 pub const FIONREAD: u32 = 0x541B;
 pub const FIONBIO: u32 = 0x5421;
+pub const FIOASYNC: u32 = 0x5452;
 pub const FIOCLEX: u32 = 0x5451;
 pub const FIONCLEX: u32 = 0x5450;
 pub const TIOCSCTTY: u32 = 0x540E;

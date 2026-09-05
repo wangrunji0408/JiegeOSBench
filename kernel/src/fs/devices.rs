@@ -205,7 +205,13 @@ impl FileOps for ConsoleDev {
     fn stat(&self) -> Result<Stat, i32> {
         match &self.dentry {
             Some(d) => Ok(d.stat()),
-            None => Ok(Stat { st_mode: S_IFCHR | 0o620, st_nlink: 1, st_rdev: ((MAJOR_TTY as u64) << 8) | MINOR_CONSOLE as u64, st_blksize: 1024, ..Stat::default() }),
+            None => Ok(Stat {
+                st_mode: S_IFCHR | 0o620,
+                st_nlink: 1,
+                st_rdev: ((MAJOR_TTY as u64) << 8) | MINOR_CONSOLE as u64,
+                st_blksize: 1024,
+                ..Stat::default()
+            }),
         }
     }
 
@@ -224,6 +230,80 @@ impl FileOps for ConsoleDev {
 
 pub static CONSOLE: crate::sync::Global<Arc<ConsoleDev>> = crate::sync::Global::new();
 
+/// /dev/strace: write "all", "off", or a pid to control syscall tracing.
+pub struct StraceDev {
+    pub dentry: Arc<Dentry>,
+}
+
+pub static STRACE_PID: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(0);
+
+impl FileOps for StraceDev {
+    fn write_at(&self, _off: u64, buf: &[u8], _file: &File) -> SysResult {
+        let s = alloc::string::String::from(alloc::string::String::from_utf8_lossy(buf).trim());
+        let v = match s.as_str() {
+            "all" => -1,
+            "off" | "0" => 0,
+            n => n.parse::<i32>().unwrap_or(0),
+        };
+        STRACE_PID.store(v, Ordering::Relaxed);
+        Ok(buf.len())
+    }
+    fn read_at(&self, off: u64, buf: &mut [u8], _file: &File) -> SysResult {
+        // Reading yields kernel statistics.
+        let (used, total) = crate::mm::heap::stats();
+        let frames = crate::mm::frame::FRAMES_ALLOCATED.load(Ordering::Relaxed);
+        let procs = crate::task::PROCESSES.lock().len();
+        let mut hist = alloc::collections::BTreeMap::new();
+        let socks = {
+            let st = crate::net::STACK.get().lock();
+            for (_, s) in st.sockets.iter() {
+                if let smoltcp::socket::Socket::Tcp(t) = s {
+                    *hist.entry(alloc::format!("{:?}", t.state())).or_insert(0usize) += 1;
+                }
+            }
+            st.sockets.iter().count()
+        };
+        let orphans = crate::net::ORPHANS.lock().len();
+        let mut s = alloc::format!(
+            "heap_used_kib {}\nheap_total_kib {}\nuser_frames {}\nprocesses {}\nsmoltcp_sockets {}\norphan_sockets {}\n",
+            used / 1024,
+            total / 1024,
+            frames,
+            procs,
+            socks,
+            orphans
+        );
+        for (k, v) in hist {
+            s.push_str(&alloc::format!("tcp_{} {}\n", k, v));
+        }
+        let b = s.as_bytes();
+        let off = off as usize;
+        if off >= b.len() {
+            return Ok(0);
+        }
+        let n = buf.len().min(b.len() - off);
+        buf[..n].copy_from_slice(&b[off..off + n]);
+        Ok(n)
+    }
+    fn seekable(&self) -> bool {
+        true
+    }
+    fn stat(&self) -> Result<Stat, i32> {
+        Ok(self.dentry.stat())
+    }
+    fn dentry(&self) -> Option<Arc<Dentry>> {
+        Some(self.dentry.clone())
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
+
+pub fn strace_enabled(pid: i32) -> bool {
+    let v = STRACE_PID.load(Ordering::Relaxed);
+    v == -1 || v == pid
+}
+
 pub fn init() {
     CONSOLE.init(Arc::new(ConsoleDev::new(None)));
 }
@@ -235,6 +315,7 @@ pub fn open_chardev(dentry: &Arc<Dentry>, major: u32, minor: u32) -> Result<Arc<
         (MAJOR_MEM, MINOR_ZERO) => Ok(Arc::new(NullDev { dentry: dentry.clone(), zero: true })),
         (MAJOR_MEM, MINOR_RANDOM) | (MAJOR_MEM, MINOR_URANDOM) => Ok(Arc::new(RandomDev { dentry: dentry.clone() })),
         (MAJOR_TTY, _) => Ok(Arc::new(ConsoleDev::new(Some(dentry.clone())))),
+        (250, 0) => Ok(Arc::new(StraceDev { dentry: dentry.clone() })),
         _ => Err(ENXIO),
     }
 }

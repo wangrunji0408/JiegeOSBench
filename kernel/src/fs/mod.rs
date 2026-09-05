@@ -16,6 +16,27 @@ use vfs::{Dentry, NodeKind};
 
 /// Open a path relative to `base`, applying O_CREAT/O_EXCL/O_TRUNC/O_DIRECTORY.
 pub fn open(base: &Arc<Dentry>, path: &str, flags: u32, mode: u32) -> Result<Arc<File>, i32> {
+    // /dev/std* and /proc/self/fd/N re-open one of our own descriptors.
+    let fd_alias = match path {
+        "/dev/stdin" | "/proc/self/fd/0" => Some(0),
+        "/dev/stdout" | "/proc/self/fd/1" => Some(1),
+        "/dev/stderr" | "/proc/self/fd/2" => Some(2),
+        p if p.starts_with("/proc/self/fd/") => p["/proc/self/fd/".len()..].parse::<i32>().ok(),
+        _ => None,
+    };
+    if let Some(fd) = fd_alias {
+        if let Some(task) = crate::task::try_current() {
+            let f = task.fds().lock().get(fd)?;
+            let keep = f.flags() & O_ACCMODE;
+            let acc = flags & O_ACCMODE;
+            let acc = if f.ops.dentry().map(|d| d.is_file()).unwrap_or(false) { acc } else { keep.max(acc) };
+            return Ok(File::new(
+                f.ops.clone(),
+                (flags & !O_ACCMODE) & !(O_CREAT | O_EXCL | O_TRUNC) | acc,
+                String::from(path),
+            ));
+        }
+    }
     let follow = flags & O_NOFOLLOW == 0;
     let dentry = match vfs::lookup(base, path, follow) {
         Ok(d) => {
@@ -40,7 +61,11 @@ pub fn open_dentry(dentry: Arc<Dentry>, flags: u32) -> Result<Arc<File>, i32> {
     let path = dentry.path();
     let acc = flags & O_ACCMODE;
     if flags & O_PATH != 0 {
-        return Ok(File::new(Arc::new(NodeFile { dentry }), flags & (O_PATH | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC), path));
+        return Ok(File::new(
+            Arc::new(NodeFile { dentry }),
+            flags & (O_PATH | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC),
+            path,
+        ));
     }
     let ops: Arc<dyn FileOps> = match &dentry.kind {
         NodeKind::Dir(_) => {
@@ -104,6 +129,7 @@ pub fn init_devfs() {
     mk("/dev/console", MAJOR_TTY, MINOR_CONSOLE, 0o620);
     mk("/dev/tty", MAJOR_TTY, 0, 0o666);
     mk("/dev/ttyS0", 4, 64, 0o620);
+    mk("/dev/strace", 250, 0, 0o600);
     let _ = vfs::create_node("/dev/stdin", S_IFLNK | 0o777, NodeKind::Symlink(String::from("/proc/self/fd/0")));
     let _ = vfs::create_node("/dev/stdout", S_IFLNK | 0o777, NodeKind::Symlink(String::from("/proc/self/fd/1")));
     let _ = vfs::create_node("/dev/stderr", S_IFLNK | 0o777, NodeKind::Symlink(String::from("/proc/self/fd/2")));

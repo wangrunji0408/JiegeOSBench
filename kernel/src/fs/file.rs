@@ -32,6 +32,11 @@ pub trait FileOps: Any + Send + Sync {
     fn wait_queue(&self) -> Option<&WaitQueue> {
         None
     }
+    /// Counter bumped whenever the object's readiness may have changed
+    /// (used for edge-triggered epoll).
+    fn event_seq(&self) -> u64 {
+        0
+    }
     fn ioctl(&self, _cmd: u32, _arg: usize) -> SysResult {
         Err(ENOTTY)
     }

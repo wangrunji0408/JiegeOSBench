@@ -4,7 +4,7 @@ use alloc::sync::Arc;
 
 use super::{Task, TaskState, CURRENT};
 use crate::sync::SpinLock;
-use crate::trap::{csr, Context, __switch};
+use crate::trap::{__switch, csr, Context};
 
 static RUNQUEUE: SpinLock<VecDeque<Arc<Task>>> = SpinLock::new(VecDeque::new());
 static mut IDLE_CTX: Context = Context::zero();

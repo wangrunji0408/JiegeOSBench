@@ -727,6 +727,7 @@ pub fn sys_ioctl(fd: i32, cmd: u32, arg: usize) -> SysResult {
             current().fds().lock().set_cloexec(fd, true)?;
             Ok(0)
         }
+        FIOASYNC => Ok(0),
         FIONCLEX => {
             current().fds().lock().set_cloexec(fd, false)?;
             Ok(0)
@@ -768,21 +769,17 @@ pub fn sys_epoll_create1(flags: u32) -> SysResult {
     install_fd(f, flags & O_CLOEXEC != 0)
 }
 
-fn get_epoll(fd: i32) -> Result<(Arc<File>, Arc<Epoll>), i32> {
+fn get_epoll(fd: i32) -> Result<Arc<File>, i32> {
     let file = get_file(fd)?;
-    let ep = file.ops.clone();
-    let any = ep.as_any();
-    if any.downcast_ref::<Epoll>().is_none() {
+    if file.ops.as_any().downcast_ref::<Epoll>().is_none() {
         return Err(EINVAL);
     }
-    // Recover an Arc<Epoll> from the Arc<dyn FileOps>.
-    let ptr = Arc::into_raw(ep) as *const Epoll;
-    let ep = unsafe { Arc::from_raw(ptr) };
-    Ok((file, ep))
+    Ok(file)
 }
 
 pub fn sys_epoll_ctl(epfd: i32, op: i32, fd: i32, event: usize) -> SysResult {
-    let (_f, ep) = get_epoll(epfd)?;
+    let f = get_epoll(epfd)?;
+    let ep = f.ops.as_any().downcast_ref::<Epoll>().unwrap();
     let target = get_file(fd).ok();
     if target.is_none() {
         return Err(EBADF);
@@ -796,7 +793,8 @@ pub fn sys_epoll_pwait(epfd: i32, events: usize, maxevents: i32, timeout_ms: i32
     if maxevents <= 0 {
         return Err(EINVAL);
     }
-    let (_f, ep) = get_epoll(epfd)?;
+    let f = get_epoll(epfd)?;
+    let ep = f.ops.as_any().downcast_ref::<Epoll>().unwrap();
     let deadline = if timeout_ms < 0 { None } else { Some(monotonic_ns() + timeout_ms as u64 * 1_000_000) };
     let evs = ep.wait(maxevents as usize, deadline)?;
     for (i, e) in evs.iter().enumerate() {
@@ -834,7 +832,8 @@ pub fn sys_ppoll(fds: usize, nfds: usize, tsp: usize, _sigmask: usize) -> SysRes
         Some(monotonic_ns() + (ts.tv_sec as u64) * 1_000_000_000 + ts.tv_nsec as u64)
     };
     let cur = current();
-    let files: Vec<Option<Arc<File>>> = pfds.iter().map(|p| if p.fd < 0 { None } else { get_file(p.fd).ok() }).collect();
+    let files: Vec<Option<Arc<File>>> =
+        pfds.iter().map(|p| if p.fd < 0 { None } else { get_file(p.fd).ok() }).collect();
     loop {
         crate::net::poll();
         let mut count = 0;
@@ -896,7 +895,14 @@ pub fn sys_ppoll(fds: usize, nfds: usize, tsp: usize, _sigmask: usize) -> SysRes
     }
 }
 
-pub fn sys_pselect6(nfds: i32, readfds: usize, writefds: usize, exceptfds: usize, tsp: usize, _sigmask: usize) -> SysResult {
+pub fn sys_pselect6(
+    nfds: i32,
+    readfds: usize,
+    writefds: usize,
+    exceptfds: usize,
+    tsp: usize,
+    _sigmask: usize,
+) -> SysResult {
     if nfds < 0 || nfds > 1024 {
         return Err(EINVAL);
     }

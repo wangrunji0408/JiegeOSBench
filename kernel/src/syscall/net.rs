@@ -209,7 +209,11 @@ pub fn sys_sendmsg(fd: i32, msg: usize, flags: u32) -> SysResult {
         data.resize(start + v.len, 0);
         copy_from_user(&mut data[start..], v.base)?;
     }
-    let to = if hdr.msg_name != 0 && hdr.msg_namelen > 0 { Some(read_sockaddr(hdr.msg_name, hdr.msg_namelen)?) } else { None };
+    let to = if hdr.msg_name != 0 && hdr.msg_namelen > 0 {
+        Some(read_sockaddr(hdr.msg_name, hdr.msg_namelen)?)
+    } else {
+        None
+    };
     // Parse control messages (SCM_RIGHTS).
     let mut anc = Ancillary::default();
     if hdr.msg_control != 0 && hdr.msg_controllen >= 16 {

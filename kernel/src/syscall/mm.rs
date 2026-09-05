@@ -116,18 +116,8 @@ pub fn sys_mremap(old_addr: usize, old_len: usize, new_len: usize, flags: u32, n
         return Ok(old_addr);
     }
     // Try to grow in place.
-    if flags & MREMAP_FIXED == 0 && a.is_free(old_addr + old_len, old_addr + new_len) && vma.end == old_addr + old_len {
-        let vs = vma.start;
-        a.munmap(vs, vma.end - vs);
-        let mut nv = vma.clone();
-        nv.end = old_addr + new_len;
-        // pages were unmapped by munmap above; re-insert the vma (data lost is
-        // avoided by copying below)
-        a.insert_vma(nv);
-        // NOTE: munmap dropped the pages; this path is only correct for
-        // freshly allocated regions, so instead fall back to move semantics.
-        drop(a);
-        return Err(ENOMEM);
+    if flags & MREMAP_FIXED == 0 && vma.end == old_addr + old_len && a.extend_vma(vma.start, old_addr + new_len) {
+        return Ok(old_addr);
     }
     if flags & MREMAP_MAYMOVE == 0 {
         return Err(ENOMEM);

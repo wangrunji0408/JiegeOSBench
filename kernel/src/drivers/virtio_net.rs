@@ -223,10 +223,12 @@ impl Drop for VirtioRxToken {
 pub struct VirtioTxToken<'a>(&'a mut NetDevice);
 
 impl Device for NetDevice {
-    type RxToken<'a> = VirtioRxToken
+    type RxToken<'a>
+        = VirtioRxToken
     where
         Self: 'a;
-    type TxToken<'a> = VirtioTxToken<'a>
+    type TxToken<'a>
+        = VirtioTxToken<'a>
     where
         Self: 'a;
 
@@ -271,9 +273,10 @@ impl phy::TxToken for VirtioTxToken<'_> {
     where
         F: FnOnce(&mut [u8]) -> R,
     {
+        let mut f = Some(f);
         let mut result = None;
         self.0.transmit_packet(len, |pkt| {
-            result = Some(f(pkt));
+            result = Some((f.take().unwrap())(pkt));
         });
         match result {
             Some(r) => r,
@@ -281,7 +284,7 @@ impl phy::TxToken for VirtioTxToken<'_> {
                 // No buffer available (should not happen after can_transmit):
                 // let smoltcp build into a scratch buffer that is dropped.
                 let mut scratch = alloc::vec![0u8; len];
-                f(&mut scratch)
+                (f.take().unwrap())(&mut scratch)
             }
         }
     }

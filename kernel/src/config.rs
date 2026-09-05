@@ -27,10 +27,12 @@ pub const MMAP_BASE: usize = 0x20_0000_0000;
 pub const PIE_BASE: usize = 0x10_0000_0000;
 pub const INTERP_BASE: usize = 0x18_0000_0000;
 /// Page holding the signal-return trampoline (mapped read/exec in every process).
-pub const SIGRET_TRAMPOLINE: usize = 0x3F_FFF0_0000;
+pub const SIGRET_TRAMPOLINE: usize = 0x3F_FF00_0000;
 
-/// Verbose kernel logging.
+/// Kernel diagnostics (faults, unimplemented syscalls, driver messages).
 pub const KLOG: bool = true;
+/// Log every process exit.
+pub const KLOG_PROC: bool = false;
 /// Trace every syscall (very noisy).
 pub const STRACE: bool = false;
 

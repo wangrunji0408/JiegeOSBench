@@ -122,6 +122,12 @@ pub fn deliver_pending(task: &Arc<Task>) {
 /// Handle the "interrupted syscall" state left by the dispatcher.
 fn restart_syscall_if_needed(task: &Arc<Task>, action: Option<&KSigAction>) {
     let mut inner = task.inner.lock();
+    if action.is_none() {
+        // No handler frame will carry the saved mask (sigsuspend): restore it.
+        if let Some(m) = inner.saved_sigmask.take() {
+            inner.sigmask = m;
+        }
+    }
     let Some((orig_a0, kind)) = inner.syscall_restart.take() else { return };
     drop(inner);
     let tf = task.tf();

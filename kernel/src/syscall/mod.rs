@@ -9,8 +9,8 @@ pub mod signal;
 
 use crate::abi::nr::*;
 use crate::abi::*;
-use crate::task::signal::RestartKind;
 use crate::task::current;
+use crate::task::signal::RestartKind;
 use crate::trap::TrapFrame;
 
 fn name(nr: usize) -> &'static str {
@@ -135,11 +135,10 @@ fn name(nr: usize) -> &'static str {
 
 fn restart_kind(nr: usize) -> Option<RestartKind> {
     match nr {
-        READ | WRITE | READV | WRITEV | PREAD64 | PWRITE64 | WAIT4 | WAITID | ACCEPT | ACCEPT4 | RECVFROM | SENDTO | RECVMSG
-        | SENDMSG | CONNECT | FUTEX | SENDFILE | FLOCK => Some(RestartKind::Always),
-        PPOLL | PSELECT6 | RT_SIGSUSPEND | RT_SIGTIMEDWAIT | NANOSLEEP | CLOCK_NANOSLEEP | EPOLL_PWAIT | EPOLL_PWAIT2 => {
-            Some(RestartKind::NoHand)
-        }
+        READ | WRITE | READV | WRITEV | PREAD64 | PWRITE64 | WAIT4 | WAITID | ACCEPT | ACCEPT4 | RECVFROM | SENDTO
+        | RECVMSG | SENDMSG | CONNECT | FUTEX | SENDFILE | FLOCK => Some(RestartKind::Always),
+        PPOLL | PSELECT6 | RT_SIGSUSPEND | RT_SIGTIMEDWAIT | NANOSLEEP | CLOCK_NANOSLEEP | EPOLL_PWAIT
+        | EPOLL_PWAIT2 => Some(RestartKind::NoHand),
         _ => None,
     }
 }
@@ -147,10 +146,22 @@ fn restart_kind(nr: usize) -> Option<RestartKind> {
 pub fn dispatch(tf: &mut TrapFrame) {
     let nr = tf.x[17];
     let args = tf.syscall_args();
-    let strace = crate::config::STRACE;
+    let strace =
+        (crate::config::STRACE || crate::fs::devices::strace_enabled(current().pid)) && nr != SENDFILE && nr != WRITEV;
     if strace {
         let t = current();
-        crate::println!("[{}] {}({:#x}, {:#x}, {:#x}, {:#x}, {:#x}, {:#x})", t.pid, name(nr), args[0], args[1], args[2], args[3], args[4], args[5]);
+        crate::println!(
+            "[{}] {} {}({:#x}, {:#x}, {:#x}, {:#x}, {:#x}, {:#x})",
+            t.pid,
+            crate::time::monotonic_ns() / 1_000_000,
+            name(nr),
+            args[0],
+            args[1],
+            args[2],
+            args[3],
+            args[4],
+            args[5]
+        );
     }
     let result: SysResult = match nr {
         // fs

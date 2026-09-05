@@ -4,10 +4,10 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 
 use crate::abi::*;
+use crate::config::PAGE_SIZE;
 use crate::fs::file::File;
 use crate::mm::addrspace::{page_up, AddressSpace, Prot, Vma};
 use crate::mm::uaccess::copy_to_user_mm;
-use crate::config::PAGE_SIZE;
 
 pub const PT_LOAD: u32 = 1;
 pub const PT_INTERP: u32 = 3;
@@ -114,7 +114,12 @@ pub struct Loaded {
 }
 
 /// Map all PT_LOAD segments of `info` into `mm`. For ET_DYN, `base_hint` is used.
-pub fn load(mm: &Arc<crate::sync::SpinLock<AddressSpace>>, file: &Arc<File>, info: &ElfInfo, base_hint: usize) -> Result<Loaded, i32> {
+pub fn load(
+    mm: &Arc<crate::sync::SpinLock<AddressSpace>>,
+    file: &Arc<File>,
+    info: &ElfInfo,
+    base_hint: usize,
+) -> Result<Loaded, i32> {
     let base = if info.ehdr.e_type == ET_DYN { base_hint } else { 0 };
     let mut end = 0usize;
     let mut phdr_addr = 0usize;
@@ -151,12 +156,26 @@ pub fn load(mm: &Arc<crate::sync::SpinLock<AddressSpace>>, file: &Arc<File>, inf
             if ph.filesz > 0 {
                 // Unmap anything already there (overlapping segments are unusual)
                 a.munmap(seg_start, file_end_page - seg_start);
-                a.insert_vma(Vma { start: seg_start, end: file_end_page, prot, shared: false, file: Some((file.clone(), file_off)), grows_down: false });
+                a.insert_vma(Vma {
+                    start: seg_start,
+                    end: file_end_page,
+                    prot,
+                    shared: false,
+                    file: Some((file.clone(), file_off)),
+                    grows_down: false,
+                });
             }
             if mem_end_page > file_end_page {
                 let anon_start = if ph.filesz > 0 { file_end_page } else { seg_start };
                 a.munmap(anon_start, mem_end_page - anon_start);
-                a.insert_vma(Vma { start: anon_start, end: mem_end_page, prot, shared: false, file: None, grows_down: false });
+                a.insert_vma(Vma {
+                    start: anon_start,
+                    end: mem_end_page,
+                    prot,
+                    shared: false,
+                    file: None,
+                    grows_down: false,
+                });
             }
             if ph.memsz > ph.filesz && file_end % PAGE_SIZE != 0 {
                 zero_tails.push((file_end, file_end_page - file_end));

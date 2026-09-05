@@ -122,7 +122,7 @@ impl Task {
         let kstack = alloc::vec![0u8; KSTACK_SIZE];
         let kstack_top = (kstack.as_ptr() as usize + KSTACK_SIZE) & !15;
         let mut ctx = Context::zero();
-        ctx.ra = process::forkret as usize;
+        ctx.ra = process::forkret as *const () as usize;
         ctx.sp = kstack_top;
         let mut tf = TrapFrame::default();
         tf.kernel_sp = kstack_top;

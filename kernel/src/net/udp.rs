@@ -35,7 +35,11 @@ impl UdpSocket {
         let rx = udp::PacketBuffer::new(alloc::vec![udp::PacketMetadata::EMPTY; 16], alloc::vec![0u8; 64 * 1024]);
         let tx = udp::PacketBuffer::new(alloc::vec![udp::PacketMetadata::EMPTY; 16], alloc::vec![0u8; 64 * 1024]);
         let mut s = udp::Socket::new(rx, tx);
-        let ep = if ep.port == 0 { IpListenEndpoint { addr: ep.addr, port: super::tcp::alloc_ephemeral_port() } } else { ep };
+        let ep = if ep.port == 0 {
+            IpListenEndpoint { addr: ep.addr, port: super::tcp::alloc_ephemeral_port() }
+        } else {
+            ep
+        };
         s.bind(ep).map_err(|_| EADDRINUSE)?;
         let h = STACK.get().lock().sockets.add(s);
         inner.handle = Some(h);

@@ -93,11 +93,54 @@ fn wake_sleepers() {
     }
 }
 
+struct ITimer {
+    task: Weak<Task>,
+    deadline: u64,
+    interval: u64,
+}
+
+static ITIMERS: SpinLock<Vec<ITimer>> = SpinLock::new(Vec::new());
+
+/// Arm (or disarm with value 0) the ITIMER_REAL timer of `task`.
+pub fn set_itimer(task: &Arc<Task>, value_ns: u64, interval_ns: u64) {
+    let mut t = ITIMERS.lock();
+    t.retain(|it| it.task.as_ptr() != Arc::as_ptr(task));
+    if value_ns > 0 {
+        t.push(ITimer { task: Arc::downgrade(task), deadline: monotonic_ns() + value_ns, interval: interval_ns });
+    }
+}
+
+fn fire_itimers() {
+    let now = monotonic_ns();
+    let mut fire: Vec<Arc<Task>> = Vec::new();
+    {
+        let mut t = ITIMERS.lock();
+        t.retain_mut(|it| {
+            if it.deadline <= now {
+                if let Some(task) = it.task.upgrade() {
+                    fire.push(task);
+                    if it.interval > 0 {
+                        it.deadline = now + it.interval;
+                        return true;
+                    }
+                }
+                false
+            } else {
+                true
+            }
+        });
+    }
+    for task in fire {
+        crate::task::signal::send_signal(&task, crate::abi::SIGALRM, None);
+    }
+}
+
 /// Timer interrupt.
 pub fn on_timer_irq() {
     TICKS.fetch_add(1, Ordering::Relaxed);
     set_next_tick();
     wake_sleepers();
+    fire_itimers();
     crate::net::poll();
 }
 

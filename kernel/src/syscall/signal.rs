@@ -176,7 +176,13 @@ pub fn sys_kill(pid: i32, sig: i32) -> SysResult {
         return Err(EINVAL);
     }
     let cur = current();
-    let info = SigInfo { si_signo: sig, si_code: SI_USER, si_pid: cur.pid, si_uid: cur.uid.load(core::sync::atomic::Ordering::Relaxed), ..SigInfo::default() };
+    let info = SigInfo {
+        si_signo: sig,
+        si_code: SI_USER,
+        si_pid: cur.pid,
+        si_uid: cur.uid.load(core::sync::atomic::Ordering::Relaxed),
+        ..SigInfo::default()
+    };
     if pid > 0 {
         let t = get_task(pid).ok_or(ESRCH)?;
         if sig != 0 {

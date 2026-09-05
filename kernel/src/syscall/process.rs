@@ -151,13 +151,15 @@ pub fn sys_setpgid(pid: i32, pgid: i32) -> SysResult {
 pub fn sys_getpgid(pid: i32) -> SysResult {
     let cur = current();
     let target = if pid == 0 { cur } else { get_task(pid).ok_or(ESRCH)? };
-    Ok(target.inner.lock().pgid as usize)
+    let v = target.inner.lock().pgid;
+    Ok(v as usize)
 }
 
 pub fn sys_getsid(pid: i32) -> SysResult {
     let cur = current();
     let target = if pid == 0 { cur } else { get_task(pid).ok_or(ESRCH)? };
-    Ok(target.inner.lock().sid as usize)
+    let v = target.inner.lock().sid;
+    Ok(v as usize)
 }
 
 pub fn sys_setsid() -> SysResult {

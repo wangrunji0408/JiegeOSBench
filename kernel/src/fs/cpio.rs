@@ -33,8 +33,10 @@ pub fn load(base: usize) -> Result<usize, &'static str> {
             return Err("bad cpio header");
         }
         let mode = hex(&hdr[14..22]) as u32;
-        let uid = hex(&hdr[22..30]) as u32;
-        let gid = hex(&hdr[30..38]) as u32;
+        let uid = 0u32;
+        let _ = hex(&hdr[22..30]);
+        let gid = 0u32;
+        let _ = hex(&hdr[30..38]);
         let mtime = hex(&hdr[46..54]) as i64;
         let filesize = hex(&hdr[54..62]) as usize;
         let rdev_major = hex(&hdr[78..86]) as u32;

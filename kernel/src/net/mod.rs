@@ -72,6 +72,21 @@ pub fn init() {
     );
 }
 
+/// Transmit pending data only (no ingress processing). Used on the send path so
+/// that a busy sender observes a full socket buffer (EAGAIN) like on Linux,
+/// instead of synchronously consuming the peer's ACKs and starving other
+/// connections.
+pub fn poll_egress() {
+    if !is_up() {
+        return;
+    }
+    let Some(mut stack) = STACK.get().try_lock() else { return };
+    let dev = DEVICE.get();
+    let ts = now();
+    let Stack { iface, sockets } = &mut *stack;
+    let _ = iface.poll_egress(ts, dev, sockets);
+}
+
 /// Run the stack: process incoming packets, send outgoing ones, wake waiters.
 pub fn poll() {
     if !is_up() {

@@ -16,6 +16,7 @@ struct EpollItem {
     data: u64,
     /// Readiness reported last time (for edge-triggered items).
     last: u32,
+    last_seq: u64,
     disabled: bool,
 }
 
@@ -33,11 +34,20 @@ impl Epoll {
         let mut items = self.items.lock();
         match op {
             EPOLL_CTL_ADD => {
-                if items.contains_key(&fd) {
-                    return Err(EEXIST);
-                }
                 let file = file.ok_or(EBADF)?;
-                items.insert(fd, EpollItem { file, events: ev.events, data: ev.data, last: 0, disabled: false });
+                if let Some(existing) = items.get(&fd) {
+                    // A registration for the same open file is a real duplicate;
+                    // otherwise the fd number was reused after a close and the
+                    // stale entry must go (Linux removes it at close time).
+                    if Arc::ptr_eq(&existing.file, &file) && Arc::strong_count(&file) > 2 {
+                        return Err(EEXIST);
+                    }
+                    items.remove(&fd);
+                }
+                items.insert(
+                    fd,
+                    EpollItem { file, events: ev.events, data: ev.data, last: 0, last_seq: u64::MAX, disabled: false },
+                );
             }
             EPOLL_CTL_MOD => {
                 let it = items.get_mut(&fd).ok_or(ENOENT)?;
@@ -45,6 +55,7 @@ impl Epoll {
                 it.data = ev.data;
                 it.disabled = false;
                 it.last = 0;
+                it.last_seq = u64::MAX;
             }
             EPOLL_CTL_DEL => {
                 items.remove(&fd).ok_or(ENOENT)?;
@@ -61,6 +72,8 @@ impl Epoll {
 
     fn scan(&self, out: &mut Vec<EpollEvent>, max: usize) {
         let mut items = self.items.lock();
+        // Drop registrations whose file has been closed everywhere else.
+        items.retain(|_, it| Arc::strong_count(&it.file) > 1);
         for it in items.values_mut() {
             if out.len() >= max {
                 break;
@@ -71,7 +84,17 @@ impl Epoll {
             let ready = it.file.poll();
             let interest = it.events | POLLERR | POLLHUP;
             let revents = ready & interest & 0xffff;
-
+            let et = it.events & EPOLLET != 0;
+            let report = if et {
+                let seq = it.file.ops.event_seq();
+                let new_bits = revents & !it.last;
+                let changed = seq != it.last_seq;
+                it.last = revents;
+                it.last_seq = seq;
+                revents != 0 && (new_bits != 0 || changed)
+            } else {
+                revents != 0
+            };
             if report {
                 out.push(EpollEvent { events: revents, _pad: 0, data: it.data });
                 if it.events & EPOLLONESHOT != 0 {
@@ -100,7 +123,8 @@ impl Epoll {
                 return Err(EINTR);
             }
             // register on all wait queues
-            let files: Vec<Arc<File>> = self.items.lock().values().filter(|it| !it.disabled).map(|it| it.file.clone()).collect();
+            let files: Vec<Arc<File>> =
+                self.items.lock().values().filter(|it| !it.disabled).map(|it| it.file.clone()).collect();
             for f in &files {
                 if let Some(wq) = f.ops.wait_queue() {
                     wq.add(&cur);

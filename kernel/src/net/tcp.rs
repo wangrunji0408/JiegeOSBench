@@ -1,5 +1,5 @@
 //! TCP sockets on smoltcp.
-use alloc::sync::{Arc, Weak};
+use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::any::Any;
 use core::sync::atomic::{AtomicU64, Ordering};
@@ -16,9 +16,9 @@ use crate::fs::file::{File, FileOps};
 use crate::sync::SpinLock;
 use crate::task::wait::{block_on, WaitQueue};
 
-const RX_BUF: usize = 128 * 1024;
-const TX_BUF: usize = 128 * 1024;
-const MAX_BACKLOG: usize = 32;
+const RX_BUF: usize = 64 * 1024;
+const TX_BUF: usize = 64 * 1024;
+const MAX_BACKLOG: usize = 256;
 
 #[derive(Clone)]
 enum Kind {
@@ -147,7 +147,8 @@ impl TcpSocket {
                 if rx > 0 || shut_rd {
                     ev |= POLLIN;
                 }
-                let peer_closed = matches!(st, State::CloseWait | State::LastAck | State::Closing | State::TimeWait | State::Closed);
+                let peer_closed =
+                    matches!(st, State::CloseWait | State::LastAck | State::Closing | State::TimeWait | State::Closed);
                 if peer_closed {
                     ev |= POLLIN | POLLRDHUP;
                 }
@@ -257,7 +258,7 @@ impl TcpSocket {
             match r {
                 Ok(n) => {
                     sent += n;
-                    super::poll();
+                    super::poll_egress();
                     if sent >= buf.len() || nonblock {
                         return Ok(sent);
                     }
@@ -664,10 +665,4 @@ pub fn alloc_ephemeral_port() -> u16 {
         NEXT_PORT.store(49152, Ordering::Relaxed);
     }
     (49152 + (p - 49152) % 16000) as u16
-}
-
-impl Drop for TcpSocket {
-    fn drop(&mut self) {
-        let _ = Weak::<TcpSocket>::new();
-    }
 }

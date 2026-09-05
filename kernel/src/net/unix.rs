@@ -111,8 +111,9 @@ impl UnixSocket {
                         anc.fds.append(&mut m.fds);
                     }
                     m.pos += take;
+                    let finished = m.pos >= m.data.len();
                     q.bytes -= take;
-                    if m.pos >= m.data.len() {
+                    if finished {
                         q.msgs.pop_front();
                     }
                     if !anc.fds.is_empty() {
@@ -133,14 +134,23 @@ impl UnixSocket {
                 }
             }
             drop(q);
-            self.tx_wq.wake_all();
-            self.tx_seq.fetch_add(1, Ordering::Relaxed);
+            // writers blocked on our receive queue wait on (their tx_wq ==) our rx_wq
+            self.rx_wq.wake_all();
             Ok((n, None, anc))
         })
     }
 }
 
 impl SocketOps for UnixSocket {
+    fn connect(&self, _addr: SockAddr, _nonblock: bool) -> Result<(), i32> {
+        // No filesystem socket namespace: behave as if the path does not exist.
+        Err(ENOENT)
+    }
+
+    fn bind(&self, _addr: SockAddr) -> Result<(), i32> {
+        Ok(())
+    }
+
     fn send(&self, buf: &[u8], flags: u32, nonblock: bool, _to: Option<SockAddr>, anc: Ancillary) -> SysResult {
         if self.shut_wr.load(Ordering::Relaxed) {
             return Err(EPIPE);
@@ -164,8 +174,8 @@ impl SocketOps for UnixSocket {
                         m.fds = anc.fds;
                     }
                 }
-                self.rx_wq.wake_all();
-                self.rx_seq.fetch_add(1, Ordering::Relaxed);
+                self.tx_wq.wake_all();
+                self.tx_seq.fetch_add(1, Ordering::Relaxed);
                 Ok(n)
             }
             Err(EPIPE) => {

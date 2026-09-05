@@ -44,12 +44,6 @@ impl<T> SpinLock<T> {
     pub fn is_locked(&self) -> bool {
         self.locked.load(Ordering::Relaxed)
     }
-
-    /// # Safety
-    /// Caller must ensure no other reference is alive.
-    pub unsafe fn get_mut_unchecked(&self) -> &mut T {
-        &mut *self.data.get()
-    }
 }
 
 impl<T> Deref for SpinLockGuard<'_, T> {

@@ -6,6 +6,7 @@
 #   280..536 f0..f31
 #   536      fcsr
 
+.attribute arch, "rv64imafdc"
 .altmacro
 .macro SAVE_GP n
     sd x\n, \n*8(sp)

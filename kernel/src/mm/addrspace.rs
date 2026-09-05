@@ -120,7 +120,11 @@ impl AddressSpace {
     /// Find a free region of `len` bytes at or above `MMAP_BASE`.
     pub fn find_free(&mut self, len: usize, hint: usize) -> Option<usize> {
         let len = page_up(len);
-        if hint != 0 && hint % PAGE_SIZE == 0 && self.is_free(hint, hint + len) && hint + len <= USER_STACK_TOP - USER_STACK_SIZE {
+        if hint != 0
+            && hint % PAGE_SIZE == 0
+            && self.is_free(hint, hint + len)
+            && hint + len <= USER_STACK_TOP - USER_STACK_SIZE
+        {
             return Some(hint);
         }
         let mut cand = self.mmap_hint;
@@ -243,7 +247,8 @@ impl AddressSpace {
             let v = self.vmas.get_mut(&k).unwrap();
             v.prot = prot;
             let (vs, ve, shared) = (v.start, v.end, v.shared);
-            let pages: Vec<(usize, usize)> = self.pages.range(vs..ve).map(|(k, f)| (*k, Arc::strong_count(f))).collect();
+            let pages: Vec<(usize, usize)> =
+                self.pages.range(vs..ve).map(|(k, f)| (*k, Arc::strong_count(f))).collect();
             for (va, rc) in pages {
                 let mut flags = PteFlags::U;
                 if prot.contains(Prot::R) {
@@ -393,32 +398,49 @@ impl AddressSpace {
             if !self.is_free(cur_end, new_end) {
                 return self.brk;
             }
-            // extend heap vma
-            let key = if cur_end > self.brk_start {
-                Some(self.find_vma(self.brk_start).map(|v| v.start))
-            } else {
-                None
-            };
-            match key.flatten() {
-                Some(k) => self.vmas.get_mut(&k).unwrap().end = new_end,
-                None => {
-                    if new_end > self.brk_start {
-                        self.insert_vma(Vma {
-                            start: self.brk_start,
-                            end: new_end,
-                            prot: Prot::R | Prot::W,
-                            shared: false,
-                            file: None,
-                            grows_down: false,
-                        })
-                    }
+            // Extend the anonymous vma ending exactly at cur_end, else insert a new one.
+            let extend = match self.find_vma(cur_end - 1) {
+                Some(v)
+                    if v.end == cur_end
+                        && v.file.is_none()
+                        && !v.shared
+                        && v.prot == (Prot::R | Prot::W)
+                        && cur_end > self.brk_start =>
+                {
+                    Some(v.start)
                 }
+                _ => None,
+            };
+            match extend {
+                Some(k) => self.vmas.get_mut(&k).unwrap().end = new_end,
+                None => self.insert_vma(Vma {
+                    start: cur_end,
+                    end: new_end,
+                    prot: Prot::R | Prot::W,
+                    shared: false,
+                    file: None,
+                    grows_down: false,
+                }),
             }
         } else if new_end < cur_end {
             self.munmap(new_end, cur_end - new_end);
         }
         self.brk = new_brk;
         self.brk
+    }
+
+    /// Grow the VMA starting at `start` to `new_end` if the space is free.
+    pub fn extend_vma(&mut self, start: usize, new_end: usize) -> bool {
+        let Some(v) = self.vmas.get(&start) else { return false };
+        let old_end = v.end;
+        if new_end <= old_end {
+            return true;
+        }
+        if !self.is_free(old_end, new_end) {
+            return false;
+        }
+        self.vmas.get_mut(&start).unwrap().end = new_end;
+        true
     }
 
     pub fn resident_pages(&self) -> usize {

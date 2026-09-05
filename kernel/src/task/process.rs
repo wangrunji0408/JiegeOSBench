@@ -120,11 +120,11 @@ pub fn exit_current(status: i32) -> ! {
     // Close all fds first (drops sockets, wakes peers).
     {
         let fds = task.fds();
-        let mut t = fds.lock();
-        let all: Vec<Arc<crate::fs::file::File>> = t.iter().map(|(_, e)| e.file.clone()).collect();
-        let _ = t;
-        drop(all);
-        *fds.lock() = FdTable::new();
+        let old = {
+            let mut t = fds.lock();
+            core::mem::replace(&mut *t, FdTable::new())
+        };
+        drop(old);
     }
     // clear_child_tid futex wake
     let ctid = task.inner.lock().clear_child_tid;
@@ -137,7 +137,7 @@ pub fn exit_current(status: i32) -> ! {
     if !children.is_empty() {
         if let Some(init) = super::get_task(1) {
             for c in &children {
-                *c.inner.lock().parent.lock_ref() = Arc::downgrade(&init);
+                c.inner.lock().parent = Arc::downgrade(&init);
             }
             let mut ii = init.inner.lock();
             for c in children {
@@ -157,9 +157,14 @@ pub fn exit_current(status: i32) -> ! {
         inner.state = TaskState::Zombie;
         inner.parent.upgrade()
     };
-    // Release the address space now (drop our reference).
-    task.set_mm(Arc::new(SpinLock::new(AddressSpace::new_empty())));
-    klog!("pid {} ({}) exited with status {:#x}", task.pid, task.name(), status);
+    // Release the address space: switch to a fresh (empty) one first so the
+    // page tables we are running on are not freed underneath us.
+    let empty = Arc::new(SpinLock::new(AddressSpace::new()));
+    sched::activate_satp(empty.lock().satp());
+    task.set_mm(empty);
+    if crate::config::KLOG_PROC {
+        klog!("pid {} ({}) exited with status {:#x}", task.pid, task.name(), status);
+    }
     if let Some(p) = parent {
         let sig = task.exit_signal.load(core::sync::atomic::Ordering::Relaxed);
         let info = SigInfo {
