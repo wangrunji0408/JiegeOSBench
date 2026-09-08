@@ -4,10 +4,10 @@ use crate::errno::*;
 use crate::fs::file::*;
 use crate::fs::{self, Inode, Kind};
 use crate::mm::address::*;
-use crate::mm::page_table::*;
 use crate::mm::frame;
+use crate::mm::page_table::*;
 use crate::task::elf;
-use crate::task::signal::{self, SignalState};
+use crate::task::signal::SignalState;
 use crate::trap::TrapFrame;
 use alloc::string::{String, ToString};
 use alloc::sync::Arc;
@@ -46,7 +46,7 @@ pub struct Area {
 }
 
 impl Area {
-    fn pte_flags(&self) -> usize {
+    pub fn pte_flags(&self) -> usize {
         let mut f = PTE_U | PTE_A | PTE_D;
         if self.prot & PROT_READ != 0 {
             f |= PTE_R;
@@ -57,7 +57,6 @@ impl Area {
         if self.prot & PROT_EXEC != 0 {
             f |= PTE_X;
         }
-        // a writable mapping must also be readable at the hardware level
         if f & PTE_W != 0 {
             f |= PTE_R;
         }
@@ -84,19 +83,26 @@ impl MemoryMap {
         }
     }
 
-    fn find(&self, va: usize) -> Option<&Area> {
-        self.areas
-            .iter()
-            .find(|a| va >= a.start && va < a.end || (a.growdown && va < a.start && va + 0x10000 > a.start))
+    pub fn find(&self, va: usize) -> Option<&Area> {
+        self.areas.iter().find(|a| va >= a.start && va < a.end)
     }
 
-    fn find_mut(&mut self, va: usize) -> Option<&mut Area> {
-        self.areas.iter_mut().find(|a| {
-            (va >= a.start && va < a.end) || (a.growdown && va < a.start && va + 0x10000 > a.start)
-        })
+    pub fn find_mut(&mut self, va: usize) -> Option<&mut Area> {
+        self.areas.iter_mut().find(|a| va >= a.start && va < a.end)
     }
 
-    pub fn add(&mut self, start: usize, end: usize, prot: u32, flags: u32, file: Option<(Arc<Inode>, u64)>, growdown: bool) {
+    pub fn add(
+        &mut self,
+        start: usize,
+        end: usize,
+        prot: u32,
+        flags: u32,
+        file: Option<(Arc<Inode>, u64)>,
+        growdown: bool,
+    ) {
+        if end <= start {
+            return;
+        }
         self.areas.push(Area {
             start,
             end,
@@ -163,9 +169,6 @@ pub fn fault_in(pt: &mut PageTable, mm: &mut MemoryMap, va: usize, write: bool) 
     if write && area.prot & PROT_WRITE == 0 {
         return false;
     }
-    if !write && area.prot & (PROT_READ | PROT_EXEC) == 0 {
-        return false;
-    }
     let page = page_align_down(va);
     if pt.translate_user(page).is_some() {
         return true;
@@ -216,20 +219,19 @@ pub struct Process {
     pub gid: u32,
     pub euid: u32,
     pub egid: u32,
-    /// initial trap frame for a freshly exec'ed process
     pub init_tf: TrapFrame,
     pub exec_path: String,
     pub did_exec: bool,
     pub wait_status: i32,
     pub parent_waiting: bool,
-    pub tmp_dir: String,
     pub kill_sig: i32,
+    pub sig_frame_sp: usize,
 }
 
 impl Process {
     pub fn new(pid: usize) -> Self {
         let root = fs::root();
-        let pt = PageTable::new_user(crate::kernel_root());
+        let pt = PageTable::new_user(crate::KERNEL_ROOT.load(core::sync::atomic::Ordering::Relaxed));
         Self {
             pid,
             ppid: 0,
@@ -261,8 +263,8 @@ impl Process {
             did_exec: false,
             wait_status: 0,
             parent_waiting: false,
-            tmp_dir: "/tmp".to_string(),
             kill_sig: 0,
+            sig_frame_sp: 0,
         }
     }
 
@@ -274,7 +276,6 @@ impl Process {
         crate::csr::set_satp(self.satp());
     }
 
-    /// Free all user pages and page tables.
     pub fn free_memory(&mut self) {
         for a in self.mm.areas.iter() {
             let mut va = page_align_down(a.start);
@@ -376,7 +377,6 @@ impl Process {
         Err(ENAMETOOLONG)
     }
 
-    /// mmap
     pub fn mmap(
         &mut self,
         addr: usize,
@@ -389,7 +389,7 @@ impl Process {
             return Err(EINVAL);
         }
         let len = page_align_up(len);
-        let mut start = if flags & MAP_FIXED != 0 {
+        let start = if flags & MAP_FIXED != 0 {
             if addr & (PAGE_SIZE - 1) != 0 {
                 return Err(EINVAL);
             }
@@ -400,9 +400,17 @@ impl Process {
             self.mm.alloc_range(len, PAGE_SIZE).ok_or(ENOMEM)?
         };
         if flags & MAP_FIXED != 0 {
+            let mut va = start;
+            while va < start + len {
+                if let Some(pa) = self.pt.translate_user(va) {
+                    self.pt.unmap(va);
+                    frame::free_frame(pa);
+                }
+                va += PAGE_SIZE;
+            }
             self.mm.remove_range(start, start + len);
         } else if !self.mm.is_free(start, start + len) {
-            start = self.mm.alloc_range(len, PAGE_SIZE).ok_or(ENOMEM)?;
+            return Err(ENOMEM);
         }
         self.mm.add(start, start + len, prot, flags, file, flags & MAP_GROWSDOWN != 0);
         if flags & MAP_POPULATE != 0 {
@@ -423,12 +431,12 @@ impl Process {
         let mut va = page_align_down(addr);
         while va < end {
             if let Some(pa) = self.pt.translate_user(va) {
-                // write back shared file mappings
-                if let Some(a) = self.mm.find(va) {
+                if let Some(a) = self.mm.find(va).cloned() {
                     if a.flags & MAP_SHARED != 0 {
                         if let Some((inode, foff)) = &a.file {
                             let off = foff + (va - a.start) as u64;
-                            let data = unsafe { core::slice::from_raw_parts(pa as *const u8, PAGE_SIZE) };
+                            let data =
+                                unsafe { core::slice::from_raw_parts(pa as *const u8, PAGE_SIZE) };
                             let _ = inode.write_at(off, data);
                         }
                     }
@@ -445,20 +453,20 @@ impl Process {
     pub fn mprotect(&mut self, addr: usize, len: usize, prot: u32) -> Result<(), Errno> {
         let start = page_align_down(addr);
         let end = page_align_up(addr + len);
-        if let Some(a) = self.mm.find_mut(start) {
-            a.prot = prot;
+        for a in self.mm.areas.iter_mut() {
+            if a.start < end && a.end > start {
+                a.prot = prot;
+            }
         }
-        let flags = {
-            let a = Area {
-                start,
-                end,
-                prot,
-                flags: 0,
-                file: None,
-                growdown: false,
-            };
-            a.pte_flags()
-        };
+        let flags = Area {
+            start,
+            end,
+            prot,
+            flags: 0,
+            file: None,
+            growdown: false,
+        }
+        .pte_flags();
         let mut va = start;
         while va < end {
             if self.pt.translate_user(va).is_some() {
@@ -477,16 +485,20 @@ impl Process {
             return self.mm.brk;
         }
         if new > self.mm.brk {
-            // extend the heap area
-            if !self.mm.is_free(self.mm.brk, page_align_up(new)) {
+            let start = page_align_up(self.mm.brk);
+            let end = page_align_up(new);
+            if end > start && !self.mm.is_free(start, end) {
                 return self.mm.brk;
             }
-            let start = page_align_down(self.mm.brk);
-            let end = page_align_up(new);
-            self.mm.remove_range(start, self.mm.brk.max(start));
-            self.mm.add(start, end, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, None, false);
+            self.mm.add(
+                page_align_down(self.mm.brk),
+                end,
+                PROT_READ | PROT_WRITE,
+                MAP_PRIVATE | MAP_ANONYMOUS,
+                None,
+                false,
+            );
         } else {
-            // shrink: unmap the tail
             let start = page_align_up(new);
             let end = page_align_up(self.mm.brk);
             let mut va = start;
@@ -498,9 +510,6 @@ impl Process {
                 va += PAGE_SIZE;
             }
             self.mm.remove_range(start, end);
-            if start > page_align_down(new) {
-                self.mm.remove_range(page_align_down(new), start);
-            }
             self.mm.add(
                 page_align_down(new),
                 page_align_up(new),
@@ -514,7 +523,6 @@ impl Process {
         new
     }
 
-    /// Load an ELF binary and replace the address space.
     pub fn exec(&mut self, path: &str, argv: Vec<String>, envp: Vec<String>) -> Result<(), Errno> {
         let inode = fs::lookup(&self.cwd, path, true)?;
         if inode.kind() != Kind::File {
@@ -525,8 +533,7 @@ impl Process {
         inode.read_at(0, &mut data)?;
         let img = elf::parse(&data).map_err(|_| ENOEXEC)?;
 
-        // build a fresh address space
-        let mut pt = PageTable::new_user(crate::kernel_root());
+        let mut pt = PageTable::new_user(crate::KERNEL_ROOT.load(core::sync::atomic::Ordering::Relaxed));
         let mut mm = MemoryMap::new();
 
         let main_base = if img.is_dyn { PIE_BASE } else { 0 };
@@ -535,12 +542,11 @@ impl Process {
         let mut load_end = 0usize;
         for ph in phs.iter() {
             if ph.p_type == elf::PT_LOAD {
-                let end = elf::load_segment(&mut pt, &data, ph, main_base)
-                    .map_err(|_| ENOMEM)?;
+                let end = elf::load_segment(&mut pt, &data, ph, main_base).map_err(|_| ENOMEM)?;
                 load_end = load_end.max(end);
             }
         }
-        let main_start = PIE_BASE;
+        let main_start = if img.is_dyn { PIE_BASE } else { 0x10000 };
         mm.add(
             main_start,
             load_end.max(main_start + PAGE_SIZE),
@@ -552,6 +558,7 @@ impl Process {
 
         let mut entry = img.entry + main_base;
         let mut at_base = 0usize;
+        let mut phdr_addr = 0usize;
 
         if let Some(interp) = &img.interp {
             let iinode = fs::lookup(&self.cwd, interp, true)?;
@@ -564,8 +571,8 @@ impl Process {
             let mut iend = 0usize;
             for ph in iphs.iter() {
                 if ph.p_type == elf::PT_LOAD {
-                    let end = elf::load_segment(&mut pt, &idata, ph, INTERP_BASE)
-                        .map_err(|_| ENOMEM)?;
+                    let end =
+                        elf::load_segment(&mut pt, &idata, ph, INTERP_BASE).map_err(|_| ENOMEM)?;
                     iend = iend.max(end);
                 }
             }
@@ -580,6 +587,7 @@ impl Process {
             at_base = INTERP_BASE;
             entry = iimg.entry + INTERP_BASE;
         }
+        phdr_addr = main_base + phoff;
 
         // sigreturn trampoline
         let tramp = frame::alloc_frame().ok_or(ENOMEM)?;
@@ -589,8 +597,12 @@ impl Process {
             code.add(1).write(0x0000_0073); // ecall
             code.add(2).write(0x0000_006f); // j .
         }
-        pt.map(SIGRETURN_TRAMPOLINE, tramp, PTE_U | PTE_R | PTE_X | PTE_A | PTE_D)
-            .map_err(|_| ENOMEM)?;
+        pt.map(
+            SIGRETURN_TRAMPOLINE,
+            tramp,
+            PTE_U | PTE_R | PTE_X | PTE_A | PTE_D,
+        )
+        .map_err(|_| ENOMEM)?;
         mm.add(
             SIGRETURN_TRAMPOLINE,
             SIGRETURN_TRAMPOLINE + PAGE_SIZE,
@@ -604,35 +616,33 @@ impl Process {
         let brk_start = page_align_up(load_end.max(main_start + PAGE_SIZE));
         mm.brk_start = brk_start;
         mm.brk = brk_start;
-        mm.add(
-            brk_start,
-            brk_start,
-            PROT_READ | PROT_WRITE,
-            MAP_PRIVATE | MAP_ANONYMOUS,
-            None,
-            false,
-        );
 
         // user stack
-        let stack_top = USER_STACK_TOP;
-        mm.stack_top = stack_top;
+        mm.stack_top = USER_STACK_TOP;
         mm.add(
-            stack_top - USER_STACK_MAX,
-            stack_top,
+            USER_STACK_TOP - USER_STACK_MAX,
+            USER_STACK_TOP,
             PROT_READ | PROT_WRITE,
-            MAP_PRIVATE | MAP_ANONYMOUS | MAP_GROWSDOWN,
+            MAP_PRIVATE | MAP_ANONYMOUS,
             None,
             true,
         );
 
-        // free the old address space, install the new one
         self.free_memory();
         self.pt = pt;
         self.mm = mm;
         self.activate();
 
-        // build the initial stack
-        let sp = self.setup_stack(argv.clone(), envp.clone(), &img, main_base, at_base, entry, path)?;
+        let sp = self.setup_stack(
+            &argv,
+            &envp,
+            &img,
+            main_base,
+            at_base,
+            entry,
+            path,
+            phdr_addr,
+        )?;
 
         self.argv = argv;
         self.envp = envp;
@@ -640,6 +650,7 @@ impl Process {
         self.comm = path.rsplit('/').next().unwrap_or(path).to_string();
         self.exe = path.to_string();
         self.did_exec = true;
+        self.sig.reset_for_exec();
         self.init_tf = TrapFrame::zeroed();
         self.init_tf.sepc = entry;
         self.init_tf.x[2] = sp;
@@ -648,118 +659,105 @@ impl Process {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn setup_stack(
         &mut self,
-        argv: Vec<String>,
-        envp: Vec<String>,
+        argv: &[String],
+        envp: &[String],
         img: &elf::ElfImage,
         main_base: usize,
         at_base: usize,
-        entry: usize,
+        _entry: usize,
         path: &str,
+        phdr_addr: usize,
     ) -> Result<usize, Errno> {
-        let mut sp = USER_STACK_TOP - 64;
-        // helper closures need explicit code; write strings first
-        let mut strings: Vec<(usize, Vec<u8>)> = Vec::new();
-        let mut push_str = |s: &[u8], sp: &mut usize| -> usize {
-            let n = s.len() + 1;
-            *sp -= n;
-            *sp &= !7;
-            *sp -= n;
-            (0, 0);
-            0
-        };
-        let _ = &mut push_str;
+        let mut sp = USER_STACK_TOP - 128;
+        let mut writes: Vec<(usize, Vec<u8>)> = Vec::new();
 
-        // push strings
+        let mut push_bytes = |sp: &mut usize, b: &[u8]| -> usize {
+            *sp -= b.len() + 1;
+            *sp &= !7;
+            writes.push((*sp, {
+                let mut v = b.to_vec();
+                v.push(0);
+                v
+            }));
+            *sp
+        };
+
         let mut arg_ptrs = Vec::new();
         for a in argv.iter() {
-            let bytes = a.as_bytes();
-            sp = (sp - bytes.len() - 1) & !7;
-            strings.push((sp, bytes.to_vec()));
-            arg_ptrs.push(sp);
+            let p = push_bytes(&mut sp, a.as_bytes());
+            arg_ptrs.push(p);
         }
         let mut env_ptrs = Vec::new();
         for e in envp.iter() {
-            let bytes = e.as_bytes();
-            sp = (sp - bytes.len() - 1) & !7;
-            strings.push((sp, bytes.to_vec()));
-            env_ptrs.push(sp);
+            let p = push_bytes(&mut sp, e.as_bytes());
+            env_ptrs.push(p);
         }
-        let path_bytes = path.as_bytes();
-        sp = (sp - path_bytes.len() - 1) & !7;
-        let execfn = sp;
-        strings.push((sp, path_bytes.to_vec()));
-        let platform = b"riscv64";
-        sp = (sp - platform.len() - 1) & !7;
-        let platform_ptr = sp;
-        strings.push((sp, platform.to_vec()));
+        let execfn = push_bytes(&mut sp, path.as_bytes());
+        let platform_ptr = push_bytes(&mut sp, b"riscv64");
         sp -= 16;
         let random_ptr = sp;
         let mut rnd = [0u8; 16];
+        let t = crate::time::rdtime();
         for (i, b) in rnd.iter_mut().enumerate() {
-            *b = (crate::time::rdtime() >> (i % 8)) as u8 ^ (i as u8);
+            *b = ((t >> ((i % 8) * 8)) as u8) ^ (i as u8).wrapping_mul(31);
         }
-        strings.push((random_ptr, rnd.to_vec()));
+        writes.push((random_ptr, rnd.to_vec()));
 
-        // auxv
-        let mut auxv: Vec<(usize, usize)> = alloc::vec![
-            (3, img.phdr),                       // AT_PHDR
-            (4, img.phent),                      // AT_PHENT
-            (5, img.phnum),                      // AT_PHNUM
-            (6, PAGE_SIZE),                      // AT_PAGESZ
-            (7, at_base),                        // AT_BASE
-            (8, 0),                              // AT_FLAGS
-            (9, img.entry + main_base),          // AT_ENTRY
-            (11, self.uid as usize),             // AT_UID
-            (12, self.euid as usize),            // AT_EUID
-            (13, self.gid as usize),             // AT_GID
-            (14, self.egid as usize),            // AT_EGID
-            (15, platform_ptr),                  // AT_PLATFORM
-            (16, 0),                             // AT_HWCAP
-            (17, 100),                           // AT_CLKTCK
-            (23, 0),                             // AT_SECURE
-            (25, random_ptr),                    // AT_RANDOM
-            (26, 0),                             // AT_HWCAP2
-            (31, execfn),                        // AT_EXECFN
-            (33, 0),                             // AT_SYSINFO_EHDR (no vDSO)
-            (51, 8192),                          // AT_MINSIGSTKSZ
+        let auxv: Vec<(usize, usize)> = alloc::vec![
+            (3, phdr_addr),
+            (4, img.phent),
+            (5, img.phnum),
+            (6, PAGE_SIZE),
+            (7, at_base),
+            (8, 0),
+            (9, img.entry + main_base),
+            (11, self.uid as usize),
+            (12, self.euid as usize),
+            (13, self.gid as usize),
+            (14, self.egid as usize),
+            (15, platform_ptr),
+            (16, 0),
+            (17, 100),
+            (23, 0),
+            (25, random_ptr),
+            (26, 0),
+            (31, execfn),
+            (33, 0),
+            (51, 8192),
+            (0, 0),
         ];
-        let _ = entry;
-        auxv.push((0, 0));
 
-        // arrays: argc, argv, NULL, envp, NULL, auxv, NULL
         let nwords = 1 + arg_ptrs.len() + 1 + env_ptrs.len() + 1 + auxv.len() * 2;
         sp = (sp - nwords * 8) & !15;
         let base = sp;
         let mut w = base;
-        let mut write = |v: usize, w: &mut usize| {
-            let bytes = v.to_ne_bytes();
-            strings.push((*w, bytes.to_vec()));
+        let mut put = |w: &mut usize, v: usize| {
+            writes.push((*w, v.to_ne_bytes().to_vec()));
             *w += 8;
         };
-        write(argv.len(), &mut w);
+        put(&mut w, argv.len());
         for p in arg_ptrs.iter() {
-            write(*p, &mut w);
+            put(&mut w, *p);
         }
-        write(0, &mut w);
+        put(&mut w, 0);
         for p in env_ptrs.iter() {
-            write(*p, &mut w);
+            put(&mut w, *p);
         }
-        write(0, &mut w);
+        put(&mut w, 0);
         for (k, v) in auxv.iter() {
-            write(*k, &mut w);
-            write(*v, &mut w);
+            put(&mut w, *k);
+            put(&mut w, *v);
         }
 
-        // now actually write everything
-        for (addr, bytes) in strings.iter() {
+        for (addr, bytes) in writes.iter() {
             self.copy_to_user(*addr, bytes)?;
         }
         Ok(base)
     }
 
-    /// Copy the address space for fork().
     pub fn fork_from(parent: &mut Process, child: &mut Process) -> Result<(), Errno> {
         child.mm = MemoryMap {
             areas: parent.mm.areas.clone(),
@@ -781,32 +779,22 @@ impl Process {
         child.robust_list_len = parent.robust_list_len;
         child.init_tf = parent.init_tf;
         child.exec_path = parent.exec_path.clone();
+        child.uid = parent.uid;
+        child.gid = parent.gid;
+        child.euid = parent.euid;
+        child.egid = parent.egid;
+        child.ppid = parent.pid;
+        child.pgid = parent.pgid;
+        child.sid = parent.sid;
         for a in parent.mm.areas.iter() {
             let mut va = page_align_down(a.start);
             while va < a.end {
                 if let Some(pa) = parent.pt.translate_user(va) {
                     let nf = frame::alloc_frame().ok_or(ENOMEM)?;
                     unsafe {
-                        core::ptr::copy_nonoverlapping(
-                            pa as *const u8,
-                            nf as *mut u8,
-                            PAGE_SIZE,
-                        );
+                        core::ptr::copy_nonoverlapping(pa as *const u8, nf as *mut u8, PAGE_SIZE);
                     }
-                    let flags = {
-                        let mut f = PTE_U | PTE_A | PTE_D;
-                        if a.prot & PROT_READ != 0 {
-                            f |= PTE_R;
-                        }
-                        if a.prot & PROT_WRITE != 0 {
-                            f |= PTE_W | PTE_R;
-                        }
-                        if a.prot & PROT_EXEC != 0 {
-                            f |= PTE_X;
-                        }
-                        f
-                    };
-                    child.pt.map(va, nf, flags).map_err(|_| ENOMEM)?;
+                    child.pt.map(va, nf, a.pte_flags()).map_err(|_| ENOMEM)?;
                 }
                 va += PAGE_SIZE;
             }
@@ -814,25 +802,22 @@ impl Process {
         Ok(())
     }
 
-    /// Common fd setup for a new process.
     pub fn init_stdio(&mut self) {
-        let console = fs::root().child("dev").and_then(|d| d.child("console"));
-        if let Some(c) = console {
-            for fd in 0..3 {
-                let f = File::new(
-                    FileObj::CharDev { rdev: crate::fs::chardev::DEV_CONSOLE },
-                    0,
-                    false,
-                );
-                let _ = self.files.set(fd, f);
-                let _ = c;
-            }
+        for fd in 0..3 {
+            let f = File::new(
+                FileObj::CharDev {
+                    rdev: crate::fs::chardev::DEV_CONSOLE,
+                },
+                0,
+                false,
+            );
+            let _ = self.files.set(fd, f);
         }
     }
 }
 
 pub fn spawn_init() -> Result<usize, &'static str> {
-    let bootargs = crate::BOOTARGS;
+    let bootargs = crate::BOOTARGS.load();
     let mut path = "/usr/sbin/nginx".to_string();
     for tok in bootargs.split_whitespace() {
         if let Some(v) = tok.strip_prefix("init=") {
@@ -840,14 +825,12 @@ pub fn spawn_init() -> Result<usize, &'static str> {
         }
     }
     let mut argv = Vec::new();
+    argv.push(path.clone());
     if path.ends_with("nginx") {
-        argv.push(path.clone());
         argv.push("-c".to_string());
         argv.push("/etc/nginx/nginx.conf".to_string());
         argv.push("-g".to_string());
         argv.push("daemon off;".to_string());
-    } else {
-        argv.push(path.clone());
     }
     let envp: Vec<String> = alloc::vec![
         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin".to_string(),
@@ -866,7 +849,7 @@ pub fn spawn_init() -> Result<usize, &'static str> {
     Ok(crate::task::spawn_user(p))
 }
 
-pub fn handle_page_fault(tf: &mut TrapFrame, va: usize, scause: usize) -> bool {
+pub fn handle_page_fault(_tf: &mut TrapFrame, va: usize, scause: usize) -> bool {
     let p = match crate::task::current().process.as_mut() {
         Some(p) => p,
         None => return false,
@@ -875,40 +858,41 @@ pub fn handle_page_fault(tf: &mut TrapFrame, va: usize, scause: usize) -> bool {
     if fault_in(&mut p.pt, &mut p.mm, va, write) {
         return true;
     }
-    // stack growth: allow faults below a growdown area
-    if let Some(a) = p.mm.areas.iter().find(|a| a.growdown && va < a.start && va + 0x20000 > a.start) {
+    // stack growth below a growdown area
+    let grow = p
+        .mm
+        .areas
+        .iter()
+        .find(|a| a.growdown && va < a.start && va + 0x20000 > a.start)
+        .cloned();
+    if let Some(a) = grow {
         let start = page_align_down(va);
-        let mut area = a.clone();
-        area.start = start;
-        if write && area.prot & PROT_WRITE != 0 {
-            p.mm.remove_range(start, a.start);
-            p.mm.add(start, a.end, area.prot, area.flags, area.file.clone(), true);
-            if fault_in(&mut p.pt, &mut p.mm, va, write) {
-                return true;
-            }
+        p.mm.remove_range(start, a.start);
+        p.mm
+            .add(start, a.end, a.prot, a.flags, a.file.clone(), true);
+        if fault_in(&mut p.pt, &mut p.mm, va, write) {
+            return true;
         }
     }
-    let _ = tf;
     false
 }
 
 pub fn on_thread_exit(_i: usize) {}
 
-/// Called by the scheduler when the last thread of a process exits.
-pub fn notify_parent(pid: usize, code: i32) {
+/// Wake a parent blocked in wait4 when one of its children exits.
+pub fn notify_parent(pid: usize, status: i32) {
     let s = crate::task::sched();
-    for t in s.threads.iter_mut() {
-        if let Some(p) = t.process.as_mut() {
+    for i in 0..s.threads.len() {
+        let mut hit = false;
+        if let Some(p) = s.threads[i].process.as_mut() {
             if p.children.contains(&pid) {
-                p.wait_status = code;
-                if p.parent_waiting {
-                    p.parent_waiting = false;
-                    t.state = crate::task::State::Ready;
-                    let idx = s.threads.iter().position(|x| core::ptr::eq(&**x, &*t)).unwrap();
-                    s.ready.push(idx);
-                }
-                break;
+                p.wait_status = status;
+                hit = true;
             }
+        }
+        if hit && s.threads[i].state == crate::task::State::Blocked {
+            s.threads[i].state = crate::task::State::Ready;
+            s.ready.push(i);
         }
     }
 }
