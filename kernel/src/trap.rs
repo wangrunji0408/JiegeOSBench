@@ -1,29 +1,20 @@
 //! Trap entry/exit and dispatch.
 
 use crate::csr::*;
-use crate::println;
+use crate::{print, println};
 
 /// Layout must match trap.S exactly.
 #[repr(C)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct TrapFrame {
     pub x: [usize; 32], // 0..256
     pub sepc: usize,    // 256
     pub sstatus: usize, // 264
-    pub ksp: usize,     // 272: kernel stack top for this thread
 }
 
 pub const TF_SIZE: usize = 288;
 
 impl TrapFrame {
-    pub const fn zeroed() -> Self {
-        Self {
-            x: [0; 32],
-            sepc: 0,
-            sstatus: 0,
-            ksp: 0,
-        }
-    }
     #[inline]
     pub fn a0(&self) -> usize {
         self.x[10]
@@ -94,8 +85,10 @@ impl TaskContext {
     }
 }
 
+/// Point stvec at the trap entry.
 pub fn init() {
-    set_stvec(__trap_entry as *const () as usize);
+    set_stvec(__trap_entry as usize);
+    // Make the kernel use the same page table (already active from boot).
     unsafe {
         set_sie(SIE_SEIE | SIE_STIE);
     }
@@ -105,68 +98,25 @@ pub fn enter_user(tf: &TrapFrame) -> ! {
     unsafe { __restore(tf) }
 }
 
+/// Jump to a freshly built trap frame from a kernel task context.
+pub unsafe fn restore_from(tf: *const TrapFrame) -> ! {
+    __restore(tf)
+}
+
 #[no_mangle]
 pub extern "C" fn trap_handler(tf: &mut TrapFrame) {
     let scause = csrr!("scause");
-    let from_user = tf.from_user();
-    if scause & (1 << 63) != 0 {
-        let code = scause & !(1 << 63);
-        match code {
-            1 => { /* supervisor software interrupt (IPI): nothing to do */ }
-            5 => {
-                crate::time::on_tick();
-                if from_user {
-                    crate::task::preempt(tf);
-                }
-            }
-            9 => {
-                crate::plic::handle();
-                if from_user {
-                    crate::task::preempt(tf);
-                }
-            }
-            _ => {}
-        }
-    } else {
-        match scause {
-            SCAUSE_ECALL_U => {
-                // advance past the ecall before dispatching
-                tf.sepc += 4;
-                crate::syscall::handle(tf);
-            }
-            SCAUSE_INST_PAGE_FAULT | SCAUSE_LOAD_PAGE_FAULT | SCAUSE_STORE_PAGE_FAULT => {
-                if from_user {
-                    crate::task::page_fault(tf, scause);
-                } else {
-                    kernel_trap(tf, scause);
-                }
-            }
-            _ => {
-                if from_user {
-                    crate::task::fault(tf, scause);
-                } else {
-                    kernel_trap(tf, scause);
-                }
-            }
-        }
+    if !tf.from_user() {
+        kernel_trap(tf, scause);
+        return;
     }
-    if from_user && tf.from_user() {
-        // keep the FP register file enabled (FS = Dirty)
-        tf.sstatus |= 3 << 13;
-        crate::task::deliver_signals(tf);
-    }
+    crate::task::user_trap(tf, scause);
 }
 
 fn kernel_trap(tf: &mut TrapFrame, scause: usize) -> ! {
     let stval = csrr!("stval");
     println!("\n=== FATAL: kernel trap ===");
-    println!(
-        "scause={:#x} ({}) stval={:#x} sepc={:#x}",
-        scause,
-        cause_name(scause),
-        stval,
-        tf.sepc
-    );
+    println!("scause={:#x} ({}) stval={:#x} sepc={:#x}", scause, cause_name(scause), stval, tf.sepc);
     println!("ra={:#x} sp={:#x}", tf.ra(), tf.sp());
     panic!("kernel trap");
 }

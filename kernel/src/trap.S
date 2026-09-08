@@ -40,19 +40,9 @@ __trap_entry:
     sd t0, 256(a0)
     csrr t0, sstatus
     sd t0, 264(a0)
-
-    # Choose a stack: user traps run on the thread's kernel stack, kernel traps
-    # continue on the interrupted stack (which is already a kernel stack).
-    mv s0, a0
-    andi t0, t0, 0x100      # SSTATUS_SPP
-    bnez t0, 1f
-    ld sp, 272(a0)          # tf.ksp
-    j 2f
-1:  ld sp, 16(a0)           # interrupted kernel sp
-2:  mv a0, s0
+    mv sp, a0
     call trap_handler
-    mv a0, s0
-    j __restore
+    j __restore_from_sp
 
     .globl __restore
 __restore:
@@ -94,19 +84,8 @@ __restore:
     ld a0, 80(a0)
     sret
 
-    .globl __restore_tf_from_sp
-__restore_tf_from_sp:
+__restore_from_sp:
     mv a0, sp
-    j __restore
-
-    # First entry of a new user thread: sp = trap frame. Restore its FP state
-    # (saved at tf+512) before entering user mode.
-    .globl __thread_entry
-__thread_entry:
-    addi sp, sp, 1024
-    addi a0, sp, -512
-    call __fp_restore
-    addi a0, sp, -1024
     j __restore
 
     .globl __switch
