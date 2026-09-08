@@ -60,6 +60,8 @@ OpenAI Codex（桌面版）运行 **约 6 分钟** 即拿到首次 HTTP 200—�
 
 DSH 有效运行 **~47 分钟**（30 分钟首次 HTTP 200），使用 **标准模式 agent preset**（可用 write/edit/read）——DeepSeek 系最快记录，也是本榜最便宜的成功方案（**$0.61**）。两个后台子代理并行：一个在 QEMU 里启动参考 riscv64 Linux，对官方 nginx 做 strace 取 ground truth；另一个实现 virtio-net + smoltcp TCP 栈，主线同时写文件系统、ELF 加载器、信号与 syscall 层。三个 agent 合计 437 步、8650 万 token，零内核 panic、零上下文压缩。走 **Ubuntu glibc 动态链接路线**——未修改的 Ubuntu 24.04 riscv64 nginx 1.24.0（与官方 `.deb` SHA-256 一致）运行在 glibc 2.39 + OpenSSL/PCRE2/zlib 之上。
 
+**两个并行 agent 如何不互相踩**：主代理先冻结 `net` 模块的公开 API（16 个签名），自己保留其余全部文件，只把 `kernel/src/net/` 交给子代理，并要求 `cargo build` 全程保持绿色——双方从未改到同一个文件（唯一的竞争是 cargo 自带的构建目录锁）。由于此时用户态还跑不起来，该子代理把测试代码注入**工作区的一份副本**来自验：内核经 slirp 从宿主 HTTP 服务端拉回 300 KB（自己发 `GET / HTTP/1.0`），另一项测试里内核监听 80 端口并应答宿主的 `curl`——在没有用户态进程的情况下验证了 TX/RX 环、ARP、TCP 握手、任意分段、EOF/FIN 与 PLIC 中断投递。它还发现 QEMU 11.1.1 默认把 `virtio-net-device` 暴露成 **legacy MMIO v1**（头部 10 字节而非 12），因此实现了双传输。
+
 | 时间 | 里程碑 |
 |------|--------|
 | 00:04 | 启动参考 riscv64 Linux 环境子代理——对官方 nginx 做 strace 取 ground truth |
