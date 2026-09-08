@@ -299,7 +299,6 @@ pub fn exit_current(code: i32) -> ! {
             let _ = p.copy_to_user(ctid, &0u32.to_le_bytes());
         }
     }
-    // tell the parent
     process::notify_parent(pid, code);
     schedule();
     unreachable!()
@@ -395,14 +394,12 @@ pub fn sys_clone(
     const CLONE_VM: usize = 0x100;
     const CLONE_THREAD: usize = 0x10000;
     if flags & (CLONE_VM | CLONE_THREAD) != 0 {
-        // Threads sharing an address space are not supported.
         return Err(ENOSYS);
     }
     let _ = (stack, tls);
     let tid = alloc_tid();
     let mut child = Process::new(tid);
     Process::fork_from(p, &mut child)?;
-    // the child returns 0 from clone; the parent returns the child tid
     child.init_tf = *tf;
     child.init_tf.set_a0(0);
     child.init_tf.ksp = 0;
@@ -453,7 +450,6 @@ pub fn send_signal(pid: i32, sig: usize, code: i32) {
     let target: Option<usize> = if pid > 0 {
         thread_index_by_tid(pid as usize)
     } else {
-        // current process group (or all)
         let cur = &s.threads[s.current];
         let pgid = cur.process.as_ref().map(|p| p.pgid).unwrap_or(0);
         s.threads
@@ -492,7 +488,6 @@ pub fn futex(
     let cmd = op & 0x7f;
     match cmd {
         0 | 9 => {
-            // FUTEX_WAIT / FUTEX_WAIT_BITSET
             let mut b = [0u8; 4];
             p.copy_from_user(uaddr, &mut b)?;
             let cur = u32::from_le_bytes(b);
@@ -513,18 +508,21 @@ pub fn futex(
                 }
                 if p.sig.pending & !p.sig.blocked != 0 {
                     current().futex_woken = false;
-                    FUTEX_WAITERS.lock().retain(|(a, t)| !(*a == uaddr && *t == tid));
+                    FUTEX_WAITERS
+                        .lock()
+                        .retain(|(a, t)| !(*a == uaddr && *t == tid));
                     return Err(EINTR);
                 }
                 sleep_ticks(1);
             }
             current().futex_woken = false;
             current().futex_addr = 0;
-            FUTEX_WAITERS.lock().retain(|(a, t)| !(*a == uaddr && *t == tid));
+            FUTEX_WAITERS
+                .lock()
+                .retain(|(a, t)| !(*a == uaddr && *t == tid));
             Ok(0)
         }
         1 | 10 => {
-            // FUTEX_WAKE
             let mut n = 0usize;
             let waiters: Vec<usize> = {
                 let list = FUTEX_WAITERS.lock();
@@ -548,10 +546,6 @@ pub fn futex(
                 }
             }
             Ok(n)
-        }
-        3 | 4 => {
-            // FUTEX_REQUEUE / CMP_REQUEUE: wake `val` waiters
-            Ok(0)
         }
         _ => Ok(0),
     }
