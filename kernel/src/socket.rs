@@ -21,7 +21,7 @@ pub enum SockInner {
     UnixPair { rx: Arc<Pipe>, tx: Arc<Pipe> },
     InetIdle,
     InetListening { handle: TcpHandle },
-    InetConnected { handle },
+    InetConnected { handle: TcpHandle },
 }
 
 pub struct Socket {
@@ -116,9 +116,12 @@ impl Socket {
                 }
                 r
             }
-            SockInner::InetListening { .. } => {
-                net::poll();
-                EPOLLIN
+            SockInner::InetListening { handle } => {
+                if net::tcp_listen_pending(*handle) {
+                    EPOLLIN
+                } else {
+                    0
+                }
             }
             _ => EPOLLIN | EPOLLOUT,
         }
@@ -152,6 +155,16 @@ impl Socket {
         matches!(&*self.inner.lock(), SockInner::InetListening { .. })
     }
 
+    /// Called when the last reference to an open file for this socket goes away.
+    pub fn on_close(&self) {
+        let inner = self.inner.lock();
+        if let SockInner::UnixPair { rx, tx } = &*inner {
+            // rx is our read end, tx our write end
+            rx.close_reader();
+            tx.close_writer();
+        }
+    }
+
     pub fn is_connected(&self) -> bool {
         matches!(&*self.inner.lock(), SockInner::InetConnected { .. })
     }
@@ -171,10 +184,14 @@ impl Drop for Socket {
 
 fn get_sock(p: &mut Process, fd: i32) -> Result<Arc<Socket>, Errno> {
     let f = p.files.get(fd)?;
-    match &*f.obj.lock() {
-        FileObj::Socket(s) => Ok(s.clone()),
-        _ => Err(ENOTSOCK),
-    }
+    let s = {
+        let g = f.obj.lock();
+        match &*g {
+            FileObj::Socket(s) => Some(s.clone()),
+            _ => None,
+        }
+    };
+    s.ok_or(ENOTSOCK)
 }
 
 fn parse_sockaddr(p: &mut Process, addr: usize, len: usize) -> Result<([u8; 4], u16, u16), Errno> {

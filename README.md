@@ -40,6 +40,16 @@ glibc 2.39, `ld-linux-riscv64-lp64d.so.1`, OpenSSL, PCRE2 and zlib — so the ke
 implements the Linux RISC-V system-call ABI well enough for glibc's dynamic loader
 and nginx to run unmodified.
 
+Measured on this kernel (QEMU 11.1.1, Apple Silicon, single hart):
+
+| workload | result |
+|---|---|
+| 300 sequential requests | 300/300 in 4 s (~75 req/s) |
+| 20-way parallel bursts, 200 requests | 199/200 |
+| 1 MiB file, 20 transfers | 20/20 byte-identical |
+| 20-way parallel + 1 MiB soak | no faults, free frames stable (±8 frames) |
+| graceful shutdown (`SIGQUIT` → master → worker → `SIGCHLD` → `wait4`) | clean exit |
+
 ---
 
 ## 1. Quick start
@@ -80,7 +90,7 @@ a Linux-compatible user ABI.
 | Firmware | legacy SBI calls (console, timer, shutdown); FDT parser for RAM size + initrd location |
 | Traps | full register trap frame in `trap.S`, per-thread trap frame page, separate kernel/user stacks |
 | Memory | bitmap physical-frame allocator (4 KiB frames), 64 MiB kernel heap, Sv39 page tables with 2 MiB kernel mappings and a high-half MMIO window |
-| Scheduling | round-robin over threads; kernel is non-preemptive (SIE=0), user threads preempted every 8 ms tick; blocking syscalls yield cooperatively |
+| Scheduling | FIFO round-robin over threads; kernel is non-preemptive (SIE=0), user threads preempted every 8 ms tick; blocking syscalls yield cooperatively |
 | Address spaces | per-process page table sharing the kernel's entries; lazy demand paging with `Area`-based VMA list; `brk`, `mmap`/`munmap`/`mprotect`/`mremap` |
 | Processes | `execve` (ELF64, PIE + dynamic interpreter), `clone`/`fork`, `wait4`, `exit_group`, credentials, `prctl` |
 | ELF | parses program headers, loads segments eagerly, loads `ld-linux-riscv64-lp64d.so.1`, builds the initial stack with `argv`/`envp`/auxv |
@@ -207,7 +217,7 @@ kernel/            the Rust kernel crate
   src/task/        threads, scheduler, processes, ELF loader, signals
   src/syscall/     Linux syscall dispatcher
   src/fs/          VFS (initramfs + tmpfs), files, pipes, char devices, cpio
-  src/net/         virtio-net driver + smoltcp stack + socket API
+  src/net/         virtio-net driver + smoltcp stack + socket API (see net/README.md)
   src/socket.rs    Linux socket layer (AF_INET, AF_UNIX socketpair, epoll glue)
   linker.ld        kernel memory layout (note the reserved boot stack)
 tools/

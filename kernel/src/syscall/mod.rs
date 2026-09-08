@@ -3,11 +3,11 @@
 use crate::errno::*;
 use crate::fs::file::*;
 use crate::fs::{self, Inode, Kind};
-use crate::socket::{self, Socket};
-use crate::task::process::{Process, PROT_EXEC, PROT_READ, PROT_WRITE};
-use crate::task::signal::{self, SigAction, SigInfo, SignalState};
+use crate::socket;
+use crate::task::process::{Process, PROT_READ, PROT_WRITE};
+use crate::task::signal::{self, SigAction, SigInfo};
 use crate::trap::TrapFrame;
-use alloc::string::{String, ToString};
+use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
@@ -22,8 +22,29 @@ pub const WUNTRACED: u32 = 2;
 
 const RLIMIT_NOFILE: usize = 7;
 
+static SYSCALL_COUNTS: crate::sync::SpinLock<[u32; 512]> =
+    crate::sync::SpinLock::new([0; 512]);
+
+pub static TRACE_ALL: core::sync::atomic::AtomicBool =
+    core::sync::atomic::AtomicBool::new(false);
+
+pub fn trace_syscall(nr: usize, a: &[usize; 6]) {
+    let mut c = SYSCALL_COUNTS.lock();
+    if nr < 512 {
+        c[nr] += 1;
+        if TRACE_ALL.load(core::sync::atomic::Ordering::Relaxed) {
+            crate::println!(
+                "[syscall] pid={} nr={} args={:x?} {:x?} {:x?} {:x?}",
+                crate::task::current().tid, nr, a[0], a[1], a[2], a[3]
+            );
+        }
+    }
+}
+
 pub fn handle(tf: &mut TrapFrame) {
     let nr = tf.a7();
+    let args = [tf.a0(), tf.a1(), tf.a2(), tf.a3(), tf.x[14], tf.x[15]];
+    trace_syscall(nr, &args);
     let t = crate::task::current();
     let p = match t.process.as_mut() {
         Some(p) => p,
@@ -323,7 +344,7 @@ fn dispatch(nr: usize, a: &[usize; 6], tf: &mut TrapFrame, p: &mut Process) -> R
             // read
             let f = p.files.get(a[0] as i32)?;
             let mut buf = alloc::vec![0u8; a[2].min(1 << 20)];
-            let mut n = 0;
+            let n;
             loop {
                 match f.read(&mut buf) {
                     Ok(k) => {
@@ -614,7 +635,8 @@ fn dispatch(nr: usize, a: &[usize; 6], tf: &mut TrapFrame, p: &mut Process) -> R
                 }
                 3 => {
                     let f = p.files.get(fd)?;
-                    Ok(*f.status.lock() as usize)
+                    let v = *f.status.lock();
+                    Ok(v as usize)
                 }
                 4 => {
                     let f = p.files.get(fd)?;
@@ -740,13 +762,14 @@ fn dispatch(nr: usize, a: &[usize; 6], tf: &mut TrapFrame, p: &mut Process) -> R
             Ok(0)
         }
         133 => {
-            // rt_sigsuspend
+            // rt_sigsuspend: the temporary mask stays in effect until the
+            // pending signal is actually delivered (see task::deliver_signals).
             let mask = read_u64(p, a[0])?;
-            let saved = p.sig.blocked;
+            p.sig.saved_mask = p.sig.blocked;
+            p.sig.have_saved_mask = true;
             p.sig.blocked = mask;
             loop {
                 if p.sig.pending & !p.sig.blocked != 0 {
-                    p.sig.blocked = saved;
                     return Err(EINTR);
                 }
                 crate::task::sleep_ticks(1);
@@ -836,11 +859,10 @@ fn dispatch(nr: usize, a: &[usize; 6], tf: &mut TrapFrame, p: &mut Process) -> R
             let ms = secs * 1000 + nsec / 1_000_000;
             let ticks = (ms / 4).max(1);
             crate::task::sleep_ticks(ticks);
-            if let Some(rem) = if nr == 101 { a[1] } else { a[3] } {
-                if rem != 0 {
-                    let z = [0u8; 16];
-                    p.copy_to_user(rem, &z)?;
-                }
+            let rem = if nr == 101 { a[1] } else { a[3] };
+            if rem != 0 {
+                let z = [0u8; 16];
+                p.copy_to_user(rem, &z)?;
             }
             Ok(0)
         }
@@ -933,8 +955,13 @@ fn dispatch(nr: usize, a: &[usize; 6], tf: &mut TrapFrame, p: &mut Process) -> R
                 FileObj::Epoll(e) => e.clone(),
                 _ => return Err(EINVAL),
             };
+            // struct epoll_event { __poll_t events; __u64 data; } - 16 bytes on riscv64
+            let mut ev = [0u8; 16];
+            p.copy_from_user(a[3], &mut ev)?;
+            let events = u32::from_le_bytes(ev[0..4].try_into().unwrap());
+            let data = u64::from_le_bytes(ev[8..16].try_into().unwrap());
             let f = p.files.get(a[2] as i32)?;
-            ep.ctl(a[1] as i32, a[2] as i32, f, a[3] as u32, a[4] as u64)?;
+            ep.ctl(a[1] as i32, a[2] as i32, f, events, data)?;
             Ok(0)
         }
         22 => sys_epoll_pwait(p, a),
@@ -962,7 +989,7 @@ fn dispatch(nr: usize, a: &[usize; 6], tf: &mut TrapFrame, p: &mut Process) -> R
         211 => socket::sys_sendmsg(p, a[0] as i32, a[1], a[2]),
         212 => socket::sys_recvmsg(p, a[0] as i32, a[1], a[2]),
         269 => socket::sys_sendmmsg(p, a[0] as i32, a[1], a[2], a[3]),
-        243 => socket::sys_recvmmsg(p, a[0] as i32, a[1], a[2], a[3]),
+        243 => socket::sys_recvmmsg(p, a[0] as i32, a[1], a[2], a[3], a[4]),
 
         _ => {
             crate::println!("[syscall] unimplemented nr={} ({} {} {} {})", nr, a[0], a[1], a[2], a[3]);
@@ -1282,27 +1309,30 @@ fn sys_epoll_pwait(p: &mut Process, a: &[usize; 6]) -> Result<usize, Errno> {
     };
     let start = crate::time::ticks();
     let result = loop {
-        let items: Vec<(i32, u32, u64)> = ep
+        let items: Vec<(i32, u32, u64, Arc<File>)> = ep
             .items
             .lock()
             .iter()
-            .map(|i| (i.fd, i.events, i.data))
+            .map(|i| (i.fd, i.events, i.data, i.file.clone()))
             .collect();
         let mut n = 0;
-        for (fd, events, data) in items.iter() {
+        for (fd, events, data, registered) in items.iter() {
             let file = match p.files.get_opt(*fd) {
                 Some(f) => f,
                 None => continue,
             };
+            if !Arc::ptr_eq(&file, registered) {
+                continue; // stale registration for a reused descriptor
+            }
             let ready = file.readiness();
             if ready & (*events | EPOLLERR | EPOLLHUP) != 0 {
                 if n >= maxevents {
                     break;
                 }
-                let mut ev = [0u8; 12];
+                let mut ev = [0u8; 16];
                 ev[0..4].copy_from_slice(&(ready & (events | EPOLLERR | EPOLLHUP)).to_le_bytes());
-                ev[4..12].copy_from_slice(&data.to_le_bytes());
-                p.copy_to_user(a[1] + n * 12, &ev)?;
+                ev[8..16].copy_from_slice(&data.to_le_bytes());
+                p.copy_to_user(a[1] + n * 16, &ev)?;
                 n += 1;
             }
         }

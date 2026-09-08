@@ -30,9 +30,22 @@ static CONSOLE: SpinLock<Console> = SpinLock::new(Console {
     tx_lock: false,
 });
 
+/// Set once the kernel page table is active (devices move to the high half).
+static mut MMU_ON: bool = false;
+
+pub fn mmu_enabled() {
+    unsafe {
+        MMU_ON = true;
+    }
+}
+
 #[inline(always)]
 fn reg(off: usize) -> *mut u8 {
-    (UART_BASE + off) as *mut u8
+    if unsafe { MMU_ON } {
+        crate::mm::address::dev_addr(UART_BASE + off) as *mut u8
+    } else {
+        (UART_BASE + off) as *mut u8
+    }
 }
 
 pub fn init() {
@@ -90,9 +103,10 @@ pub fn handle_rx_interrupt() {
         }
         let b = unsafe { reg(RBR).read_volatile() };
         let mut c = CONSOLE.lock();
-        let next = (c.rx_head + 1) % RX_BUF_SIZE;
+        let head = c.rx_head;
+        let next = (head + 1) % RX_BUF_SIZE;
         if next != c.rx_tail {
-            c.rx[c.rx_head] = b;
+            c.rx[head] = b;
             c.rx_head = next;
         }
     }

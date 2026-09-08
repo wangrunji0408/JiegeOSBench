@@ -19,7 +19,7 @@ pub const USER_MMAP_BASE: usize = 0x0000_0000_1000_0000;
 pub const USER_MMAP_LIMIT: usize = 0x0000_0000_7000_0000;
 pub const PIE_BASE: usize = 0x0000_0000_0100_0000;
 pub const INTERP_BASE: usize = 0x0000_0000_0400_0000;
-pub const SIGRETURN_TRAMPOLINE: usize = 0x0000_0000_7f00_0000;
+pub const SIGRETURN_TRAMPOLINE: usize = 0x0000_0000_7e00_0000;
 
 pub const PROT_READ: u32 = 1;
 pub const PROT_WRITE: u32 = 2;
@@ -111,6 +111,38 @@ impl MemoryMap {
             file,
             growdown,
         });
+        self.areas.sort_by_key(|a| a.start);
+    }
+
+    /// Apply a new protection to exactly [start, end), splitting areas as needed.
+    pub fn set_prot_range(&mut self, start: usize, end: usize, prot: u32) {
+        let mut out: Vec<Area> = Vec::new();
+        for a in self.areas.drain(..) {
+            if a.end <= start || a.start >= end {
+                out.push(a);
+                continue;
+            }
+            if a.start < start {
+                let mut lo = a.clone();
+                lo.end = start;
+                out.push(lo);
+            }
+            let mut mid = a.clone();
+            mid.start = a.start.max(start);
+            mid.end = a.end.min(end);
+            mid.prot = prot;
+            out.push(mid);
+            if a.end > end {
+                let mut hi = a.clone();
+                let delta = end - a.start;
+                hi.start = end;
+                if let Some((f, off)) = &hi.file {
+                    hi.file = Some((f.clone(), off + delta as u64));
+                }
+                out.push(hi);
+            }
+        }
+        self.areas = out;
         self.areas.sort_by_key(|a| a.start);
     }
 
@@ -231,7 +263,7 @@ pub struct Process {
 impl Process {
     pub fn new(pid: usize) -> Self {
         let root = fs::root();
-        let pt = PageTable::new_user(crate::KERNEL_ROOT.load(core::sync::atomic::Ordering::Relaxed));
+        let pt = PageTable::new_user(crate::task::KERNEL_ROOT.load(core::sync::atomic::Ordering::Relaxed));
         Self {
             pid,
             ppid: 0,
@@ -453,11 +485,7 @@ impl Process {
     pub fn mprotect(&mut self, addr: usize, len: usize, prot: u32) -> Result<(), Errno> {
         let start = page_align_down(addr);
         let end = page_align_up(addr + len);
-        for a in self.mm.areas.iter_mut() {
-            if a.start < end && a.end > start {
-                a.prot = prot;
-            }
-        }
+        self.mm.set_prot_range(start, end, prot);
         let flags = Area {
             start,
             end,
@@ -533,7 +561,7 @@ impl Process {
         inode.read_at(0, &mut data)?;
         let img = elf::parse(&data).map_err(|_| ENOEXEC)?;
 
-        let mut pt = PageTable::new_user(crate::KERNEL_ROOT.load(core::sync::atomic::Ordering::Relaxed));
+        let mut pt = PageTable::new_user(crate::task::KERNEL_ROOT.load(core::sync::atomic::Ordering::Relaxed));
         let mut mm = MemoryMap::new();
 
         let main_base = if img.is_dyn { PIE_BASE } else { 0 };
@@ -558,7 +586,7 @@ impl Process {
 
         let mut entry = img.entry + main_base;
         let mut at_base = 0usize;
-        let mut phdr_addr = 0usize;
+        let phdr_addr;
 
         if let Some(interp) = &img.interp {
             let iinode = fs::lookup(&self.cwd, interp, true)?;
@@ -593,7 +621,7 @@ impl Process {
         let tramp = frame::alloc_frame().ok_or(ENOMEM)?;
         unsafe {
             let code = tramp as *mut u32;
-            code.write(0x08f0_0893); // li a7, 139 (rt_sigreturn)
+            code.write(0x08b0_0893); // li a7, 139 (rt_sigreturn)
             code.add(1).write(0x0000_0073); // ecall
             code.add(2).write(0x0000_006f); // j .
         }
@@ -655,7 +683,7 @@ impl Process {
         self.init_tf.sepc = entry;
         self.init_tf.x[2] = sp;
         self.init_tf.x[10] = 0;
-        self.init_tf.sstatus = crate::csr::SSTATUS_SPIE;
+        self.init_tf.sstatus = crate::csr::SSTATUS_SPIE | (3 << 13);
         Ok(())
     }
 
@@ -789,12 +817,21 @@ impl Process {
         for a in parent.mm.areas.iter() {
             let mut va = page_align_down(a.start);
             while va < a.end {
-                if let Some(pa) = parent.pt.translate_user(va) {
+                if child.pt.translate_user(va).is_some() {
+                    va += PAGE_SIZE;
+                    continue;
+                }
+                if let Some((pa, pte)) = parent.pt.translate(va) {
+                    if pte & PTE_U == 0 {
+                        va += PAGE_SIZE;
+                        continue;
+                    }
                     let nf = frame::alloc_frame().ok_or(ENOMEM)?;
                     unsafe {
                         core::ptr::copy_nonoverlapping(pa as *const u8, nf as *mut u8, PAGE_SIZE);
                     }
-                    child.pt.map(va, nf, a.pte_flags()).map_err(|_| ENOMEM)?;
+                    let flags = (pte & 0xff) | PTE_A | PTE_D;
+                    child.pt.map(va, nf, flags).map_err(|_| ENOMEM)?;
                 }
                 va += PAGE_SIZE;
             }
@@ -829,8 +866,6 @@ pub fn spawn_init() -> Result<usize, &'static str> {
     if path.ends_with("nginx") {
         argv.push("-c".to_string());
         argv.push("/etc/nginx/nginx.conf".to_string());
-        argv.push("-g".to_string());
-        argv.push("daemon off;".to_string());
     }
     let envp: Vec<String> = alloc::vec![
         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin".to_string(),
@@ -879,20 +914,33 @@ pub fn handle_page_fault(_tf: &mut TrapFrame, va: usize, scause: usize) -> bool 
 
 pub fn on_thread_exit(_i: usize) {}
 
-/// Wake a parent blocked in wait4 when one of its children exits.
+/// Wake a parent blocked in wait4 and deliver SIGCHLD when a child exits.
 pub fn notify_parent(pid: usize, status: i32) {
+    use crate::task::signal::{SigInfo, SIGCHLD};
     let s = crate::task::sched();
     for i in 0..s.threads.len() {
         let mut hit = false;
         if let Some(p) = s.threads[i].process.as_mut() {
             if p.children.contains(&pid) {
                 p.wait_status = status;
+                p.sig.raise_with(
+                    SIGCHLD,
+                    SigInfo {
+                        code: 1, // CLD_EXITED
+                        pid: pid as i32,
+                        uid: p.uid,
+                        status: (status & 0xff) << 8,
+                        ..Default::default()
+                    },
+                );
                 hit = true;
             }
         }
-        if hit && s.threads[i].state == crate::task::State::Blocked {
-            s.threads[i].state = crate::task::State::Ready;
-            s.ready.push(i);
+        if hit {
+            if s.threads[i].state == crate::task::State::Blocked {
+                s.threads[i].state = crate::task::State::Ready;
+                s.ready.push_back(i);
+            }
         }
     }
 }

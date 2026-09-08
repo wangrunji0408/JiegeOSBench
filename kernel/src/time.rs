@@ -6,8 +6,8 @@ use crate::mm::address::dev_addr;
 use crate::sbi;
 
 pub const TIMER_FREQ: u64 = 10_000_000;
-/// Timer interrupt period: 4 ms.
-pub const TICK_TICKS: u64 = TIMER_FREQ / 250;
+/// Timer interrupt period: 1 ms.
+pub const TICK_TICKS: u64 = TIMER_FREQ / 1000;
 
 const RTC_BASE: usize = 0x0010_1000;
 

@@ -5,12 +5,11 @@ use crate::sync::SpinLock;
 
 const PLIC_BASE: usize = 0x0c00_0000;
 const PRIORITY: usize = 0x0000_0000;
-const ENABLE: usize = 0x0000_2000;
-const THRESHOLD: usize = 0x0020_0000;
-const CLAIM: usize = 0x0020_0004;
-
-/// S-mode context for hart 0.
+/// S-mode context for hart 0 (context 0 is M-mode).
 const CONTEXT: usize = 1;
+const ENABLE: usize = 0x0000_2000 + 0x80 * CONTEXT;
+const THRESHOLD: usize = 0x0020_0000 + 0x1000 * CONTEXT;
+const CLAIM: usize = 0x0020_0004 + 0x1000 * CONTEXT;
 
 const MAX_IRQ: usize = 64;
 
@@ -34,13 +33,13 @@ fn w32(off: usize, v: u32) {
 
 pub fn init() {
     // lowest priority threshold for this context
-    w32(THRESHOLD + 4 * CONTEXT, 0);
+    w32(THRESHOLD, 0);
 }
 
 pub fn register(irq: usize, f: fn(usize)) {
     PLIC.lock().handlers[irq] = Some(f);
     w32(PRIORITY + 4 * irq, 1);
-    w32(ENABLE + 4 * CONTEXT, 1u32 << irq);
+    w32(ENABLE, 1u32 << irq);
 }
 
 /// Claim and dispatch all pending interrupts.

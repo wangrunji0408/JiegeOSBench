@@ -99,6 +99,16 @@ __restore_tf_from_sp:
     mv a0, sp
     j __restore
 
+    # First entry of a new user thread: sp = trap frame. Restore its FP state
+    # (saved at tf+512) before entering user mode.
+    .globl __thread_entry
+__thread_entry:
+    addi sp, sp, 1024
+    addi a0, sp, -512
+    call __fp_restore
+    addi a0, sp, -1024
+    j __restore
+
     .globl __switch
 __switch:
     sd ra, 0(a0)

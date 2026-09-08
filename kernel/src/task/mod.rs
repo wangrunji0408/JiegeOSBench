@@ -7,8 +7,9 @@ pub mod signal;
 use crate::csr::*;
 use crate::errno::*;
 use crate::mm::frame;
-use crate::trap::{TaskContext, TrapFrame, TF_SIZE};
+use crate::trap::{TaskContext, TrapFrame};
 use alloc::boxed::Box;
+use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 use core::sync::atomic::{AtomicUsize, Ordering};
 use process::Process;
@@ -17,9 +18,11 @@ pub const KSTACK_SIZE: usize = 64 * 1024;
 
 /// Root of the kernel page table (copied into every user address space).
 pub static KERNEL_ROOT: AtomicUsize = AtomicUsize::new(0);
+pub static KERNEL_SATP: AtomicUsize = AtomicUsize::new(0);
 
 pub fn set_kernel_root(root: usize) {
     KERNEL_ROOT.store(root, Ordering::Relaxed);
+    KERNEL_SATP.store((8usize << 60) | (root >> 12), Ordering::Relaxed);
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -51,7 +54,7 @@ unsafe impl Send for Thread {}
 
 pub struct Scheduler {
     pub threads: Vec<Box<Thread>>,
-    pub ready: Vec<usize>,
+    pub ready: VecDeque<usize>,
     pub current: usize,
     pub idle: usize,
     pub next_tid: usize,
@@ -118,7 +121,7 @@ fn new_thread_skeleton(tid: usize) -> Box<Thread> {
 pub fn init() {
     let mut s = Scheduler {
         threads: Vec::new(),
-        ready: Vec::new(),
+        ready: VecDeque::new(),
         current: 0,
         idle: 0,
         next_tid: 1,
@@ -128,7 +131,7 @@ pub fn init() {
     idle.ctx.ra = kernel_thread_entry as usize;
     idle.ctx.sp = idle.kstack + KSTACK_SIZE;
     s.threads.push(idle);
-    s.ready.push(0);
+    s.ready.push_back(0);
     unsafe {
         SCHED = Some(s);
     }
@@ -144,7 +147,7 @@ pub fn spawn_kernel(f: fn()) -> usize {
     t.entry = Some(f);
     let idx = s.threads.len();
     s.threads.push(t);
-    s.ready.push(idx);
+    s.ready.push_back(idx);
     tid
 }
 
@@ -152,7 +155,9 @@ pub fn spawn_user(process: Process) -> usize {
     let s = sched();
     let tid = process.pid;
     let mut t = new_thread_skeleton(tid);
-    t.ctx.ra = restore_tf_from_sp as usize;
+    // NOTE: must be the bare assembly trampoline: a Rust fn prologue would
+    // move sp and corrupt the trap frame at the top of the "stack".
+    t.ctx.ra = __thread_entry as usize;
     t.ctx.sp = t.tf as usize;
     unsafe {
         *t.tf = process.init_tf;
@@ -161,14 +166,21 @@ pub fn spawn_user(process: Process) -> usize {
     t.process = Some(Box::new(process));
     let idx = s.threads.len();
     s.threads.push(t);
-    s.ready.push(idx);
+    s.ready.push_back(idx);
     tid
 }
 
-extern "C" fn restore_tf_from_sp() -> ! {
-    unsafe {
-        core::arch::asm!("j __restore_tf_from_sp", options(noreturn));
-    }
+extern "C" {
+    fn __thread_entry() -> !;
+    fn __fp_save(buf: *mut u8);
+    fn __fp_restore(buf: *const u8);
+}
+
+/// Offset of the per-thread FP save area inside the trap frame page.
+pub const FP_OFF: usize = 512;
+
+pub fn fp_area(tf: *mut TrapFrame) -> *mut u8 {
+    (tf as usize + FP_OFF) as *mut u8
 }
 
 extern "C" fn kernel_thread_entry() -> ! {
@@ -193,6 +205,53 @@ pub fn start_init() {
         crate::println!("[init] no initramfs, running boot test thread");
         spawn_kernel(boot_test);
     }
+    if crate::BOOTARGS.load().contains("shutdown-test") {
+        spawn_kernel(shutdown_test);
+    }
+    if crate::BOOTARGS.load().contains("memreport") {
+        spawn_kernel(mem_report);
+    }
+}
+
+/// Periodic memory report (diagnostic boot option "memreport").
+fn mem_report() {
+    loop {
+        sleep_ticks(5_000);
+        let s = sched();
+        let zombies = s
+            .threads
+            .iter()
+            .filter(|t| t.state == State::Zombie)
+            .count();
+        crate::println!(
+            "[mem] free frames {} ({} MiB) threads {} zombies {}",
+            crate::mm::frame::free_count(),
+            crate::mm::frame::free_count() * 4096 / 1048576,
+            s.threads.len(),
+            zombies
+        );
+    }
+}
+
+/// Optional end-to-end lifecycle test driven by the "shutdown-test" boot arg:
+/// after 12 s send SIGQUIT to nginx's master and report whether it exited.
+fn shutdown_test() {
+    sleep_ticks(12_000);
+    crate::println!("[test] sending SIGQUIT to pid 1");
+    send_signal(1, signal::SIGQUIT, 0);
+    for _ in 0..10 {
+        sleep_ticks(1_000);
+        let s = sched();
+        let alive = s
+            .threads
+            .iter()
+            .any(|t| t.tid == 1 && t.state != State::Zombie && t.state != State::Dead);
+        if !alive {
+            crate::println!("[test] nginx master exited after SIGQUIT: PASS");
+            return;
+        }
+    }
+    crate::println!("[test] nginx master still alive after SIGQUIT: FAIL");
 }
 
 fn boot_test() {
@@ -227,7 +286,7 @@ pub fn schedule() {
     }
     let s = sched();
     let prev = s.current;
-    let next = match s.ready.pop() {
+    let next = match s.ready.pop_front() {
         Some(i) => i,
         None => s.idle,
     };
@@ -240,16 +299,28 @@ pub fn schedule() {
     }
     if s.threads[prev].state == State::Running {
         s.threads[prev].state = State::Ready;
-        s.ready.push(prev);
+        s.ready.push_back(prev);
     }
     s.threads[next].state = State::Running;
     s.current = next;
+    // switch address space before switching stacks
+    let next_satp = match s.threads[next].process.as_ref() {
+        Some(p) => p.satp(),
+        None => KERNEL_SATP.load(Ordering::Relaxed),
+    };
+    if crate::csr::satp() != next_satp {
+        crate::csr::set_satp(next_satp);
+    }
     let next_tf = s.threads[next].tf as usize;
     let next_ctx = &s.threads[next].ctx as *const TaskContext;
     let prev_ctx = &mut s.threads[prev].ctx as *mut TaskContext;
+    let prev_fp = fp_area(s.threads[prev].tf);
     set_sscratch(next_tf);
     unsafe {
+        __fp_save(prev_fp);
         crate::trap::__switch(prev_ctx, next_ctx);
+        // resumed: restore our own FP register file
+        __fp_restore(fp_area(current().tf));
     }
 }
 
@@ -266,7 +337,7 @@ pub fn wake_index(i: usize) {
     let s = sched();
     if s.threads[i].state == State::Blocked {
         s.threads[i].state = State::Ready;
-        s.ready.push(i);
+        s.ready.push_back(i);
     }
 }
 
@@ -312,7 +383,7 @@ pub fn on_timer() {
             if now >= s.threads[i].wake_tick {
                 s.threads[i].wake_tick = 0;
                 s.threads[i].state = State::Ready;
-                s.ready.push(i);
+                s.ready.push_back(i);
             }
         }
     }
@@ -330,7 +401,7 @@ pub fn sleep_ticks(ticks: u64) {
     schedule();
 }
 
-pub fn preempt(_tf: &mut TrapFrame) {
+pub fn preempt(tf: &mut TrapFrame) {
     let s = sched();
     if s.threads[s.current].process.is_none() {
         return;
@@ -351,8 +422,7 @@ pub fn page_fault(tf: &mut TrapFrame, scause: usize) {
     if process::handle_page_fault(tf, stval, scause) {
         return;
     }
-    let sig = if scause == SCAUSE_STORE_PAGE_FAULT { 7 } else { 11 };
-    crate::syscall::deliver_signal_fault(tf, sig);
+    crate::syscall::deliver_signal_fault(tf, 11);
 }
 
 pub fn fault(tf: &mut TrapFrame, scause: usize) {
@@ -377,7 +447,14 @@ pub fn deliver_signals(tf: &mut TrapFrame) {
         crate::println!("[sig] pid {} killed", p.pid);
         exit_current(137);
     }
-    signal::deliver(p, tf);
+    let delivered = signal::deliver(p, tf);
+    if p.sig.have_saved_mask {
+        if !delivered {
+            // no signal was delivered: put the original mask back
+            p.sig.blocked = p.sig.saved_mask;
+        }
+        p.sig.have_saved_mask = false;
+    }
 }
 
 // ---- clone / wait / signals / futex -------------------------------------
@@ -456,11 +533,12 @@ pub fn send_signal(pid: i32, sig: usize, code: i32) {
             .iter()
             .position(|t| t.process.as_ref().map(|p| p.pgid == pgid).unwrap_or(false))
     };
+    let sender_tid = s.threads[s.current].tid;
     if let Some(i) = target {
         if let Some(p) = s.threads[i].process.as_mut() {
             let info = signal::SigInfo {
                 code,
-                pid: s.threads[s.current].tid as i32,
+                pid: sender_tid as i32,
                 uid: 0,
                 ..Default::default()
             };
@@ -468,7 +546,7 @@ pub fn send_signal(pid: i32, sig: usize, code: i32) {
             s.threads[i].futex_woken = true;
             if s.threads[i].state == State::Blocked {
                 s.threads[i].state = State::Ready;
-                s.ready.push(i);
+                s.ready.push_back(i);
             }
         }
     }
@@ -540,7 +618,7 @@ pub fn futex(
                     s.threads[i].futex_woken = true;
                     if s.threads[i].state == State::Blocked {
                         s.threads[i].state = State::Ready;
-                        s.ready.push(i);
+                        s.ready.push_back(i);
                     }
                     n += 1;
                 }

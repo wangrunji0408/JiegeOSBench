@@ -2,7 +2,7 @@
 
 #[inline(always)]
 fn sbi_call(eid: usize, fid: usize, arg0: usize, arg1: usize, arg2: usize) -> (usize, usize) {
-    let (mut a0, mut a1, mut a2, mut a6, mut a7);
+    let (mut a0, mut a1, a2, mut a6, mut a7);
     a0 = arg0;
     a1 = arg1;
     a2 = arg2;

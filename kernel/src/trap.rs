@@ -95,7 +95,7 @@ impl TaskContext {
 }
 
 pub fn init() {
-    set_stvec(__trap_entry as usize);
+    set_stvec(__trap_entry as *const () as usize);
     unsafe {
         set_sie(SIE_SEIE | SIE_STIE);
     }
@@ -127,24 +127,33 @@ pub extern "C" fn trap_handler(tf: &mut TrapFrame) {
             }
             _ => {}
         }
-        return;
+    } else {
+        match scause {
+            SCAUSE_ECALL_U => {
+                // advance past the ecall before dispatching
+                tf.sepc += 4;
+                crate::syscall::handle(tf);
+            }
+            SCAUSE_INST_PAGE_FAULT | SCAUSE_LOAD_PAGE_FAULT | SCAUSE_STORE_PAGE_FAULT => {
+                if from_user {
+                    crate::task::page_fault(tf, scause);
+                } else {
+                    kernel_trap(tf, scause);
+                }
+            }
+            _ => {
+                if from_user {
+                    crate::task::fault(tf, scause);
+                } else {
+                    kernel_trap(tf, scause);
+                }
+            }
+        }
     }
-    match scause {
-        SCAUSE_ECALL_U => crate::syscall::handle(tf),
-        SCAUSE_INST_PAGE_FAULT | SCAUSE_LOAD_PAGE_FAULT | SCAUSE_STORE_PAGE_FAULT => {
-            if from_user {
-                crate::task::page_fault(tf, scause);
-            } else {
-                kernel_trap(tf, scause);
-            }
-        }
-        _ => {
-            if from_user {
-                crate::task::fault(tf, scause);
-            } else {
-                kernel_trap(tf, scause);
-            }
-        }
+    if from_user && tf.from_user() {
+        // keep the FP register file enabled (FS = Dirty)
+        tf.sstatus |= 3 << 13;
+        crate::task::deliver_signals(tf);
     }
 }
 

@@ -528,6 +528,13 @@ fn load_cpio(root: &Arc<Inode>, buf: &'static [u8]) {
                 }
             }
         };
+        // An archive may repeat a directory entry (e.g. once as a parent and
+        // once explicitly); never replace a populated directory with an empty one.
+        if let Some(existing) = parent.child(base) {
+            if ftype == S_IFDIR && existing.is_dir() {
+                return;
+            }
+        }
         if e.nlink > 1 && ftype == S_IFREG {
             if let Some(existing) = hardlinks.get(&e.ino) {
                 existing.inner.lock().nlink += 1;

@@ -16,14 +16,18 @@ shasum -a 256 "$DEB"
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-ar p "$DEB" data.tar.xz > "$TMP/data.tar.xz" 2>/dev/null || ar p "$DEB" data.tar.zst > "$TMP/data.tar.zst"
-tar -xf "$TMP"/data.tar.* -C "$TMP" ./usr/sbin/nginx 2>/dev/null || tar -xf "$TMP"/data.tar.* -C "$TMP" usr/sbin/nginx
+MEMBER=$(ar t "$DEB" | grep '^data.tar' | head -1)
+ar p "$DEB" "$MEMBER" > "$TMP/$MEMBER"
+mkdir -p "$TMP/x"
+tar -xf "$TMP/$MEMBER" -C "$TMP/x" --strip-components=0 usr/sbin/nginx 2>/dev/null || tar -xf "$TMP/$MEMBER" -C "$TMP/x" ./usr/sbin/nginx
+cp "$TMP/x/usr/sbin/nginx" "$TMP/nginx"
+TMP_NGINX="$TMP/nginx"
 echo "== sha256 (binary inside the .deb)"
-shasum -a 256 "$TMP/usr/sbin/nginx"
+shasum -a 256 "$TMP/nginx"
 echo "== sha256 (binary in the guest initramfs source tree)"
 shasum -a 256 rootfs/usr/sbin/nginx
 
-if cmp -s "$TMP/usr/sbin/nginx" rootfs/usr/sbin/nginx; then
+if cmp -s "$TMP/nginx" rootfs/usr/sbin/nginx; then
   echo "OK: the nginx we boot is bit-identical to the official Ubuntu riscv64 package"
 else
   echo "MISMATCH: rootfs/usr/sbin/nginx differs from the package payload"

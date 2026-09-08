@@ -79,8 +79,10 @@ pub struct SignalState {
     pub altstack_size: usize,
     pub altstack_flags: u32,
     pub info: [SigInfo; 65],
-    pub in_sigsuspend: bool,
-    pub suspended_mask: u64,
+    /// Original mask saved by rt_sigsuspend; restored only if no signal is
+    /// actually delivered on the way back to user mode (Linux semantics).
+    pub saved_mask: u64,
+    pub have_saved_mask: bool,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -103,8 +105,8 @@ impl SignalState {
             altstack_size: 0,
             altstack_flags: 2, // SS_DISABLE
             info: [SigInfo::default(); 65],
-            in_sigsuspend: false,
-            suspended_mask: 0,
+            saved_mask: 0,
+            have_saved_mask: false,
         }
     }
 
@@ -174,15 +176,7 @@ pub fn deliver(proc: &mut Process, tf: &mut TrapFrame) -> bool {
         Some(s) => s,
         None => return false,
     };
-    // Signals that were only queued for a blocked mask are cleared once consumed.
     proc.sig.pending &= !(1u64 << (sig - 1));
-    if proc.sig.in_sigsuspend {
-        // rt_sigsuspend: restore the original mask now that a signal arrived
-        proc.sig.blocked = proc.sig.suspended_mask;
-        proc.sig.in_sigsuspend = false;
-        tf.sepc = tf.sepc.wrapping_sub(4); // re-execute the ecall? no: set EINTR
-        // The syscall will return EINTR through the normal path; leave sepc.
-    }
 
     let action = proc.sig.actions[sig];
     if action.handler == SIG_IGN {
@@ -195,7 +189,7 @@ pub fn deliver(proc: &mut Process, tf: &mut TrapFrame) -> bool {
         crate::println!("[sig] pid {} terminated by signal {}", proc.pid, sig);
         proc.exit_code = 128 + sig as i32;
         proc.exited = true;
-        return false;
+        crate::task::exit_current(128 + sig as i32);
     }
 
     // Build the signal frame on the user stack.
