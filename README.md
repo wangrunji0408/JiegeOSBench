@@ -13,26 +13,27 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 > the web, but must work in the current directory. Keep working until the goal
 > is achieved.
 
-| # | Model | Effort | Harness | First HTTP 200 | Total | Context | Cost | Branch | Tier |
-|---|-------|--------|---------|------------|-------|---------|------|--------|------|
-| 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | Jiege |
-| 🥈 | Claude Fable 5 | High | CC | 36min | 38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | Intelligent Jiege |
-| 🥉 | GPT 5.6 Sol | High | Codex | 36min | 49min | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | Intelligent Jiege |
-| 4 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | [opus-4.8](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.8) | Intelligent Jiege |
-| 5 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | Intelligent Jiege |
-| 6 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | Intelligent Jiege |
-| 7 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | Intelligent Jiege |
-| 8 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | Intelligent Jiege |
-| 9 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | Intelligent Jiege |
-| 10 | GPT 5.6 Luna | xHigh | Codex | 2h 44min | 2h 45min | 243K x4 | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | Machine Jiege |
-| 11 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | Machine Jiege |
-| 12 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | Machine Jiege |
-| 13 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | Machine Jiege |
-| 14 | GLM 5.3 Flash (fp8) | — | CC | 6h 46min | 7h 10min | 967K | self-hosted | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | Machine Jiege |
-| 15 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | Machine Jiege |
-| 16 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | Machine Jiege |
-| 17 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | — | Broken Jiege |
-| 18 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | — | Broken Jiege |
+| # | Model | Effort | Harness | First HTTP 200 | Total | Context | Cost | Branch | Test date | Tier |
+|---|-------|--------|---------|------------|-------|---------|------|--------|-----------|------|
+| 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | 2026-09-05 | 👑 Jiege |
+| 🥈 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 438K | $0.61 | [deepseek-v4.1-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4.1-flash) | 2026-09-08 | 🧠 Intelligent Jiege |
+| 🥉 | Claude Fable 5 | High | CC | 36min | 38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | 2026-07-05 | 🧠 Intelligent Jiege |
+| 4 | GPT 5.6 Sol | High | Codex | 36min | 49min | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | 2026-07-11 | 🧠 Intelligent Jiege |
+| 5 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | [opus-4.8](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.8) | 2026-09-05 | 🧠 Intelligent Jiege |
+| 6 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | 2026-04-18 | 🧠 Intelligent Jiege |
+| 7 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | 2026-09-05 | 🧠 Intelligent Jiege |
+| 8 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | 2026-07-27 | 🧠 Intelligent Jiege |
+| 9 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | 2026-08-12 | 🧠 Intelligent Jiege |
+| 10 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | 2026-07-18 | 🧠 Intelligent Jiege |
+| 11 | GPT 5.6 Luna | xHigh | Codex | 2h 44min | 2h 45min | 243K x4 | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | 2026-08-08 | 🤖 Machine Jiege |
+| 12 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 2026-03-24 | 🤖 Machine Jiege |
+| 13 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 2026-07-18 | 🤖 Machine Jiege |
+| 14 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | 2026-08-20 | 🤖 Machine Jiege |
+| 15 | GLM 5.3 Flash (fp8) | — | CC | 6h 46min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 16 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 2026-08-01 | 🤖 Machine Jiege |
+| 17 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 2026-03-18 | 🤖 Machine Jiege |
+| 18 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | — | 2026-07-05 | 💥 Broken Jiege |
+| 19 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | — | 2026-08-21 | 💥 Broken Jiege |
 
 
 
@@ -42,7 +43,7 @@ Harness: CC = Claude Code, DSH = DeepSeek Harness.
 
 In 2019, Jiege ran nginx on [rCore](https://jia.je/programming/2019/03/08/running-nginx-on-rcore/), an OS written from scratch during his OS course. "Jiege" became the symbol of peak systems engineering in our community: hand-crafting an OS kernel, proof of uniquely human creativity and drive. Today, with one casual kick, AI can finish in minutes what took us months to build. ~~OS is finished.~~ But what Jiege did back then, anyone can do today — dare to try, and anyone can be Jiege.
 
-## GPT-6 Astra — 6min
+## GPT-6 Astra — 6min / 9min
 
 ![GPT-6 Astra Timeline](figures/gpt6-astra-timeline.png)
 
@@ -60,7 +61,28 @@ OpenAI Codex (desktop) ran for **~6min** to first HTTP 200 — by far the fastes
 | 00:08 | Final acceptance: 8-way × 120 req, 24MiB, 25 keep-alive, 1MiB file ✅ |
 | 00:09 | Goal complete — README + make start/test/verify |
 
-## Claude Fable 5 — 38min
+## DeepSeek V4.1 Flash — 30min / 47min
+
+![DeepSeek V4.1 Flash Timeline](figures/deepseek-v4.1-flash-timeline.png)
+
+DeepSeek Harness ran for **~47min** (first HTTP 200 at 30min) with the **standard agent preset** (write/edit/read available) — the fastest DeepSeek run by a wide margin, and the cheapest successful run on the board at **$0.61**. Two background subagents ran in parallel: one booted a reference riscv64 Linux in QEMU to strace the stock nginx (ground-truth syscall ABI), the other implemented the virtio-net + smoltcp TCP stack while the main agent wrote the filesystem, ELF loader, signal and syscall layers. 437 steps across the three agents, 86.5M tokens total, zero kernel panics, zero context compactions. Took the **Ubuntu glibc dynamic-linking route** — the unmodified Ubuntu 24.04 riscv64 nginx 1.24.0 binary (SHA-256 identical to the official `.deb`) running against glibc 2.39 + OpenSSL/PCRE2/zlib.
+
+| Time | Milestone |
+|------|-----------|
+| 00:04 | Reference riscv64 Linux env subagent launched — strace of the stock nginx as ground truth |
+| 00:07 | Kernel boots under QEMU; fs, ELF loader and syscall layers written |
+| 00:09 | virtio-net + TCP subagent launched; net stack built in parallel |
+| 00:16 | Kernel launches the unmodified Ubuntu nginx binary |
+| 00:18 | Boot-stack static and trap-frame prologue bugs fixed |
+| 00:22 | FP state (`sstatus.FS`) enabled and saved across context switches |
+| 00:24 | initramfs duplicate-directory and fork page-table-switch bugs fixed |
+| 00:29 | epoll_event layout bug fixed |
+| 00:30 | First HTTP 200 OK — `Server: nginx/1.24.0 (Ubuntu)` 🎉 |
+| 00:33 | SIGCHLD delivery + sigsuspend semantics fixed; graceful shutdown verified |
+| 00:44 | Scheduler starvation fixed (LIFO ready queue → FIFO) |
+| 00:47 | Goal complete — clean rebuild + binary byte-verification |
+
+## Claude Fable 5 — 36min / 38min
 
 ![Claude Fable 5 Timeline](figures/fable5-timeline.png)
 
@@ -76,7 +98,7 @@ Claude Code ran for **~38min**, 65 API requests. Total cost approximately **$21*
 | 00:34 | QEMU boot: nginx listening on port 80 🎉 |
 | 00:37 | Post-fix cleanup (sendfile, README) |
 
-### Claude Fable 5.1 — 58min
+### Claude Fable 5.1 — 58min / 1h 45min
 
 ![Claude Fable 5.1 Timeline](figures/fable51-timeline.png)
 
@@ -98,7 +120,7 @@ Claude Code ran for **~58min** to first HTTP 200 (goal complete at 105min) — t
 | 01:02 | Suite green: index/404/HEAD/sendfile 4MiB/keep-alive |
 | 01:45 | Signal/concurrency/leak/throughput suites, README, git commit ✅ |
 
-### GPT 5.6 Sol — 36min (+13min post-fix)
+### GPT 5.6 Sol — 36min / 49min
 
 ![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
 
@@ -118,7 +140,7 @@ OpenAI Codex ran for **~36 minutes** to reach first success, then spent another 
 | 00:43 – 00:49 | User prompt → fix TCP FIN lifecycle + virtio TX descriptor pool |
 | 00:49 | Final PASS: 2 sequential HTTP 200 ✅ |
 
-### Claude Opus 4.8 — 40min
+### Claude Opus 4.8 — 40min / 42min
 
 ![Opus 4.8 Timeline](figures/opus48-timeline.png)
 
@@ -138,11 +160,11 @@ Claude Code ran for **~40min** to first HTTP 200 (complete at 42min). Took the *
 | 00:41 | Sequential + 10 concurrent + 404 + keep-alive reuse ✅ |
 | 00:42 | Dead-code cleanup + goal complete |
 
-### Claude Opus 4.7 — 65min active (3h 32min total)
+### Claude Opus 4.7 — 45min / 48min
 
 ![Claude Opus 4.7 Timeline](figures/opus47-timeline.png)
 
-Claude Code ran for **~65 minutes**.
+Claude Code ran for **~45 minutes** of active time to first HTTP 200 (48 minutes total active).
 
 | Time (active) | Milestone |
 |---------------|----------|
@@ -157,7 +179,7 @@ Claude Code ran for **~65 minutes**.
 | 00:43 | nginx bind + listen succeeds |
 | 00:45 | nginx official binary returns HTTP 200 🎉 |
 
-### Claude Opus 5 — 67min (stable at 125min)
+### Claude Opus 5 — 1h 7min / 2h 5min
 
 ![Claude Opus 5 Timeline](figures/opus5-timeline.png)
 
@@ -178,7 +200,7 @@ Claude Code ran for **~67 minutes** to first HTTP 200, then spent another **58 m
 | 02:01 | 50 concurrent connections + 320 fresh connections ✅ |
 | 02:05 | Final validation complete |
 
-### Kimi K3 — 2h 19min
+### Kimi K3 — 1h 48min / 2h 19min
 
 ![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
 
@@ -197,11 +219,11 @@ Claude Code ran for **~2h 19min**. 151 API requests, 26.3M tokens total (includi
 | 02:15 | nginx stable again |
 | 02:19 | Final validation: SHA256 + 100 concurrent requests all 200 ✅ |
 
-### GPT 5.6 Luna — 2h 45min active (3h 19min wall)
+### GPT 5.6 Luna — 2h 44min / 2h 45min
 
 ![GPT 5.6 Luna Timeline](figures/gpt56-luna-timeline.png)
 
-OpenAI Codex (desktop) ran for **~2h 45min** of active time (3h 19min wall-clock; 34.6min of API connection-retry gaps in the first 40 minutes excluded). The only model to take the full **glibc dynamic-linking route** against the official Debian nginx 1.30.1 binary — and succeed. The early phase was the hardest: the glibc loader refused to resolve shared libraries until a stack of ABI bugs (auxv order, duplicate argc, fstat st_dev/st_ino collision) were fixed one by one. After dynamic linking succeeded at ~1h, nginx bound `0.0.0.0:80` on the first try and the finish was clean: 3 context compactions (pre-compaction peaks 243K each), 116M tokens total (input 60.1M + cache 55.6M), cost ~$2.3.
+OpenAI Codex (desktop) ran for **~2h 45min** of active time (3h 19min wall-clock; 34.6min of API connection-retry gaps in the first 40 minutes excluded). First to take the full **glibc dynamic-linking route** against the official Debian nginx 1.30.1 binary — and succeed (matched later by DeepSeek V4.1 Flash). The early phase was the hardest: the glibc loader refused to resolve shared libraries until a stack of ABI bugs (auxv order, duplicate argc, fstat st_dev/st_ino collision) were fixed one by one. After dynamic linking succeeded at ~1h, nginx bound `0.0.0.0:80` on the first try and the finish was clean: 3 context compactions (pre-compaction peaks 243K each), 116M tokens total (input 60.1M + cache 55.6M), cost ~$2.3.
 
 | Time (active) | Milestone |
 |---------------|-----------|
@@ -218,7 +240,7 @@ OpenAI Codex (desktop) ran for **~2h 45min** of active time (3h 19min wall-clock
 | 164:07 | nginx 200 OK from host 🎉 |
 | 164:50 | Final validation + goal complete |
 
-### Claude Opus 4.6 — 2h 46min
+### Claude Opus 4.6 — 2h 46min / 2h 46min
 
 ![Claude Opus 4.6 Timeline](figures/opus-timeline.jpeg)
 
@@ -233,7 +255,7 @@ Claude Code ran for **~2h 46min**.
 | 02:45 | Fix virtio-net recv + epoll data bug |
 | 02:46 | nginx returns HTTP 200 🎉 |
 
-### Claude Sonnet 5 — 2h 49min
+### Claude Sonnet 5 — 2h 31min / 2h 49min
 
 ![Claude Sonnet 5 Timeline](figures/sonnet5-timeline.png)
 
@@ -250,7 +272,7 @@ Claude Code ran for **~2h 49min** (active time, 77min permission gap excluded). 
 | 02:31 | QEMU self-written kernel: nginx 200 OK 🎉 |
 | 02:48 | Second self-kernel success, stable responses |
 
-### GLM 5.3 — 3h 52min
+### GLM 5.3 — 3h 50min / 3h 52min
 
 ![GLM 5.3 Timeline](figures/glm53-timeline.png)
 
@@ -270,7 +292,7 @@ Claude Code ran for **~3h 52min** (continuous — no idle or API-retry gaps), 35
 | 03:52 | Stable: 4 sequential + 3 concurrent requests all 200 ✅ |
 | 03:53 | README written, goal complete |
 
-### GLM 5.3 Flash (fp8) — 5h 50min active (7h 10min wall)
+### GLM 5.3 Flash (fp8) — 6h 46min / 7h 10min
 
 ![GLM 5.3 Flash Timeline](figures/glm53-flash-timeline.png)
 
@@ -289,7 +311,7 @@ Self-hosted **GLM-5.3-Flash-fp8** (sglang, 1M context) run with Claude Code agai
 | 06:46 | First HTTP 200 from official nginx 🎉 |
 | 07:09 | Stable: 8/8 requests 200, README written ✅ |
 
-### Claude Sonnet 4.6 — 16 hours
+### Claude Sonnet 4.6 — 16h / 16h
 
 Claude Code ran for **16 hours**. The total cost was approximately $60.
 
@@ -305,11 +327,11 @@ Claude Code ran for **16 hours**. The total cost was approximately $60.
 | 10:00 | curl first receives response (connection reset) |
 | 16:00 | nginx returns HTTP 200 with complete welcome page 🎉 |
 
-### DeepSeek V4 Flash — 6h 35min
+### DeepSeek V4 Flash — 6h 30min / 6h 35min
 
 ![DeepSeek V4 Flash Timeline](figures/flash-timeline.png)
 
-Ran for **~6h 35min**. First HTTP 200 at 6h30min. 1,088 tool calls (898 bash), 388.5M tokens total (99.1% cache hit), peak context 792K. Cost approximately **$1.60** — the cheapest successful run by far, thanks to DeepSeek's ultra-low cache pricing. The path was rough: 31 kernel panics and 2 context compactions before nginx finally served.
+Ran for **~6h 35min** with the harness's **minimal agent preset**. First HTTP 200 at 6h30min. 1,088 tool calls (898 bash), 388.5M tokens total (99.1% cache hit), peak context 792K. Cost approximately **$1.60**, thanks to DeepSeek's ultra-low cache pricing. The path was rough: 31 kernel panics and 2 context compactions before nginx finally served.
 
 | Time | Milestone |
 |------|-----------|
@@ -325,11 +347,11 @@ Ran for **~6h 35min**. First HTTP 200 at 6h30min. 1,088 tool calls (898 bash), 3
 | 06:29 | First HTTP 200 OK 🎉 |
 | 06:35 | Final validation + goal complete |
 
-### DeepSeek V4 Pro — 108min
+### DeepSeek V4 Pro — 1h 46min / 1h 48min
 
 ![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
 
-Ran for **~108min** of active time. First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.86** — the cheapest successful run, edging out DeepSeek V4 Flash's $1.60. Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent (DeepSeek V4 Flash, 11.7M tokens, $0.09) while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
+Ran for **~108min** of active time with the harness's **minimal agent preset**. First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.86** — the cheapest DeepSeek run, edging out DeepSeek V4 Flash's $1.60 (until V4.1 Flash's $0.61). Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent (DeepSeek V4 Flash, 11.7M tokens, $0.09) while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
 
 | Time | Milestone |
 |------|-----------|
@@ -346,13 +368,13 @@ Ran for **~108min** of active time. First HTTP 200 at 105.6min. 373 model steps,
 | 01:45 | First HTTP 200 OK 🎉 |
 | 01:48 | Release build verified + goal complete |
 
-### DeepSeek V4 Pro Preview — >16h ❌
+### DeepSeek V4 Pro Preview — ❌
 
 Ran for over 16 hours but never reached a working state. Got stuck in dependency hell and architecture dead ends.
 
 ### DeepSeek V4 Flash Vision — ❌
 
-Experimental `deepseek-v4-flash-vision-exp` model via DSH (High effort), 3 sessions totaling over 5 hours (2026-08-21/22). Never completed the task. Worse, two of the three runs cheated: the first compiled the official Linux 6.12.94 kernel instead of writing one from scratch; the second `git clone`d `anicbeer/Tiny-Rust-Os` — a ready-made RISC-V OS that already runs nginx — and modified only ~115 lines to adapt it. The third run (standard toolset) finally wrote a kernel from scratch, but stalled at the memory-management stage after ~105 steps. A clear case of the model ignoring the "from scratch" constraint when left unchecked.
+Experimental `deepseek-v4-flash-vision-exp` model via DSH (High effort, **minimal agent preset**), 3 sessions totaling over 5 hours (2026-08-21/22). Never completed the task. Worse, two of the three runs cheated: the first compiled the official Linux 6.12.94 kernel instead of writing one from scratch; the second `git clone`d `anicbeer/Tiny-Rust-Os` — a ready-made RISC-V OS that already runs nginx — and modified only ~115 lines to adapt it. The third run (standard toolset) finally wrote a kernel from scratch, but stalled at the memory-management stage after ~105 steps. A clear case of the model ignoring the "from scratch" constraint when left unchecked.
 
 The git history for every branch above is a complete record exported from the agent's session log (Claude Code, Codex, or DeepSeek Harness).
 

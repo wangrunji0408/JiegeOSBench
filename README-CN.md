@@ -6,26 +6,27 @@
 
 > 提示词：你是智能杰哥。你的任务是从头用Rust写一个riscv操作系统内核，目标是能够在QEMU中运行Linux nginx server，从外面能访问网站。必须运行nginx官方binary，不能自行修改目标。请自行设计实现，不要问我任何问题，我不会给你答复或提供帮助。你拥有所有权限，包括上网查资料，但必须在当前目录下工作。你需要一直干活直到目标实现为止。
 
-| # | 模型 | 思考强度 | Harness | 首次HTTP200时间 | 总时间 | 上下文 | 成本 | 分支 | 段位 |
-|:--|:------|:--------|:---------|:----------|:------|:------|:------|:------|:----|
-| 🏅 | GPT-6 Astra | 高 | Codex | 6分钟 | 9分钟 | 83K | $4 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | 杰哥 |
-| 🥈 | Claude Fable 5 | 高 | CC | 36分钟 | 38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | 智能杰哥 |
-| 🥉 | GPT 5.6 Sol | 高 | Codex | 36分钟 | 49分钟 | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | 智能杰哥 |
-| 4 | Claude Opus 4.8 | 高 | CC | 40分钟 | 42分钟 | 230K | $12 | [opus-4.8](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.8) | 智能杰哥 |
-| 5 | Claude Opus 4.7 | — | CC | 45分钟 | 48分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | 智能杰哥 |
-| 6 | Claude Fable 5.1 | 高 | CC | 58分钟 | 1小时45分 | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | 智能杰哥 |
-| 7 | Claude Opus 5 | 高 | CC | 1小时7分 | 2小时5分 | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | 智能杰哥 |
-| 8 | DeepSeek V4 Pro | 高 | DSH | 1小时46分 | 1小时48分 | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | 智能杰哥 |
-| 9 | Kimi K3 | 高 | CC | 1小时48分 | 2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | 智能杰哥 |
-| 10 | GPT 5.6 Luna | 极高 | Codex | 2小时44分 | 2小时45分 | 243K x4 | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | 机器杰哥 |
-| 11 | Claude Opus 4.6 | — | CC | 2小时46分 | 2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 机器杰哥 |
-| 12 | Claude Sonnet 5 | 极高 | CC | 2小时31分 | 2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 机器杰哥 |
-| 13 | GLM 5.3 | 高 | CC | 3小时50分 | 3小时52分 | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | 机器杰哥 |
-| 14 | GLM 5.3 Flash (fp8) | — | CC | 6小时46分 | 7小时10分 | 967K | 自部署 | [glm-5.3-flash-fp8](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3-flash-fp8) | 机器杰哥 |
-| 15 | DeepSeek V4 Flash | 高 | DSH | 6小时30分 | 6小时35分 | 792K x3 | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 机器杰哥 |
-| 16 | Claude Sonnet 4.6 | — | CC | 16小时 | 16小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 机器杰哥 |
-| 17 | DeepSeek V4 Pro 预览版 | 最高 | CC | ❌ | ❌ | — | — | — | 损坏杰哥 |
-| 18 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | ❌ | — | — | — | 损坏杰哥 |
+| # | 模型 | 思考强度 | Harness | 首次HTTP200时间 | 总时间 | 上下文 | 成本 | 分支 | 测试日期 | 段位 |
+|:--|:------|:--------|:---------|:----------|:------|:------|:------|:------|:--------|:----|
+| 🏅 | GPT-6 Astra | 高 | Codex | 6分钟 | 9分钟 | 83K | $4 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | 2026-09-05 | 👑 杰哥 |
+| 🥈 | DeepSeek V4.1 Flash | 高 | DSH | 30分钟 | 47分钟 | 438K | $0.61 | [deepseek-v4.1-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4.1-flash) | 2026-09-08 | 🧠 智能杰哥 |
+| 🥉 | Claude Fable 5 | 高 | CC | 36分钟 | 38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | 2026-07-05 | 🧠 智能杰哥 |
+| 4 | GPT 5.6 Sol | 高 | Codex | 36分钟 | 49分钟 | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | 2026-07-11 | 🧠 智能杰哥 |
+| 5 | Claude Opus 4.8 | 高 | CC | 40分钟 | 42分钟 | 230K | $12 | [opus-4.8](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.8) | 2026-09-05 | 🧠 智能杰哥 |
+| 6 | Claude Opus 4.7 | — | CC | 45分钟 | 48分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | 2026-04-18 | 🧠 智能杰哥 |
+| 7 | Claude Fable 5.1 | 高 | CC | 58分钟 | 1小时45分 | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | 2026-09-05 | 🧠 智能杰哥 |
+| 8 | Claude Opus 5 | 高 | CC | 1小时7分 | 2小时5分 | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | 2026-07-27 | 🧠 智能杰哥 |
+| 9 | DeepSeek V4 Pro | 高 | DSH | 1小时46分 | 1小时48分 | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | 2026-08-12 | 🧠 智能杰哥 |
+| 10 | Kimi K3 | 高 | CC | 1小时48分 | 2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | 2026-07-18 | 🧠 智能杰哥 |
+| 11 | GPT 5.6 Luna | 极高 | Codex | 2小时44分 | 2小时45分 | 243K x4 | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | 2026-08-08 | 🤖 机器杰哥 |
+| 12 | Claude Opus 4.6 | — | CC | 2小时46分 | 2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 2026-03-24 | 🤖 机器杰哥 |
+| 13 | Claude Sonnet 5 | 极高 | CC | 2小时31分 | 2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 2026-07-18 | 🤖 机器杰哥 |
+| 14 | GLM 5.3 | 高 | CC | 3小时50分 | 3小时52分 | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | 2026-08-20 | 🤖 机器杰哥 |
+| 15 | GLM 5.3 Flash (fp8) | — | CC | 6小时46分 | 7小时10分 | 967K | 自部署 | — | 2026-08-31 | 🤖 机器杰哥 |
+| 16 | DeepSeek V4 Flash | 高 | DSH | 6小时30分 | 6小时35分 | 792K x3 | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 2026-08-01 | 🤖 机器杰哥 |
+| 17 | Claude Sonnet 4.6 | — | CC | 16小时 | 16小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 2026-03-18 | 🤖 机器杰哥 |
+| 18 | DeepSeek V4 Pro 预览版 | 最高 | CC | ❌ | ❌ | — | — | — | 2026-07-05 | 💥 损坏杰哥 |
+| 19 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | ❌ | — | — | — | 2026-08-21 | 💥 损坏杰哥 |
 
 
 
@@ -35,7 +36,7 @@ Harness 说明：CC = Claude Code，DSH = DeepSeek Harness。
 
 2019 年，杰哥在操作系统课上，把 nginx 跑上了[从零写出的 rCore](https://jia.je/programming/2019/03/08/running-nginx-on-rcore/)。从此"杰哥"成了我们心中系统能力巅峰的象征：徒手撸 OS，人类创造力的骄傲。如今，只要随便蹬一脚，AI 分分钟就能完成我们过去好几个月才能造出的系统。~~OS 已经彻底倒闭了。~~ 但杰哥当年做的事，今天任何人都能做到——只要敢想敢干，你我皆是杰哥。
 
-## GPT-6 Astra — 6分钟
+## GPT-6 Astra — 6分钟 / 9分钟
 
 ![GPT-6 Astra Timeline](figures/gpt6-astra-timeline.png)
 
@@ -53,7 +54,28 @@ OpenAI Codex（桌面版）运行 **约 6 分钟** 即拿到首次 HTTP 200—�
 | 00:08 | 完整验收通过：8 路并发 ×120 请求、24MiB、25 次 keep-alive、1MiB 文件 ✅ |
 | 00:09 | Goal complete（README + make start/test/verify） |
 
-## Claude Fable 5 — 38分钟
+## DeepSeek V4.1 Flash — 30分钟 / 47分钟
+
+![DeepSeek V4.1 Flash Timeline](figures/deepseek-v4.1-flash-timeline.png)
+
+DSH 有效运行 **~47 分钟**（30 分钟首次 HTTP 200），使用 **标准模式 agent preset**（可用 write/edit/read）——DeepSeek 系最快记录，也是本榜最便宜的成功方案（**$0.61**）。两个后台子代理并行：一个在 QEMU 里启动参考 riscv64 Linux，对官方 nginx 做 strace 取 ground truth；另一个实现 virtio-net + smoltcp TCP 栈，主线同时写文件系统、ELF 加载器、信号与 syscall 层。三个 agent 合计 437 步、8650 万 token，零内核 panic、零上下文压缩。走 **Ubuntu glibc 动态链接路线**——未修改的 Ubuntu 24.04 riscv64 nginx 1.24.0（与官方 `.deb` SHA-256 一致）运行在 glibc 2.39 + OpenSSL/PCRE2/zlib 之上。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:04 | 启动参考 riscv64 Linux 环境子代理——对官方 nginx 做 strace 取 ground truth |
+| 00:07 | 内核在 QEMU 下启动；文件系统、ELF 加载器、syscall 层写出 |
+| 00:09 | 启动 virtio-net + TCP 子代理；网络栈并行实现 |
+| 00:16 | 内核拉起未修改的 Ubuntu nginx 二进制 |
+| 00:18 | 修复 boot stack 静态变量与 trap frame 序言 bug |
+| 00:22 | 打开 `sstatus.FS` 并在上下文切换中保存/恢复浮点寄存器 |
+| 00:24 | 修复 initramfs 重复目录项与 fork 后不切页表 bug |
+| 00:29 | 修复 epoll_event 结构体布局 |
+| 00:30 | 首次 HTTP 200 OK——`Server: nginx/1.24.0 (Ubuntu)` 🎉 |
+| 00:33 | 修复 SIGCHLD 投递与 sigsuspend 语义；验证优雅退出 |
+| 00:44 | 修复调度器饥饿（就绪队列 LIFO → FIFO） |
+| 00:47 | 目标完成——全量重建 + 二进制逐字节复验 |
+
+## Claude Fable 5 — 36分钟 / 38分钟
 
 ![Claude Fable 5 Timeline](figures/fable5-timeline.png)
 
@@ -69,7 +91,7 @@ Claude Code 运行时长约 **38分钟**，65 次 API 请求。总成本约 **$2
 | 00:34 | QEMU 启动：nginx listening on port 80 🎉 |
 | 00:37 | 收尾修复（sendfile 等 syscall, README） |
 
-### Claude Fable 5.1 — 58分钟
+### Claude Fable 5.1 — 58分钟 / 1小时45分
 
 ![Claude Fable 5.1 Timeline](figures/fable51-timeline.png)
 
@@ -91,7 +113,7 @@ Claude Code 运行 **约 58 分钟** 达成首次 HTTP 200（105 分钟全部完
 | 01:02 | 套件全绿：index/404/HEAD/sendfile 4MiB/keep-alive |
 | 01:45 | 信号/并发/泄漏/吞吐套件、README、git 提交 ✅ |
 
-### GPT 5.6 Sol — 36分钟（+13分钟修复）
+### GPT 5.6 Sol — 36分钟 / 49分钟
 
 ![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
 
@@ -111,7 +133,7 @@ OpenAI Codex 运行 **~36 分钟** 达成首次成功，后在用户提醒下用
 | 00:43 – 00:49 | 用户提示 → 修复 TCP FIN 生命周期 + virtio TX descriptor 池 |
 | 00:49 | 最终 PASS：连续两次 HTTP 200 ✅ |
 
-### Claude Opus 4.8 — 40分钟
+### Claude Opus 4.8 — 40分钟 / 42分钟
 
 ![Opus 4.8 Timeline](figures/opus48-timeline.png)
 
@@ -131,11 +153,11 @@ Claude Code 运行 **约 40 分钟** 达成首次 HTTP 200（42 分钟完成）�
 | 00:41 | 连续请求 / 10 并发 / 404 / keepalive 复用全过 ✅ |
 | 00:42 | 清理死代码 + 完成 |
 
-### Claude Opus 4.7 — 65分钟
+### Claude Opus 4.7 — 45分钟 / 48分钟
 
 ![Claude Opus 4.7 Timeline](figures/opus47-timeline.png)
 
-Claude Code 运行时长约 **65分钟**。
+Claude Code 有效运行约 **45 分钟** 达成首次 HTTP 200（总计 48 分钟）。
 
 | 时间 | 里程碑 |
 |------|--------|
@@ -150,7 +172,7 @@ Claude Code 运行时长约 **65分钟**。
 | 00:43 | nginx bind + listen 成功 |
 | 00:45 | nginx 官方 binary 返回 HTTP 200 🎉 |
 
-### Claude Opus 5 — 67分钟（125分钟完全稳定）
+### Claude Opus 5 — 1小时7分 / 2小时5分
 
 ![Claude Opus 5 Timeline](figures/opus5-timeline.png)
 
@@ -171,7 +193,7 @@ Claude Code 运行约 **67 分钟**拿到首次 HTTP 200，后续又花了 **58 
 | 02:01 | 50 并发 + 320 短连接全部通过 ✅ |
 | 02:05 | 最终验证完成 |
 
-### Kimi K3 — 2小时19分
+### Kimi K3 — 1小时48分 / 2小时19分
 
 ![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
 
@@ -190,11 +212,11 @@ Claude Code 运行约 **2小时19分钟**。151 次 API 请求，累计 2630 万
 | 02:15 | nginx 恢复稳定 |
 | 02:19 | 最终验证：SHA256 校验 + 100 并发全部 200 ✅ |
 
-### GPT 5.6 Luna — 有效 2小时45分（墙钟 3小时19分）
+### GPT 5.6 Luna — 2小时44分 / 2小时45分
 
 ![GPT 5.6 Luna Timeline](figures/gpt56-luna-timeline.png)
 
-OpenAI Codex（桌面版）有效运行 **~2小时45分**（墙钟 3小时19分，已剔除前 40 分钟内的 34.6 分钟 API 断线重试等待）。**唯一走完整 glibc 动态链接路线**并成功运行官方 Debian nginx 1.30.1 binary 的模型。早期阶段最艰难：glibc 加载器拒绝解析共享库，直到逐个修复一串 ABI 错误（auxv 顺序、argc 重复、fstat st_dev/st_ino 相同）才打通。动态链接在 ~1 小时处成功后，nginx 一次就绑定 `0.0.0.0:80`，收尾干净：3 次上下文压缩（4 个窗口峰值各 243K）、总消耗 116M tokens（input 60.1M + 缓存 55.6M）、成本约 $2.3。
+OpenAI Codex（桌面版）有效运行 **~2小时45分**（墙钟 3小时19分，已剔除前 40 分钟内的 34.6 分钟 API 断线重试等待）。**首个走完整 glibc 动态链接路线**并成功运行官方 Debian nginx 1.30.1 binary 的模型（后由 DeepSeek V4.1 Flash 复现）。早期阶段最艰难：glibc 加载器拒绝解析共享库，直到逐个修复一串 ABI 错误（auxv 顺序、argc 重复、fstat st_dev/st_ino 相同）才打通。动态链接在 ~1 小时处成功后，nginx 一次就绑定 `0.0.0.0:80`，收尾干净：3 次上下文压缩（4 个窗口峰值各 243K）、总消耗 116M tokens（input 60.1M + 缓存 55.6M）、成本约 $2.3。
 
 | 时间（有效） | 里程碑 |
 |---------------|-----------|
@@ -211,7 +233,7 @@ OpenAI Codex（桌面版）有效运行 **~2小时45分**（墙钟 3小时19分�
 | 164:07 | nginx 从宿主返回 200 OK 🎉 |
 | 164:50 | 最终验证 + 目标完成 |
 
-### Claude Opus 4.6 — 2小时46分
+### Claude Opus 4.6 — 2小时46分 / 2小时46分
 
 ![Claude Opus 4.6 Timeline](figures/opus-timeline.jpeg)
 
@@ -226,7 +248,7 @@ Claude Code 全程运行约 **2小时46分钟**。
 | 02:45 | 修复 virtio-net 接收 + epoll data 指针 bug |
 | 02:46 | nginx 成功返回 HTTP 200 🎉 |
 
-### Claude Sonnet 5 — 2小时49分
+### Claude Sonnet 5 — 2小时31分 / 2小时49分
 
 ![Claude Sonnet 5 Timeline](figures/sonnet5-timeline.png)
 
@@ -243,7 +265,7 @@ Claude Code 运行约 **2小时49分钟**（有效活跃时间，扣除了 77 �
 | 02:31 | QEMU 自写 kernel：nginx 200 OK 🎉 |
 | 02:48 | 第二次自写 kernel 成功，稳定响应 |
 
-### GLM 5.3 — 3小时52分
+### GLM 5.3 — 3小时50分 / 3小时52分
 
 ![GLM 5.3 Timeline](figures/glm53-timeline.png)
 
@@ -263,7 +285,7 @@ Claude Code 连续运行约 **3小时52分钟**（无空闲/断线间隙），35
 | 03:52 | 稳定：4 次串行 + 3 次并发全部 200 ✅ |
 | 03:53 | 写 README，目标达成 |
 
-### GLM 5.3 Flash (fp8) — 有效 5小时50分（墙钟 7小时10分）
+### GLM 5.3 Flash (fp8) — 6小时46分 / 7小时10分
 
 ![GLM 5.3 Flash Timeline](figures/glm53-flash-timeline.png)
 
@@ -282,7 +304,7 @@ Claude Code 连续运行约 **3小时52分钟**（无空闲/断线间隙），35
 | 06:46 | 官方 nginx 首次 HTTP 200 🎉 |
 | 07:09 | 稳定：8/8 请求 200，README 完成 ✅ |
 
-### Claude Sonnet 4.6 — 16 小时
+### Claude Sonnet 4.6 — 16小时 / 16小时
 
 Claude Code 全程运行共 16 小时。总成本约 60 美元。
 
@@ -298,11 +320,11 @@ Claude Code 全程运行共 16 小时。总成本约 60 美元。
 | 10:00 | curl 首次收到响应（Connection reset） |
 | 16:00 | nginx 成功返回 HTTP 200，欢迎页完整响应 🎉 |
 
-### DeepSeek V4 Flash — 6小时35分
+### DeepSeek V4 Flash — 6小时30分 / 6小时35分
 
 ![DeepSeek V4 Flash Timeline](figures/flash-timeline.png)
 
-全程运行约 **6小时35分钟**。6小时30分首次拿到 HTTP 200。共 1,088 次工具调用（898 次 bash），累计 3.885 亿 token（99.1% 缓存命中），上下文峰值 792K。成本约 **$1.60**——凭借 DeepSeek 极低的缓存定价，成为目前最便宜的成功方案。过程相当曲折：经历 31 次内核 panic 和 2 次上下文压缩后才最终跑通。
+全程运行约 **6小时35分钟**（harness **极简模式 agent preset**）。6小时30分首次拿到 HTTP 200。共 1,088 次工具调用（898 次 bash），累计 3.885 亿 token（99.1% 缓存命中），上下文峰值 792K。成本约 **$1.60**——得益于 DeepSeek 极低的缓存定价。过程相当曲折：经历 31 次内核 panic 和 2 次上下文压缩后才最终跑通。
 
 | 时间 | 里程碑 |
 |------|--------|
@@ -318,11 +340,11 @@ Claude Code 全程运行共 16 小时。总成本约 60 美元。
 | 06:29 | 首次 HTTP 200 OK 🎉 |
 | 06:35 | 最终验证 + 目标完成 |
 
-### DeepSeek V4 Pro — 108分钟
+### DeepSeek V4 Pro — 1小时46分 / 1小时48分
 
 ![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
 
-有效运行约 **108 分钟**。开跑后 105.6 分钟首次拿到 HTTP 200。共 373 个模型步，累计 9790 万 token（99.9% 缓存命中），上下文峰值 503K。成本约 **$0.86**——史上最便宜的成功方案，比 DeepSeek V4 Flash 的 $1.60 还低。零内核 panic、零上下文压缩。静态 musl nginx 二进制由后台子代理（DeepSeek V4 Flash，1170 万 token，$0.09）与主线写内核并行构建；两次网络搜索（musl TLS 布局、QEMU virtio MMIO）均为技术查询，非找答案。
+有效运行约 **108 分钟**（harness **极简模式 agent preset**）。开跑后 105.6 分钟首次拿到 HTTP 200。共 373 个模型步，累计 9790 万 token（99.9% 缓存命中），上下文峰值 503K。成本约 **$0.86**——DeepSeek 系里最便宜的成功方案，比 DeepSeek V4 Flash 的 $1.60 还低（直到 V4.1 Flash 的 $0.61）。零内核 panic、零上下文压缩。静态 musl nginx 二进制由后台子代理（DeepSeek V4 Flash，1170 万 token，$0.09）与主线写内核并行构建；两次网络搜索（musl TLS 布局、QEMU virtio MMIO）均为技术查询，非找答案。
 
 | 时间 | 里程碑 |
 |------|--------|
@@ -339,13 +361,13 @@ Claude Code 全程运行共 16 小时。总成本约 60 美元。
 | 01:45 | 首次 HTTP 200 OK 🎉 |
 | 01:48 | Release 构建验证 + 目标完成 |
 
-### DeepSeek V4 Pro 预览版 — >16h ❌
+### DeepSeek V4 Pro 预览版 — ❌
 
 运行超过 16 小时但始终未能跑通。陷入依赖地狱和架构死胡同。
 
 ### DeepSeek V4 Flash Vision — ❌
 
-实验模型 `deepseek-v4-flash-vision-exp`，DSH 运行（思考强度高），3 个会话累计超过 5 小时（2026-08-21/22），始终未完成任务。更严重的是三次中有两次作弊：第一次直接编译官方 Linux 6.12.94 内核，而非从零编写；第二次 `git clone` 了 `anicbeer/Tiny-Rust-Os`——一个现成的、本就能运行 nginx 的 RISC-V OS——仅修改约 115 行适配。第三次（标准工具集）终于从零编写内核，但在内存管理阶段停滞（约 105 steps）。典型的不受约束时无视"从零编写"要求的行为。
+实验模型 `deepseek-v4-flash-vision-exp`，DSH 运行（思考强度高，**极简模式 agent preset**），3 个会话累计超过 5 小时（2026-08-21/22），始终未完成任务。更严重的是三次中有两次作弊：第一次直接编译官方 Linux 6.12.94 内核，而非从零编写；第二次 `git clone` 了 `anicbeer/Tiny-Rust-Os`——一个现成的、本就能运行 nginx 的 RISC-V OS——仅修改约 115 行适配。第三次（标准工具集）终于从零编写内核，但在内存管理阶段停滞（约 105 steps）。典型的不受约束时无视"从零编写"要求的行为。
 
 以上各分支的 Git 历史均从对应 agent（Claude Code / Codex / DeepSeek Harness）的会话日志完整导出。
 
