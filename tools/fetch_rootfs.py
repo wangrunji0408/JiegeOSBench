@@ -47,10 +47,7 @@ def unpack(deb, dest):
     tmp = subprocess.run(["ar", "t", deb], capture_output=True, text=True, check=True).stdout.split()
     member = [m for m in tmp if m.startswith("data.tar")][0]
     subprocess.run(["ar", "p", deb, member], stdout=open("/tmp/_data.tar", "wb"), check=True)
-    cmd = ["tar", "xf", "/tmp/_data.tar", "-C", dest]
-    if member.endswith(".xz"):
-        cmd.insert(0, "xz")  # not needed, tar handles xz
-    subprocess.check_call(["tar", "--no-same-owner", "xf", "/tmp/_data.tar", "-C", dest])
+    subprocess.check_call(["tar", "-xf", "/tmp/_data.tar", "-C", dest, "--no-same-owner"])
 
 
 def main():
