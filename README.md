@@ -13,27 +13,27 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 > the web, but must work in the current directory. Keep working until the goal
 > is achieved.
 
-| # | Model | Effort | Harness | First HTTP 200 | Total | Context | Cost | Branch | Test date | Tier |
-|---|-------|--------|---------|------------|-------|---------|------|--------|-----------|------|
-| 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | 2026-09-05 | 👑 Jiege |
-| 🥈 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 438K | $0.61 | [deepseek-v4.1-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4.1-flash) | 2026-09-08 | 🧠 Intelligent Jiege |
-| 🥉 | Claude Fable 5 | High | CC | 36min | 38min | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | 2026-07-05 | 🧠 Intelligent Jiege |
-| 4 | GPT 5.6 Sol | High | Codex | 36min | 49min | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | 2026-07-11 | 🧠 Intelligent Jiege |
-| 5 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | [opus-4.8](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.8) | 2026-09-05 | 🧠 Intelligent Jiege |
-| 6 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | 2026-04-18 | 🧠 Intelligent Jiege |
-| 7 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | 2026-09-05 | 🧠 Intelligent Jiege |
-| 8 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | 2026-07-27 | 🧠 Intelligent Jiege |
-| 9 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | 2026-08-12 | 🧠 Intelligent Jiege |
-| 10 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | 2026-07-18 | 🧠 Intelligent Jiege |
-| 11 | GPT 5.6 Luna | xHigh | Codex | 2h 44min | 2h 45min | 243K x4 | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | 2026-08-08 | 🤖 Machine Jiege |
-| 12 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 2026-03-24 | 🤖 Machine Jiege |
-| 13 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 2026-07-18 | 🤖 Machine Jiege |
-| 14 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | 2026-08-20 | 🤖 Machine Jiege |
-| 15 | GLM 5.3 Flash (fp8) | — | CC | 6h 46min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
-| 16 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 2026-08-01 | 🤖 Machine Jiege |
-| 17 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 2026-03-18 | 🤖 Machine Jiege |
-| 18 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | — | 2026-07-05 | 💥 Broken Jiege |
-| 19 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | — | 2026-08-21 | 💥 Broken Jiege |
+| # | Model | Effort | Harness | First HTTP 200 | Total | Context | Cost | Test date | Tier |
+|---|-------|--------|---------|------------|-------|---------|------|-----------|------|
+| 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | 2026-09-05 | 👑 Jiege |
+| 🥈 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 438K | $0.61 | 2026-09-08 | 🧠 Intelligent Jiege |
+| 🥉 | Claude Fable 5 | High | CC | 36min | 38min | 155K | $21 | 2026-07-05 | 🧠 Intelligent Jiege |
+| 4 | GPT 5.6 Sol | High | Codex | 36min | 49min | 222K | $14 | 2026-07-11 | 🧠 Intelligent Jiege |
+| 5 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 6 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
+| 7 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 8 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 2026-07-27 | 🧠 Intelligent Jiege |
+| 9 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 2026-08-12 | 🧠 Intelligent Jiege |
+| 10 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 2026-07-18 | 🧠 Intelligent Jiege |
+| 11 | GPT 5.6 Luna | xHigh | Codex | 2h 44min | 2h 45min | 243K x4 | $2.3 | 2026-08-08 | 🤖 Machine Jiege |
+| 12 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | 2026-03-24 | 🤖 Machine Jiege |
+| 13 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 2026-07-18 | 🤖 Machine Jiege |
+| 14 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 2026-08-20 | 🤖 Machine Jiege |
+| 15 | GLM 5.3 Flash (fp8) | — | CC | 6h 46min | 7h 10min | 967K | self-hosted | 2026-08-31 | 🤖 Machine Jiege |
+| 16 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 2026-08-01 | 🤖 Machine Jiege |
+| 17 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | 2026-03-18 | 🤖 Machine Jiege |
+| 18 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 2026-07-05 | 💥 Broken Jiege |
+| 19 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 2026-08-21 | 💥 Broken Jiege |
 
 
 
@@ -376,7 +376,7 @@ Ran for over 16 hours but never reached a working state. Got stuck in dependency
 
 Experimental `deepseek-v4-flash-vision-exp` model via DSH (High effort, **minimal agent preset**), 3 sessions totaling over 5 hours (2026-08-21/22). Never completed the task. Worse, two of the three runs cheated: the first compiled the official Linux 6.12.94 kernel instead of writing one from scratch; the second `git clone`d `anicbeer/Tiny-Rust-Os` — a ready-made RISC-V OS that already runs nginx — and modified only ~115 lines to adapt it. The third run (standard toolset) finally wrote a kernel from scratch, but stalled at the memory-management stage after ~105 steps. A clear case of the model ignoring the "from scratch" constraint when left unchecked.
 
-The git history for every branch above is a complete record exported from the agent's session log (Claude Code, Codex, or DeepSeek Harness).
+The git history of every run is a complete record exported from the agent's session log (Claude Code, Codex, or DeepSeek Harness).
 
 ## License
 

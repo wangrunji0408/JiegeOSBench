@@ -6,27 +6,27 @@
 
 > 提示词：你是智能杰哥。你的任务是从头用Rust写一个riscv操作系统内核，目标是能够在QEMU中运行Linux nginx server，从外面能访问网站。必须运行nginx官方binary，不能自行修改目标。请自行设计实现，不要问我任何问题，我不会给你答复或提供帮助。你拥有所有权限，包括上网查资料，但必须在当前目录下工作。你需要一直干活直到目标实现为止。
 
-| # | 模型 | 思考强度 | Harness | 首次HTTP200时间 | 总时间 | 上下文 | 成本 | 分支 | 测试日期 | 段位 |
-|:--|:------|:--------|:---------|:----------|:------|:------|:------|:------|:--------|:----|
-| 🏅 | GPT-6 Astra | 高 | Codex | 6分钟 | 9分钟 | 83K | $4 | [gpt-6-astra](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-6-astra) | 2026-09-05 | 👑 杰哥 |
-| 🥈 | DeepSeek V4.1 Flash | 高 | DSH | 30分钟 | 47分钟 | 438K | $0.61 | [deepseek-v4.1-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4.1-flash) | 2026-09-08 | 🧠 智能杰哥 |
-| 🥉 | Claude Fable 5 | 高 | CC | 36分钟 | 38分钟 | 155K | $21 | [fable-5](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5) | 2026-07-05 | 🧠 智能杰哥 |
-| 4 | GPT 5.6 Sol | 高 | Codex | 36分钟 | 49分钟 | 222K | $14 | [gpt-5.6-sol](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-sol) | 2026-07-11 | 🧠 智能杰哥 |
-| 5 | Claude Opus 4.8 | 高 | CC | 40分钟 | 42分钟 | 230K | $12 | [opus-4.8](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.8) | 2026-09-05 | 🧠 智能杰哥 |
-| 6 | Claude Opus 4.7 | — | CC | 45分钟 | 48分钟 | — | — | [opus-4.7](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.7) | 2026-04-18 | 🧠 智能杰哥 |
-| 7 | Claude Fable 5.1 | 高 | CC | 58分钟 | 1小时45分 | 516K | $34 | [fable-5.1](https://github.com/wangrunji0408/JiegeOSBench/tree/fable-5.1) | 2026-09-05 | 🧠 智能杰哥 |
-| 8 | Claude Opus 5 | 高 | CC | 1小时7分 | 2小时5分 | 334K | $26 | [opus-5](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-5) | 2026-07-27 | 🧠 智能杰哥 |
-| 9 | DeepSeek V4 Pro | 高 | DSH | 1小时46分 | 1小时48分 | 503K | $0.86 | [deepseek-v4-pro](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-pro) | 2026-08-12 | 🧠 智能杰哥 |
-| 10 | Kimi K3 | 高 | CC | 1小时48分 | 2小时19分 | 270K | $11 | [kimi-k3](https://github.com/wangrunji0408/JiegeOSBench/tree/kimi-k3) | 2026-07-18 | 🧠 智能杰哥 |
-| 11 | GPT 5.6 Luna | 极高 | Codex | 2小时44分 | 2小时45分 | 243K x4 | $2.3 | [gpt-5.6-luna](https://github.com/wangrunji0408/JiegeOSBench/tree/gpt-5.6-luna) | 2026-08-08 | 🤖 机器杰哥 |
-| 12 | Claude Opus 4.6 | — | CC | 2小时46分 | 2小时46分 | — | — | [opus-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/opus-4.6) | 2026-03-24 | 🤖 机器杰哥 |
-| 13 | Claude Sonnet 5 | 极高 | CC | 2小时31分 | 2小时49分 | 804K | $64 | [sonnet-5](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-5) | 2026-07-18 | 🤖 机器杰哥 |
-| 14 | GLM 5.3 | 高 | CC | 3小时50分 | 3小时52分 | 593K | $34 | [glm-5.3](https://github.com/wangrunji0408/JiegeOSBench/tree/glm-5.3) | 2026-08-20 | 🤖 机器杰哥 |
-| 15 | GLM 5.3 Flash (fp8) | — | CC | 6小时46分 | 7小时10分 | 967K | 自部署 | — | 2026-08-31 | 🤖 机器杰哥 |
-| 16 | DeepSeek V4 Flash | 高 | DSH | 6小时30分 | 6小时35分 | 792K x3 | $1.60 | [deepseek-v4-flash](https://github.com/wangrunji0408/JiegeOSBench/tree/deepseek-v4-flash) | 2026-08-01 | 🤖 机器杰哥 |
-| 17 | Claude Sonnet 4.6 | — | CC | 16小时 | 16小时 | — | $60 | [sonnet-4.6](https://github.com/wangrunji0408/JiegeOSBench/tree/sonnet-4.6) | 2026-03-18 | 🤖 机器杰哥 |
-| 18 | DeepSeek V4 Pro 预览版 | 最高 | CC | ❌ | ❌ | — | — | — | 2026-07-05 | 💥 损坏杰哥 |
-| 19 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | ❌ | — | — | — | 2026-08-21 | 💥 损坏杰哥 |
+| # | 模型 | 思考强度 | Harness | 首次HTTP200时间 | 总时间 | 上下文 | 成本 | 测试日期 | 段位 |
+|:--|:------|:--------|:---------|:----------|:------|:------|:------|:--------|:----|
+| 🏅 | GPT-6 Astra | 高 | Codex | 6分钟 | 9分钟 | 83K | $4 | 2026-09-05 | 👑 杰哥 |
+| 🥈 | DeepSeek V4.1 Flash | 高 | DSH | 30分钟 | 47分钟 | 438K | $0.61 | 2026-09-08 | 🧠 智能杰哥 |
+| 🥉 | Claude Fable 5 | 高 | CC | 36分钟 | 38分钟 | 155K | $21 | 2026-07-05 | 🧠 智能杰哥 |
+| 4 | GPT 5.6 Sol | 高 | Codex | 36分钟 | 49分钟 | 222K | $14 | 2026-07-11 | 🧠 智能杰哥 |
+| 5 | Claude Opus 4.8 | 高 | CC | 40分钟 | 42分钟 | 230K | $12 | 2026-09-05 | 🧠 智能杰哥 |
+| 6 | Claude Opus 4.7 | — | CC | 45分钟 | 48分钟 | — | — | 2026-04-18 | 🧠 智能杰哥 |
+| 7 | Claude Fable 5.1 | 高 | CC | 58分钟 | 1小时45分 | 516K | $34 | 2026-09-05 | 🧠 智能杰哥 |
+| 8 | Claude Opus 5 | 高 | CC | 1小时7分 | 2小时5分 | 334K | $26 | 2026-07-27 | 🧠 智能杰哥 |
+| 9 | DeepSeek V4 Pro | 高 | DSH | 1小时46分 | 1小时48分 | 503K | $0.86 | 2026-08-12 | 🧠 智能杰哥 |
+| 10 | Kimi K3 | 高 | CC | 1小时48分 | 2小时19分 | 270K | $11 | 2026-07-18 | 🧠 智能杰哥 |
+| 11 | GPT 5.6 Luna | 极高 | Codex | 2小时44分 | 2小时45分 | 243K x4 | $2.3 | 2026-08-08 | 🤖 机器杰哥 |
+| 12 | Claude Opus 4.6 | — | CC | 2小时46分 | 2小时46分 | — | — | 2026-03-24 | 🤖 机器杰哥 |
+| 13 | Claude Sonnet 5 | 极高 | CC | 2小时31分 | 2小时49分 | 804K | $64 | 2026-07-18 | 🤖 机器杰哥 |
+| 14 | GLM 5.3 | 高 | CC | 3小时50分 | 3小时52分 | 593K | $34 | 2026-08-20 | 🤖 机器杰哥 |
+| 15 | GLM 5.3 Flash (fp8) | — | CC | 6小时46分 | 7小时10分 | 967K | 自部署 | 2026-08-31 | 🤖 机器杰哥 |
+| 16 | DeepSeek V4 Flash | 高 | DSH | 6小时30分 | 6小时35分 | 792K x3 | $1.60 | 2026-08-01 | 🤖 机器杰哥 |
+| 17 | Claude Sonnet 4.6 | — | CC | 16小时 | 16小时 | — | $60 | 2026-03-18 | 🤖 机器杰哥 |
+| 18 | DeepSeek V4 Pro 预览版 | 最高 | CC | ❌ | ❌ | — | — | 2026-07-05 | 💥 损坏杰哥 |
+| 19 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | ❌ | — | — | 2026-08-21 | 💥 损坏杰哥 |
 
 
 
@@ -369,7 +369,7 @@ Claude Code 全程运行共 16 小时。总成本约 60 美元。
 
 实验模型 `deepseek-v4-flash-vision-exp`，DSH 运行（思考强度高，**极简模式 agent preset**），3 个会话累计超过 5 小时（2026-08-21/22），始终未完成任务。更严重的是三次中有两次作弊：第一次直接编译官方 Linux 6.12.94 内核，而非从零编写；第二次 `git clone` 了 `anicbeer/Tiny-Rust-Os`——一个现成的、本就能运行 nginx 的 RISC-V OS——仅修改约 115 行适配。第三次（标准工具集）终于从零编写内核，但在内存管理阶段停滞（约 105 steps）。典型的不受约束时无视"从零编写"要求的行为。
 
-以上各分支的 Git 历史均从对应 agent（Claude Code / Codex / DeepSeek Harness）的会话日志完整导出。
+以上各次运行的 Git 历史均从对应 agent（Claude Code / Codex / DeepSeek Harness）的会话日志完整导出。
 
 ## License
 
