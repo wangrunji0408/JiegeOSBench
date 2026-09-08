@@ -263,7 +263,6 @@ pub fn init_kernel(root: usize, ram_start: usize, ram_end: usize, initrd: Option
         (0x0c00_0000usize, 0x40_0000usize), // PLIC
         (0x1000_0000, 0x10_0000),           // UART + RTC + virtio-mmio
         (0x0200_0000, 0x1_0000),            // CLINT (not used from S-mode but handy)
-        (0x0010_0000, 0x1_0000),            // goldfish RTC
     ] {
         let mut off = 0;
         while off < size {

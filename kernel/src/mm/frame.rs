@@ -131,47 +131,6 @@ pub fn free_count() -> usize {
     FRAMES.lock().free
 }
 
-/// Index of the first free frame (debugging aid).
-pub fn first_free() -> Option<usize> {
-    let f = FRAMES.lock();
-    for i in 0..f.frames {
-        if !test_bit(&f.bitmap, i) {
-            return Some(f.base + i * PAGE_SIZE);
-        }
-    }
-    None
-}
-
-/// (counter, scanned) - detects corruption of the free counter.
-pub fn audit() -> (usize, usize) {
-    let f = FRAMES.lock();
-    let mut n = 0;
-    for i in 0..f.frames {
-        if !test_bit(&f.bitmap, i) {
-            n += 1;
-        }
-    }
-    (f.free, n)
-}
-
-/// Largest contiguous free run, in frames.
-pub fn largest_run() -> usize {
-    let f = FRAMES.lock();
-    let mut best = 0;
-    let mut run = 0;
-    for i in 0..f.frames {
-        if !test_bit(&f.bitmap, i) {
-            run += 1;
-            if run > best {
-                best = run;
-            }
-        } else {
-            run = 0;
-        }
-    }
-    best
-}
-
 pub fn total_count() -> usize {
     FRAMES.lock().frames
 }
