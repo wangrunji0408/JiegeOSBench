@@ -52,20 +52,6 @@ impl Pipe {
         Ok(n)
     }
 
-    pub fn close_reader(&self) {
-        let mut r = self.readers.lock();
-        if *r > 0 {
-            *r -= 1;
-        }
-    }
-
-    pub fn close_writer(&self) {
-        let mut w = self.writers.lock();
-        if *w > 0 {
-            *w -= 1;
-        }
-    }
-
     pub fn readable(&self) -> bool {
         !self.buf.lock().is_empty() || *self.writers.lock() == 0
     }
