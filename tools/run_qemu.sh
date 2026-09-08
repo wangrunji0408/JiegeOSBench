@@ -13,7 +13,7 @@
 #   TIMEOUT=0     kill qemu after N seconds (0 = run forever)
 set -u
 cd "$(dirname "$0")/.."
-KERNEL=${KERNEL:-kernel/target/riscv64imac-unknown-none-elf/debug/ijiege-kernel}
+KERNEL=${KERNEL:-kernel/target/riscv64gc-unknown-none-elf/debug/ijiege-kernel}
 MEM=${MEM:-2G}
 SMP=${SMP:-1}
 TIMEOUT=${TIMEOUT:-0}
@@ -21,7 +21,6 @@ TIMEOUT=${TIMEOUT:-0}
 ARGS=(-M virt -m "$MEM" -smp "$SMP" -nographic -bios default)
 ARGS+=(-kernel "$KERNEL")
 [ -n "${INITRD:-}" ] && ARGS+=(-initrd "$INITRD")
-[ -n "${APPEND:-}" ] && ARGS+=(-append "$APPEND")
 if [ "${NET:-0}" = "1" ]; then
   ARGS+=(-netdev "user,id=n0,hostfwd=tcp::8080-:80,hostfwd=tcp::8081-:8081")
   ARGS+=(-device virtio-net-device,netdev=n0)
