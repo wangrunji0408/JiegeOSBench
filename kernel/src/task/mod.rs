@@ -1,18 +1,26 @@
 //! Threads, scheduling and the user-mode entry/exit paths.
 
+pub mod elf;
 pub mod process;
+pub mod signal;
 
 use crate::csr::*;
+use crate::errno::*;
 use crate::mm::frame;
-use crate::mm::page_table::PageTable;
 use crate::trap::{TaskContext, TrapFrame, TF_SIZE};
-use crate::println;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-use core::ptr::null_mut;
+use core::sync::atomic::{AtomicUsize, Ordering};
 use process::Process;
 
 pub const KSTACK_SIZE: usize = 64 * 1024;
+
+/// Root of the kernel page table (copied into every user address space).
+pub static KERNEL_ROOT: AtomicUsize = AtomicUsize::new(0);
+
+pub fn set_kernel_root(root: usize) {
+    KERNEL_ROOT.store(root, Ordering::Relaxed);
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum State {
@@ -20,6 +28,7 @@ pub enum State {
     Running,
     Blocked,
     Zombie,
+    Dead,
 }
 
 pub struct Thread {
@@ -30,30 +39,22 @@ pub struct Thread {
     pub kstack: usize,
     pub state: State,
     pub process: Option<Box<Process>>,
-    /// kernel-thread entry point
     pub entry: Option<fn()>,
-    /// wake-up time in ticks (0 = not sleeping)
     pub wake_tick: u64,
-    /// waiting on a futex: (address space root, uaddr)
-    pub futex_addr: usize,
     pub exit_code: i32,
-    /// resources owned by this thread that must be released after it dies
     pub kstack_frames: usize,
-    pub tf_frames: usize,
-    pub clear_child_tid: usize,
-    pub robust_list: usize,
-    pub robust_list_len: usize,
+    pub futex_woken: bool,
+    pub futex_addr: usize,
 }
 
 unsafe impl Send for Thread {}
 
 pub struct Scheduler {
-    threads: Vec<Box<Thread>>,
-    ready: Vec<usize>,
-    current: usize,
-    idle: usize,
-    next_tid: usize,
-    /// tick counter for round-robin
+    pub threads: Vec<Box<Thread>>,
+    pub ready: Vec<usize>,
+    pub current: usize,
+    pub idle: usize,
+    pub next_tid: usize,
     pub quantum: u64,
 }
 
@@ -78,22 +79,21 @@ pub fn current_process() -> &'static mut Process {
     current().process.as_mut().expect("no current process")
 }
 
-pub fn has_process() -> bool {
-    current().process.is_some()
+pub fn thread_index_by_tid(tid: usize) -> Option<usize> {
+    sched().threads.iter().position(|t| t.tid == tid)
 }
 
-pub fn thread_by_tid(tid: usize) -> Option<&'static mut Thread> {
+pub fn alloc_tid() -> usize {
     let s = sched();
-    s.threads.iter_mut().find(|t| t.tid == tid)
+    let t = s.next_tid;
+    s.next_tid += 1;
+    t
 }
 
 fn new_thread_skeleton(tid: usize) -> Box<Thread> {
     let tf_frame = frame::alloc_frame().expect("no frame for trap frame");
     let kstack = frame::alloc_frames(KSTACK_SIZE / 4096).expect("no frame for kernel stack");
     let tf = tf_frame as *mut TrapFrame;
-    unsafe {
-        core::ptr::write_bytes(tf_frame as *mut u8, 0, 4096);
-    }
     let mut t = Box::new(Thread {
         tid,
         ctx: TaskContext::empty(),
@@ -104,13 +104,10 @@ fn new_thread_skeleton(tid: usize) -> Box<Thread> {
         process: None,
         entry: None,
         wake_tick: 0,
-        futex_addr: 0,
         exit_code: 0,
         kstack_frames: KSTACK_SIZE / 4096,
-        tf_frames: 1,
-        clear_child_tid: 0,
-        robust_list: 0,
-        robust_list_len: 0,
+        futex_woken: false,
+        futex_addr: 0,
     });
     unsafe {
         (*t.tf).ksp = kstack + KSTACK_SIZE;
@@ -127,21 +124,16 @@ pub fn init() {
         next_tid: 1,
         quantum: 0,
     };
-    // thread 0: idle
     let mut idle = new_thread_skeleton(0);
     idle.ctx.ra = kernel_thread_entry as usize;
     idle.ctx.sp = idle.kstack + KSTACK_SIZE;
-    idle.state = State::Ready;
     s.threads.push(idle);
     s.ready.push(0);
-    s.current = 0;
-    s.idle = 0;
     unsafe {
         SCHED = Some(s);
     }
 }
 
-/// Create a kernel thread running `f`.
 pub fn spawn_kernel(f: fn()) -> usize {
     let s = sched();
     let tid = s.next_tid;
@@ -150,23 +142,23 @@ pub fn spawn_kernel(f: fn()) -> usize {
     t.ctx.ra = kernel_thread_entry as usize;
     t.ctx.sp = t.kstack + KSTACK_SIZE;
     t.entry = Some(f);
-    t.state = State::Ready;
     let idx = s.threads.len();
     s.threads.push(t);
     s.ready.push(idx);
     tid
 }
 
-/// Create a user thread from a prepared process; returns the tid.
 pub fn spawn_user(process: Process) -> usize {
     let s = sched();
-    let tid = s.next_tid;
-    s.next_tid += 1;
+    let tid = process.pid;
     let mut t = new_thread_skeleton(tid);
     t.ctx.ra = restore_tf_from_sp as usize;
     t.ctx.sp = t.tf as usize;
+    unsafe {
+        *t.tf = process.init_tf;
+        (*t.tf).ksp = t.kstack + KSTACK_SIZE;
+    }
     t.process = Some(Box::new(process));
-    t.state = State::Ready;
     let idx = s.threads.len();
     s.threads.push(t);
     s.ready.push(idx);
@@ -174,7 +166,6 @@ pub fn spawn_user(process: Process) -> usize {
 }
 
 extern "C" fn restore_tf_from_sp() -> ! {
-    // The scheduler switched to us with sp == tf.
     unsafe {
         core::arch::asm!("j __restore_tf_from_sp", options(noreturn));
     }
@@ -199,28 +190,18 @@ pub fn start_init() {
             crate::println!("[init] failed to start init: {}", e);
         }
     } else {
+        crate::println!("[init] no initramfs, running boot test thread");
         spawn_kernel(boot_test);
     }
 }
 
 fn boot_test() {
     crate::println!("[test] kernel thread running, tid={}", current().tid);
-    let mut n = 0u64;
     loop {
-        sleep_ticks(50); // ~200 ms
-        n += 1;
-        if n % 10 == 0 {
-            crate::println!(
-                "[test] tick {} uptime {} ms free frames {}",
-                n,
-                crate::time::uptime_ns() / 1_000_000,
-                crate::mm::frame::free_count()
-            );
-        }
+        sleep_ticks(250);
     }
 }
 
-/// Enter the scheduler as the idle thread.
 pub fn start() -> ! {
     unsafe {
         set_sscratch(current().tf as usize);
@@ -230,27 +211,22 @@ pub fn start() -> ! {
 
 fn idle_loop() -> ! {
     loop {
-        // Nothing runnable: sleep until an interrupt.
         unsafe {
             enable_interrupts();
             core::arch::asm!("wfi", options(nomem, nostack));
             disable_interrupts();
         }
+        crate::net::poll();
         schedule();
     }
 }
 
-/// Pick the next runnable thread and switch to it.
 pub fn schedule() {
     unsafe {
         disable_interrupts();
     }
     let s = sched();
     let prev = s.current;
-    if s.threads[prev].state == State::Running {
-        s.threads[prev].state = State::Ready;
-        s.ready.push(prev);
-    }
     let next = match s.ready.pop() {
         Some(i) => i,
         None => s.idle,
@@ -261,6 +237,10 @@ pub fn schedule() {
             enable_interrupts();
         }
         return;
+    }
+    if s.threads[prev].state == State::Running {
+        s.threads[prev].state = State::Ready;
+        s.ready.push(prev);
     }
     s.threads[next].state = State::Running;
     s.current = next;
@@ -273,7 +253,6 @@ pub fn schedule() {
     }
 }
 
-/// Called when a thread blocks: switch away and never come back until woken.
 pub fn block_current() {
     unsafe {
         disable_interrupts();
@@ -283,18 +262,17 @@ pub fn block_current() {
     schedule();
 }
 
-/// Make a thread runnable again.
-pub fn wake(pid: usize) {
+pub fn wake_index(i: usize) {
     let s = sched();
-    if s.threads[pid].state == State::Blocked {
-        s.threads[pid].state = State::Ready;
-        s.ready.push(pid);
+    if s.threads[i].state == State::Blocked {
+        s.threads[i].state = State::Ready;
+        s.ready.push(i);
     }
 }
 
 pub fn wake_tid(tid: usize) {
-    if let Some(i) = sched().threads.iter().position(|t| t.tid == tid) {
-        wake(i);
+    if let Some(i) = thread_index_by_tid(tid) {
+        wake_index(i);
     }
 }
 
@@ -306,16 +284,27 @@ pub fn exit_current(code: i32) -> ! {
     let i = s.current;
     s.threads[i].exit_code = code;
     s.threads[i].state = State::Zombie;
-    if let Some(p) = s.threads[i].process.as_mut() {
-        p.exit_code = code;
-        p.exited = true;
+    let (pid, ctid) = {
+        match s.threads[i].process.as_mut() {
+            Some(p) => {
+                p.exit_code = code;
+                p.exited = true;
+                (p.pid, p.clear_child_tid)
+            }
+            None => (s.threads[i].tid, 0),
+        }
+    };
+    if ctid != 0 {
+        if let Some(p) = s.threads[i].process.as_mut() {
+            let _ = p.copy_to_user(ctid, &0u32.to_le_bytes());
+        }
     }
-    crate::task::process::on_thread_exit(i);
+    // tell the parent
+    process::notify_parent(pid, code);
     schedule();
     unreachable!()
 }
 
-/// Timer tick: wake sleeping threads and preempt the current user thread.
 pub fn on_timer() {
     let s = sched();
     let now = crate::time::ticks();
@@ -342,7 +331,6 @@ pub fn sleep_ticks(ticks: u64) {
     schedule();
 }
 
-/// Round-robin preemption of a user thread on timer tick.
 pub fn preempt(_tf: &mut TrapFrame) {
     let s = sched();
     if s.threads[s.current].process.is_none() {
@@ -359,13 +347,13 @@ pub fn page_fault(tf: &mut TrapFrame, scause: usize) {
     let stval = csrr!("stval");
     if current().process.is_none() {
         crate::println!("kernel page fault at {:#x}", stval);
-        crate::trap::cause_name(scause);
         crate::sbi::shutdown(true);
     }
-    if crate::task::process::handle_page_fault(tf, stval, scause) {
+    if process::handle_page_fault(tf, stval, scause) {
         return;
     }
-    crate::syscall::deliver_signal_fault(tf, if scause == SCAUSE_STORE_PAGE_FAULT { 7 } else { 11 });
+    let sig = if scause == SCAUSE_STORE_PAGE_FAULT { 7 } else { 11 };
+    crate::syscall::deliver_signal_fault(tf, sig);
 }
 
 pub fn fault(tf: &mut TrapFrame, scause: usize) {
@@ -379,6 +367,192 @@ pub fn fault(tf: &mut TrapFrame, scause: usize) {
     crate::syscall::deliver_signal_fault(tf, 7);
 }
 
-pub fn user_trap(tf: &mut TrapFrame, scause: usize) {
-    crate::trap::trap_handler(tf);
+/// Called from the trap return path before going back to user mode.
+pub fn deliver_signals(tf: &mut TrapFrame) {
+    let t = current();
+    let p = match t.process.as_mut() {
+        Some(p) => p,
+        None => return,
+    };
+    if p.sig.pending & (1 << (signal::SIGKILL - 1)) != 0 {
+        crate::println!("[sig] pid {} killed", p.pid);
+        exit_current(137);
+    }
+    signal::deliver(p, tf);
+}
+
+// ---- clone / wait / signals / futex -------------------------------------
+
+pub fn sys_clone(
+    p: &mut Process,
+    flags: usize,
+    stack: usize,
+    ptid: usize,
+    ctid: usize,
+    tls: usize,
+    tf: &mut TrapFrame,
+) -> Result<usize, Errno> {
+    const CLONE_VM: usize = 0x100;
+    const CLONE_THREAD: usize = 0x10000;
+    if flags & (CLONE_VM | CLONE_THREAD) != 0 {
+        // Threads sharing an address space are not supported.
+        return Err(ENOSYS);
+    }
+    let _ = (stack, tls);
+    let tid = alloc_tid();
+    let mut child = Process::new(tid);
+    Process::fork_from(p, &mut child)?;
+    // the child returns 0 from clone; the parent returns the child tid
+    child.init_tf = *tf;
+    child.init_tf.set_a0(0);
+    child.init_tf.ksp = 0;
+    if ctid != 0 {
+        child.clear_child_tid = ctid;
+        let _ = child.copy_to_user(ctid, &(tid as u32).to_le_bytes());
+    }
+    if ptid != 0 {
+        let _ = p.copy_to_user(ptid, &(tid as u32).to_le_bytes());
+    }
+    p.children.push(tid);
+    spawn_user(child);
+    Ok(tid)
+}
+
+pub fn child_exit_code(pid: usize) -> Option<i32> {
+    let s = sched();
+    for t in s.threads.iter() {
+        if t.tid == pid && (t.state == State::Zombie || t.state == State::Dead) {
+            return Some(t.exit_code);
+        }
+    }
+    None
+}
+
+pub fn reap_child(pid: usize) {
+    let s = sched();
+    let idx = match s.threads.iter().position(|t| t.tid == pid) {
+        Some(i) => i,
+        None => return,
+    };
+    if s.threads[idx].state == State::Dead {
+        return;
+    }
+    if let Some(mut p) = s.threads[idx].process.take() {
+        p.free_memory();
+        p.files.files.clear();
+    }
+    s.threads[idx].state = State::Dead;
+    frame::free_frames(s.threads[idx].kstack, s.threads[idx].kstack_frames);
+    frame::free_frame(s.threads[idx].tf_frame);
+    s.threads[idx].kstack = 0;
+    s.threads[idx].tf_frame = 0;
+}
+
+pub fn send_signal(pid: i32, sig: usize, code: i32) {
+    let s = sched();
+    let target: Option<usize> = if pid > 0 {
+        thread_index_by_tid(pid as usize)
+    } else {
+        // current process group (or all)
+        let cur = &s.threads[s.current];
+        let pgid = cur.process.as_ref().map(|p| p.pgid).unwrap_or(0);
+        s.threads
+            .iter()
+            .position(|t| t.process.as_ref().map(|p| p.pgid == pgid).unwrap_or(false))
+    };
+    if let Some(i) = target {
+        if let Some(p) = s.threads[i].process.as_mut() {
+            let info = signal::SigInfo {
+                code,
+                pid: s.threads[s.current].tid as i32,
+                uid: 0,
+                ..Default::default()
+            };
+            p.sig.raise_with(sig, info);
+            s.threads[i].futex_woken = true;
+            if s.threads[i].state == State::Blocked {
+                s.threads[i].state = State::Ready;
+                s.ready.push(i);
+            }
+        }
+    }
+}
+
+static FUTEX_WAITERS: crate::sync::SpinLock<Vec<(usize, usize)>> =
+    crate::sync::SpinLock::new(Vec::new());
+
+pub fn futex(
+    p: &mut Process,
+    uaddr: usize,
+    op: i32,
+    val: u32,
+    _timeout: usize,
+    _uaddr2: usize,
+) -> Result<usize, Errno> {
+    let cmd = op & 0x7f;
+    match cmd {
+        0 | 9 => {
+            // FUTEX_WAIT / FUTEX_WAIT_BITSET
+            let mut b = [0u8; 4];
+            p.copy_from_user(uaddr, &mut b)?;
+            let cur = u32::from_le_bytes(b);
+            if cur != val {
+                return Err(EAGAIN);
+            }
+            let tid = current().tid;
+            FUTEX_WAITERS.lock().push((uaddr, tid));
+            current().futex_addr = uaddr;
+            loop {
+                let mut b = [0u8; 4];
+                if p.copy_from_user(uaddr, &mut b).is_err() {
+                    break;
+                }
+                let now = u32::from_le_bytes(b);
+                if now != val || current().futex_woken {
+                    break;
+                }
+                if p.sig.pending & !p.sig.blocked != 0 {
+                    current().futex_woken = false;
+                    FUTEX_WAITERS.lock().retain(|(a, t)| !(*a == uaddr && *t == tid));
+                    return Err(EINTR);
+                }
+                sleep_ticks(1);
+            }
+            current().futex_woken = false;
+            current().futex_addr = 0;
+            FUTEX_WAITERS.lock().retain(|(a, t)| !(*a == uaddr && *t == tid));
+            Ok(0)
+        }
+        1 | 10 => {
+            // FUTEX_WAKE
+            let mut n = 0usize;
+            let waiters: Vec<usize> = {
+                let list = FUTEX_WAITERS.lock();
+                list.iter()
+                    .filter(|(a, _)| *a == uaddr)
+                    .map(|(_, t)| *t)
+                    .collect()
+            };
+            for tid in waiters {
+                if n >= val as usize && val != u32::MAX {
+                    break;
+                }
+                if let Some(i) = thread_index_by_tid(tid) {
+                    let s = sched();
+                    s.threads[i].futex_woken = true;
+                    if s.threads[i].state == State::Blocked {
+                        s.threads[i].state = State::Ready;
+                        s.ready.push(i);
+                    }
+                    n += 1;
+                }
+            }
+            Ok(n)
+        }
+        3 | 4 => {
+            // FUTEX_REQUEUE / CMP_REQUEUE: wake `val` waiters
+            Ok(0)
+        }
+        _ => Ok(0),
+    }
 }
