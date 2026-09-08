@@ -1,0 +1,306 @@
+96    16:09:13.365923 execve("/usr/sbin/nginx", ["/usr/sbin/nginx", "-c", "/etc/nginx/nginx.conf"], 0x7fffe9b82e00 /* 7 vars */) = 0
+96    16:09:13.374554 brk(NULL)         = 0x556159977000
+96    16:09:13.375552 faccessat(AT_FDCWD, "/etc/ld.so.preload", R_OK) = -1 ENOENT (No such file or directory)
+96    16:09:13.377684 openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+96    16:09:13.378623 openat(AT_FDCWD, "/lib/riscv64-linux-gnu/libcrypt.so.1", O_RDONLY|O_CLOEXEC) = 3
+96    16:09:13.379317 read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\363\0\1\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\0\220A\3\0\0\0\0\0\5\0\0\0@\08\0\10\0@\0\31\0\30\0\3\0\0p\4\0\0\0\10@\3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0S\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\1\0\0\0\5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\08/\3\0\0\0\0\08/\3\0\0\0\0\0\0\20\0\0\0\0\0\0\1\0\0\0\6\0\0\0\3709\3\0\0\0\0\0\3709\3\0\0\0\0\0"..., 832) = 832
+96    16:09:13.380391 fstat(3, {st_mode=S_IFREG|0644, st_size=214992, ...}) = 0
+96    16:09:13.381481 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ff58004a000
+96    16:09:13.382337 mmap(NULL, 246376, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ff58000d000
+96    16:09:13.382880 mmap(0x7ff580040000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x33000) = 0x7ff580040000
+96    16:09:13.383528 mmap(0x7ff580042000, 29288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ff580042000
+96    16:09:13.384301 close(3)          = 0
+96    16:09:13.384792 openat(AT_FDCWD, "/lib/riscv64-linux-gnu/libpcre2-8.so.0", O_RDONLY|O_CLOEXEC) = 3
+96    16:09:13.385427 read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\363\0\1\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\0X\243\5\0\0\0\0\0\5\0\0\0@\08\0\10\0@\0\31\0\30\0\3\0\0p\4\0\0\0\330\241\5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0S\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\1\0\0\0\5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0,\222\5\0\0\0\0\0,\222\5\0\0\0\0\0\0\20\0\0\0\0\0\0\1\0\0\0\6\0\0\0p\234\5\0\0\0\0\0p\254\5\0\0\0\0\0"..., 832) = 832
+96    16:09:13.385972 fstat(3, {st_mode=S_IFREG|0644, st_size=371096, ...}) = 0
+96    16:09:13.386496 mmap(NULL, 373216, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ff57ffb1000
+96    16:09:13.387059 mmap(0x7ff58000b000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x59000) = 0x7ff58000b000
+96    16:09:13.388549 close(3)          = 0
+96    16:09:13.389440 openat(AT_FDCWD, "/lib/riscv64-linux-gnu/libssl.so.3", O_RDONLY|O_CLOEXEC) = 3
+96    16:09:13.390222 read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\363\0\1\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\0h\311\t\0\0\0\0\0\5\0\0\0@\08\0\10\0@\0\31\0\30\0\3\0\0p\4\0\0\0\340\307\t\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0S\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\1\0\0\0\5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\f\367\10\0\0\0\0\0\f\367\10\0\0\0\0\0\0\20\0\0\0\0\0\0\1\0\0\0\6\0\0\0\10\374\10\0\0\0\0\0\10\f\t\0\0\0\0\0"..., 832) = 832
+96    16:09:13.390816 fstat(3, {st_mode=S_IFREG|0644, st_size=642984, ...}) = 0
+96    16:09:13.391350 mmap(NULL, 645152, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ff57ff13000
+96    16:09:13.392484 mmap(0x7ff57ffa3000, 57344, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x8f000) = 0x7ff57ffa3000
+96    16:09:13.393481 close(3)          = 0
+96    16:09:13.394072 openat(AT_FDCWD, "/lib/riscv64-linux-gnu/libcrypto.so.3", O_RDONLY|O_CLOEXEC) = 3
+96    16:09:13.394805 read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\363\0\1\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\0h\202;\0\0\0\0\0\5\0\0\0@\08\0\10\0@\0\31\0\30\0\3\0\0p\4\0\0\0\340\200;\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0S\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\1\0\0\0\5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\230\0076\0\0\0\0\0\230\0076\0\0\0\0\0\0\20\0\0\0\0\0\0\1\0\0\0\6\0\0\0P\0226\0\0\0\0\0P\0226\0\0\0\0\0"..., 832) = 832
+96    16:09:13.395646 fstat(3, {st_mode=S_IFREG|0644, st_size=3901608, ...}) = 0
+96    16:09:13.396378 mmap(NULL, 3911800, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ff57fb57000
+96    16:09:13.397037 mmap(0x7ff57feb8000, 360448, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x361000) = 0x7ff57feb8000
+96    16:09:13.397823 mmap(0x7ff57ff10000, 8312, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ff57ff10000
+96    16:09:13.398468 close(3)          = 0
+96    16:09:13.399002 openat(AT_FDCWD, "/lib/riscv64-linux-gnu/libz.so.1", O_RDONLY|O_CLOEXEC) = 3
+96    16:09:13.399867 read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\363\0\1\0\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\0 b\1\0\0\0\0\0\5\0\0\0@\08\0\10\0@\0\32\0\31\0\3\0\0p\4\0\0\0\220`\1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0S\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\1\0\0\0\5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\324Z\1\0\0\0\0\0\324Z\1\0\0\0\0\0\0\20\0\0\0\0\0\0\1\0\0\0\6\0\0\0\200\\\1\0\0\0\0\0\200l\1\0\0\0\0\0"..., 832) = 832
+96    16:09:13.400413 fstat(3, {st_mode=S_IFREG|0644, st_size=92320, ...}) = 0
+96    16:09:13.400931 mmap(NULL, 94360, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ff57fb3f000
+96    16:09:13.401461 mmap(0x7ff57fb55000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x15000) = 0x7ff57fb55000
+96    16:09:13.402128 close(3)          = 0
+96    16:09:13.402691 openat(AT_FDCWD, "/lib/riscv64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+96    16:09:13.403555 read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0\363\0\1\0\0\0Ry\2\0\0\0\0\0@\0\0\0\0\0\0\0(Y\27\0\0\0\0\0\5\0\0\0@\08\0\v\0@\0>\0=\0\6\0\0\0\4\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0@\0\0\0\0\0\0\0h\2\0\0\0\0\0\0h\2\0\0\0\0\0\0\10\0\0\0\0\0\0\0\3\0\0\0\4\0\0\0\270\343\22\0\0\0\0\0\270\343\22\0\0\0\0\0\270\343\22\0\0\0\0\0!\0\0\0\0\0\0\0!\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\3\0\0p\4\0\0\0\0105\27\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 832) = 832
+96    16:09:13.404159 fstat(3, {st_mode=S_IFREG|0755, st_size=1534120, ...}) = 0
+96    16:09:13.404713 mmap(NULL, 1572280, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7ff57f9bf000
+96    16:09:13.405387 mmap(0x7ff57fb2e000, 20480, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x16f000) = 0x7ff57fb2e000
+96    16:09:13.406123 mmap(0x7ff57fb33000, 48568, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7ff57fb33000
+96    16:09:13.406755 close(3)          = 0
+96    16:09:13.407298 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ff57f9bd000
+96    16:09:13.407938 set_tid_address(0x7ff57f9bddf0) = 96
+96    16:09:13.408575 set_robust_list(0x7ff57f9bde00, 24) = 0
+96    16:09:13.409364 mprotect(0x7ff57fb2e000, 12288, PROT_READ) = 0
+96    16:09:13.410050 mprotect(0x7ff57fb55000, 4096, PROT_READ) = 0
+96    16:09:13.413141 mprotect(0x7ff57feb8000, 348160, PROT_READ) = 0
+96    16:09:13.415092 mprotect(0x7ff57ffa3000, 40960, PROT_READ) = 0
+96    16:09:13.415796 mprotect(0x7ff58000b000, 4096, PROT_READ) = 0
+96    16:09:13.416726 mprotect(0x7ff580040000, 4096, PROT_READ) = 0
+96    16:09:13.418658 mprotect(0x556133797000, 8192, PROT_READ) = 0
+96    16:09:13.419288 mprotect(0x7ff580074000, 8192, PROT_READ) = 0
+96    16:09:13.420196 prlimit64(0, RLIMIT_STACK, NULL, {rlim_cur=8192*1024, rlim_max=RLIM64_INFINITY}) = 0
+96    16:09:13.422374 getrandom("\x2b\x47\xd9\x48\x85\x0a\x7b\xff", 8, GRND_NONBLOCK) = 8
+96    16:09:13.423270 brk(NULL)         = 0x556159977000
+96    16:09:13.424061 brk(0x556159998000) = 0x556159998000
+96    16:09:13.424867 openat(AT_FDCWD, "/etc/localtime", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+96    16:09:13.425917 getpid()          = 96
+96    16:09:13.426434 getppid()         = 93
+96    16:09:13.427782 futex(0x7ff57ff0f950, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.429010 futex(0x7ff57ff0f954, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.429559 futex(0x7ff57ff0f958, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.430548 futex(0x7ff57ff0fa34, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.434550 futex(0x7ff57ff0f960, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.436207 futex(0x7ff57ff0f964, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.437045 openat(AT_FDCWD, "/proc/sys/crypto/fips_enabled", O_RDONLY) = -1 ENOENT (No such file or directory)
+96    16:09:13.437971 futex(0x7ff57ff0f474, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.440335 futex(0x7ff57ff0f64c, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.441172 futex(0x7ff57ff0f3c8, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.441836 futex(0x7ff57ff0f984, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.442432 futex(0x7ff57ff0f2c0, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.446199 futex(0x7ff57ff0f95c, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.447322 openat(AT_FDCWD, "/usr/lib/ssl/openssl.cnf", O_RDONLY) = -1 ENOENT (No such file or directory)
+96    16:09:13.448779 futex(0x7ff57ff0f968, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.449334 futex(0x7ff57ffb07fc, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.450323 futex(0x7ff57ffb0814, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:13.452243 uname({sysname="Linux", nodename="ref-riscv64", ...}) = 0
+96    16:09:13.453471 openat(AT_FDCWD, "/sys/devices/system/cpu/online", O_RDONLY|O_CLOEXEC) = 3
+96    16:09:13.454814 read(3, "0\n", 1024) = 2
+96    16:09:13.456256 close(3)          = 0
+96    16:09:13.457064 prlimit64(0, RLIMIT_NOFILE, NULL, {rlim_cur=1024, rlim_max=4*1024}) = 0
+96    16:09:13.458479 openat(AT_FDCWD, "/etc/localtime", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+96    16:09:13.459615 uname({sysname="Linux", nodename="ref-riscv64", ...}) = 0
+96    16:09:13.461292 openat(AT_FDCWD, "/etc/nginx/nginx.conf", O_RDONLY) = 3
+96    16:09:13.461996 fstat(3, {st_mode=S_IFREG|0644, st_size=380, ...}) = 0
+96    16:09:13.462914 pread64(3, "worker_processes 1;\ndaemon off;\nmaster_process on;\nerror_log /dev/stderr warn;\npid /run/nginx.pid;\nevents { worker_connections 256; }\nhttp {\n    include /etc/nginx/mime.types;\n    default_type applica"..., 380, 0) = 380
+96    16:09:13.465050 epoll_create1(0)  = 4
+96    16:09:13.465772 close(4)          = 0
+96    16:09:13.468203 brk(0x5561599b9000) = 0x5561599b9000
+96    16:09:13.471155 openat(AT_FDCWD, "/etc/nginx/mime.types", O_RDONLY) = 4
+96    16:09:13.472315 fstat(4, {st_mode=S_IFREG|0644, st_size=5465, ...}) = 0
+96    16:09:13.473120 pread64(4, "\ntypes {\n    text/html                                        html htm shtml;\n    text/css                                         css;\n    text/xml                                         xml;\n    im"..., 4096, 0) = 4096
+96    16:09:13.474343 pread64(4, " application/octet-stream                         deb;\n    application/octet-stream                         dmg;\n    application/octet-stream                         iso img;\n    application/octet-str"..., 1369, 4096) = 1369
+96    16:09:13.475325 close(4)          = 0
+96    16:09:13.489356 close(3)          = 0
+96    16:09:13.490398 geteuid()         = 0
+96    16:09:13.491300 socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+96    16:09:13.492205 connect(3, {sa_family=AF_UNIX, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+96    16:09:13.493216 close(3)          = 0
+96    16:09:13.493780 socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+96    16:09:13.494286 connect(3, {sa_family=AF_UNIX, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+96    16:09:13.494898 close(3)          = 0
+96    16:09:13.495508 newfstatat(AT_FDCWD, "/etc/nsswitch.conf", {st_mode=S_IFREG|0644, st_size=114, ...}, 0) = 0
+96    16:09:13.496520 newfstatat(AT_FDCWD, "/", {st_mode=S_IFDIR|S_ISVTX|0777, st_size=420, ...}, 0) = 0
+96    16:09:13.497200 openat(AT_FDCWD, "/etc/nsswitch.conf", O_RDONLY|O_CLOEXEC) = 3
+96    16:09:13.497854 fstat(3, {st_mode=S_IFREG|0644, st_size=114, ...}) = 0
+96    16:09:13.498431 read(3, "passwd:         files\ngroup:          files\nshadow:         files\nhosts:          files dns\nnetworks:       files\n", 4096) = 114
+96    16:09:13.499000 read(3, "", 4096) = 0
+96    16:09:13.500024 fstat(3, {st_mode=S_IFREG|0644, st_size=114, ...}) = 0
+96    16:09:13.500888 close(3)          = 0
+96    16:09:13.501626 openat(AT_FDCWD, "/etc/passwd", O_RDONLY|O_CLOEXEC) = 3
+96    16:09:13.502243 fstat(3, {st_mode=S_IFREG|0644, st_size=839, ...}) = 0
+96    16:09:13.502789 lseek(3, 0, SEEK_SET) = 0
+96    16:09:13.503723 read(3, "root:*:0:0:root:/root:/bin/bash\ndaemon:*:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:*:2:2:bin:/bin:/usr/sbin/nologin\nsys:*:3:3:sys:/dev:/usr/sbin/nologin\nsync:*:4:65534:sync:/bin:/bin/sync\ngames:*:5:6"..., 4096) = 839
+96    16:09:13.504429 close(3)          = 0
+96    16:09:13.505170 socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+96    16:09:13.505716 connect(3, {sa_family=AF_UNIX, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+96    16:09:13.506357 close(3)          = 0
+96    16:09:13.506878 socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3
+96    16:09:13.507841 connect(3, {sa_family=AF_UNIX, sun_path="/var/run/nscd/socket"}, 110) = -1 ENOENT (No such file or directory)
+96    16:09:13.509033 close(3)          = 0
+96    16:09:13.509723 newfstatat(AT_FDCWD, "/etc/nsswitch.conf", {st_mode=S_IFREG|0644, st_size=114, ...}, 0) = 0
+96    16:09:13.510515 openat(AT_FDCWD, "/etc/group", O_RDONLY|O_CLOEXEC) = 3
+96    16:09:13.511313 fstat(3, {st_mode=S_IFREG|0644, st_size=434, ...}) = 0
+96    16:09:13.511945 lseek(3, 0, SEEK_SET) = 0
+96    16:09:13.512465 read(3, "root:*:0:\ndaemon:*:1:\nbin:*:2:\nsys:*:3:\nadm:*:4:\ntty:*:5:\ndisk:*:6:\nlp:*:7:\nmail:*:8:\nnews:*:9:\nuucp:*:10:\nman:*:12:\nproxy:*:13:\nkmem:*:15:\ndialout:*:20:\nfax:*:21:\nvoice:*:22:\ncdrom:*:24:\nfloppy:*:25:"..., 4096) = 434
+96    16:09:13.513299 close(3)          = 0
+96    16:09:13.514222 mkdirat(AT_FDCWD, "/var/lib/nginx/body", 0700) = 0
+96    16:09:13.515276 newfstatat(AT_FDCWD, "/var/lib/nginx/body", {st_mode=S_IFDIR|0700, st_size=40, ...}, 0) = 0
+96    16:09:13.515978 fchownat(AT_FDCWD, "/var/lib/nginx/body", 65534, -1, 0) = 0
+96    16:09:13.516929 mkdirat(AT_FDCWD, "/var/lib/nginx/proxy", 0700) = 0
+96    16:09:13.517568 newfstatat(AT_FDCWD, "/var/lib/nginx/proxy", {st_mode=S_IFDIR|0700, st_size=40, ...}, 0) = 0
+96    16:09:13.518180 fchownat(AT_FDCWD, "/var/lib/nginx/proxy", 65534, -1, 0) = 0
+96    16:09:13.518781 mkdirat(AT_FDCWD, "/var/lib/nginx/fastcgi", 0700) = 0
+96    16:09:13.519443 newfstatat(AT_FDCWD, "/var/lib/nginx/fastcgi", {st_mode=S_IFDIR|0700, st_size=40, ...}, 0) = 0
+96    16:09:13.520747 fchownat(AT_FDCWD, "/var/lib/nginx/fastcgi", 65534, -1, 0) = 0
+96    16:09:13.521557 mkdirat(AT_FDCWD, "/var/lib/nginx/uwsgi", 0700) = 0
+96    16:09:13.522295 newfstatat(AT_FDCWD, "/var/lib/nginx/uwsgi", {st_mode=S_IFDIR|0700, st_size=40, ...}, 0) = 0
+96    16:09:13.522892 fchownat(AT_FDCWD, "/var/lib/nginx/uwsgi", 65534, -1, 0) = 0
+96    16:09:13.523444 mkdirat(AT_FDCWD, "/var/lib/nginx/scgi", 0700) = 0
+96    16:09:13.524212 newfstatat(AT_FDCWD, "/var/lib/nginx/scgi", {st_mode=S_IFDIR|0700, st_size=40, ...}, 0) = 0
+96    16:09:13.524787 fchownat(AT_FDCWD, "/var/lib/nginx/scgi", 65534, -1, 0) = 0
+96    16:09:13.525466 openat(AT_FDCWD, "/dev/stderr", O_WRONLY|O_CREAT|O_APPEND, 0644) = 3
+96    16:09:13.526631 fcntl(3, F_SETFD, FD_CLOEXEC) = 0
+96    16:09:13.527213 openat(AT_FDCWD, "/dev/stdout", O_WRONLY|O_CREAT|O_APPEND, 0644) = 4
+96    16:09:13.528381 fcntl(4, F_SETFD, FD_CLOEXEC) = 0
+96    16:09:13.529016 socket(AF_INET, SOCK_STREAM, IPPROTO_IP) = 5
+96    16:09:13.530053 setsockopt(5, SOL_SOCKET, SO_REUSEADDR, [1], 4) = 0
+96    16:09:13.531402 ioctl(5, FIONBIO, [1]) = 0
+96    16:09:13.532501 bind(5, {sa_family=AF_INET, sin_port=htons(80), sin_addr=inet_addr("0.0.0.0")}, 16) = 0
+96    16:09:13.534381 listen(5, 511)    = 0
+96    16:09:13.535814 listen(5, 511)    = 0
+96    16:09:13.536544 prlimit64(0, RLIMIT_NOFILE, NULL, {rlim_cur=1024, rlim_max=4*1024}) = 0
+96    16:09:13.537552 mmap(NULL, 1280, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0) = 0x7ff57f9bc000
+96    16:09:13.539322 rt_sigaction(SIGHUP, {sa_handler=0x5561336dc552, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+96    16:09:13.540498 rt_sigaction(SIGUSR1, {sa_handler=0x5561336dc552, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+96    16:09:13.541039 rt_sigaction(SIGWINCH, {sa_handler=0x5561336dc552, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+96    16:09:13.541548 rt_sigaction(SIGTERM, {sa_handler=0x5561336dc552, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+96    16:09:13.542055 rt_sigaction(SIGQUIT, {sa_handler=0x5561336dc552, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+96    16:09:13.542550 rt_sigaction(SIGUSR2, {sa_handler=0x5561336dc552, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+96    16:09:13.543040 rt_sigaction(SIGALRM, {sa_handler=0x5561336dc552, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+96    16:09:13.543752 rt_sigaction(SIGINT, {sa_handler=0x5561336dc552, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+96    16:09:13.544254 rt_sigaction(SIGIO, {sa_handler=0x5561336dc552, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+96    16:09:13.544743 rt_sigaction(SIGCHLD, {sa_handler=0x5561336dc552, sa_mask=[], sa_flags=SA_SIGINFO}, NULL, 8) = 0
+96    16:09:13.545234 rt_sigaction(SIGSYS, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+96    16:09:13.545721 rt_sigaction(SIGPIPE, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=0}, NULL, 8) = 0
+96    16:09:13.546270 openat(AT_FDCWD, "/run/nginx.pid", O_RDWR|O_CREAT|O_TRUNC, 0644) = 6
+96    16:09:13.547661 pwrite64(6, "96\n", 3, 0) = 3
+96    16:09:13.548658 close(6)          = 0
+96    16:09:13.549185 dup3(3, 2, 0)     = 2
+96    16:09:13.549772 rt_sigprocmask(SIG_BLOCK, [HUP INT QUIT USR1 USR2 ALRM TERM CHLD WINCH IO], NULL, 8) = 0
+96    16:09:13.550616 socketpair(AF_UNIX, SOCK_STREAM, 0, [6, 7]) = 0
+96    16:09:13.552077 ioctl(6, FIONBIO, [1]) = 0
+96    16:09:13.552791 ioctl(7, FIONBIO, [1]) = 0
+96    16:09:13.553385 ioctl(6, FIOASYNC, [1]) = 0
+96    16:09:13.554282 fcntl(6, F_SETOWN, 96) = 0
+96    16:09:13.555058 fcntl(6, F_SETFD, FD_CLOEXEC) = 0
+96    16:09:13.555519 fcntl(7, F_SETFD, FD_CLOEXEC) = 0
+96    16:09:13.555978 clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD <unfinished ...>
+97    16:09:13.558320 set_robust_list(0x7ff57f9bde00, 24) = 0
+97    16:09:13.559439 getpid()          = 97
+96    16:09:13.559921 <... clone resumed>, child_tidptr=0x7ff57f9bddf0) = 97
+97    16:09:13.561208 geteuid( <unfinished ...>
+96    16:09:13.562034 rt_sigsuspend([], 8 <unfinished ...>
+97    16:09:13.562601 <... geteuid resumed>) = 0
+97    16:09:13.562912 setgid(65534)     = 0
+97    16:09:13.563699 openat(AT_FDCWD, "/proc/sys/kernel/ngroups_max", O_RDONLY|O_CLOEXEC) = 8
+97    16:09:13.565060 read(8, "65536\n", 31) = 6
+97    16:09:13.565665 close(8)          = 0
+97    16:09:13.566487 newfstatat(AT_FDCWD, "/etc/nsswitch.conf", {st_mode=S_IFREG|0644, st_size=114, ...}, 0) = 0
+97    16:09:13.567804 newfstatat(AT_FDCWD, "/etc/nsswitch.conf", {st_mode=S_IFREG|0644, st_size=114, ...}, 0) = 0
+97    16:09:13.569014 openat(AT_FDCWD, "/etc/group", O_RDONLY|O_CLOEXEC) = 8
+97    16:09:13.569773 fstat(8, {st_mode=S_IFREG|0644, st_size=434, ...}) = 0
+97    16:09:13.570477 lseek(8, 0, SEEK_SET) = 0
+97    16:09:13.571052 read(8, "root:*:0:\ndaemon:*:1:\nbin:*:2:\nsys:*:3:\nadm:*:4:\ntty:*:5:\ndisk:*:6:\nlp:*:7:\nmail:*:8:\nnews:*:9:\nuucp:*:10:\nman:*:12:\nproxy:*:13:\nkmem:*:15:\ndialout:*:20:\nfax:*:21:\nvoice:*:22:\ncdrom:*:24:\nfloppy:*:25:"..., 4096) = 434
+97    16:09:13.571681 read(8, "", 4096) = 0
+97    16:09:13.572541 close(8)          = 0
+97    16:09:13.573374 setgroups(1, [65534]) = 0
+97    16:09:13.574753 setuid(65534)     = 0
+97    16:09:13.575753 prctl(PR_SET_DUMPABLE, SUID_DUMP_USER) = 0
+97    16:09:13.576532 rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+97    16:09:13.577304 epoll_create1(0)  = 8
+97    16:09:13.577874 eventfd2(0, 0)    = 9
+97    16:09:13.578831 epoll_ctl(8, EPOLL_CTL_ADD, 9, {events=EPOLLIN|EPOLLET, data={u32=863821976, u64=93875964010648}}) = 0
+97    16:09:13.580633 socketpair(AF_UNIX, SOCK_STREAM, 0, [10, 11]) = 0
+97    16:09:13.581396 epoll_ctl(8, EPOLL_CTL_ADD, 10, {events=EPOLLIN|EPOLLRDHUP|EPOLLET, data={u32=863821976, u64=93875964010648}}) = 0
+97    16:09:13.582274 close(11)         = 0
+97    16:09:13.583146 epoll_pwait(8, [{events=EPOLLIN|EPOLLHUP|EPOLLRDHUP, data={u32=863821976, u64=93875964010648}}], 1, 5000, NULL, 8) = 1
+97    16:09:13.584904 close(10)         = 0
+97    16:09:13.586083 brk(0x5561599e1000) = 0x5561599e1000
+97    16:09:13.588248 epoll_ctl(8, EPOLL_CTL_ADD, 5, {events=EPOLLIN|EPOLLRDHUP, data={u32=1503336096, u64=93876603524768}}) = 0
+97    16:09:13.589545 close(6)          = 0
+97    16:09:13.590199 epoll_ctl(8, EPOLL_CTL_ADD, 7, {events=EPOLLIN|EPOLLRDHUP, data={u32=1503336336, u64=93876603525008}}) = 0
+97    16:09:13.591070 epoll_pwait(8, [{events=EPOLLIN, data={u32=1503336096, u64=93876603524768}}], 512, -1, NULL, 8) = 1
+97    16:09:15.386031 accept4(5, {sa_family=AF_INET, sin_port=htons(52174), sin_addr=inet_addr("127.0.0.1")}, [112 => 16], SOCK_NONBLOCK) = 6
+97    16:09:15.389989 epoll_ctl(8, EPOLL_CTL_ADD, 6, {events=EPOLLIN|EPOLLRDHUP|EPOLLET, data={u32=1503336576, u64=93876603525248}}) = 0
+97    16:09:15.391143 epoll_pwait(8, [{events=EPOLLIN, data={u32=1503336576, u64=93876603525248}}], 512, 60000, NULL, 8) = 1
+97    16:09:15.392221 recvfrom(6, "GET / HTTP/1.1\r\nHost: 127.0.0.1\r\nUser-Agent: Wget\r\nConnection: close\r\n\r\n", 1024, 0, NULL, NULL) = 72
+97    16:09:15.402177 newfstatat(AT_FDCWD, "/usr/share/nginx/html/index.html", {st_mode=S_IFREG|0644, st_size=615, ...}, 0) = 0
+97    16:09:15.403453 openat(AT_FDCWD, "/usr/share/nginx/html/index.html", O_RDONLY|O_NONBLOCK) = 10
+97    16:09:15.404643 fstat(10, {st_mode=S_IFREG|0644, st_size=615, ...}) = 0
+97    16:09:15.407733 pread64(10, "<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style"..., 615, 0) = 615
+97    16:09:15.409218 writev(6, [{iov_base="HTTP/1.1 200 OK\r\nServer: nginx/1.24.0 (Ubuntu)\r\nDate: Tue, 08 Sep 2026 16:09:15 GMT\r\nContent-Type: text/html\r\nContent-Length: 615\r\nLast-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\nConnection: close\r\nETag"..., iov_len=235}, {iov_base="<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style"..., iov_len=615}], 2) = 850
+97    16:09:15.413142 write(4, "127.0.0.1 - - [08/Sep/2026:16:09:15 +0000] \"GET / HTTP/1.1\" 200 615 \"-\" \"Wget\"\n", 79) = 79
+97    16:09:15.419217 close(10)         = 0
+97    16:09:15.420359 close(6)          = 0
+97    16:09:15.424189 epoll_pwait(8, [{events=EPOLLIN, data={u32=1503336096, u64=93876603524768}}], 512, -1, NULL, 8) = 1
+97    16:09:16.448280 accept4(5, {sa_family=AF_INET, sin_port=htons(52176), sin_addr=inet_addr("127.0.0.1")}, [112 => 16], SOCK_NONBLOCK) = 6
+97    16:09:16.450737 epoll_ctl(8, EPOLL_CTL_ADD, 6, {events=EPOLLIN|EPOLLRDHUP|EPOLLET, data={u32=1503336577, u64=93876603525249}}) = 0
+97    16:09:16.452542 epoll_pwait(8, [{events=EPOLLIN, data={u32=1503336577, u64=93876603525249}}], 512, 60000, NULL, 8) = 1
+97    16:09:16.453880 recvfrom(6, "GET /index.html HTTP/1.1\r\nHost: 127.0.0.1\r\nUser-Agent: Wget\r\nConnection: close\r\n\r\n", 1024, 0, NULL, NULL) = 82
+97    16:09:16.455465 openat(AT_FDCWD, "/usr/share/nginx/html/index.html", O_RDONLY|O_NONBLOCK) = 10
+97    16:09:16.456808 fstat(10, {st_mode=S_IFREG|0644, st_size=615, ...}) = 0
+97    16:09:16.457948 pread64(10, "<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style"..., 615, 0) = 615
+97    16:09:16.458944 writev(6, [{iov_base="HTTP/1.1 200 OK\r\nServer: nginx/1.24.0 (Ubuntu)\r\nDate: Tue, 08 Sep 2026 16:09:16 GMT\r\nContent-Type: text/html\r\nContent-Length: 615\r\nLast-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\nConnection: close\r\nETag"..., iov_len=235}, {iov_base="<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style"..., iov_len=615}], 2) = 850
+97    16:09:16.463184 write(4, "127.0.0.1 - - [08/Sep/2026:16:09:16 +0000] \"GET /index.html HTTP/1.1\" 200 615 \"-\" \"Wget\"\n", 89) = 89
+97    16:09:16.467457 close(10)         = 0
+97    16:09:16.468831 close(6)          = 0
+97    16:09:16.470272 epoll_pwait(8, [{events=EPOLLIN, data={u32=1503336096, u64=93876603524768}}], 512, -1, NULL, 8) = 1
+97    16:09:17.489791 accept4(5, {sa_family=AF_INET, sin_port=htons(52180), sin_addr=inet_addr("127.0.0.1")}, [112 => 16], SOCK_NONBLOCK) = 6
+97    16:09:17.490635 epoll_ctl(8, EPOLL_CTL_ADD, 6, {events=EPOLLIN|EPOLLRDHUP|EPOLLET, data={u32=1503336576, u64=93876603525248}}) = 0
+97    16:09:17.491197 epoll_pwait(8, [{events=EPOLLIN, data={u32=1503336576, u64=93876603525248}}], 512, 60000, NULL, 8) = 1
+97    16:09:17.491739 recvfrom(6, "GET / HTTP/1.1\r\nHost: localhost\r\nUser-Agent: Wget\r\nConnection: close\r\n\r\n", 1024, 0, NULL, NULL) = 72
+97    16:09:17.492736 newfstatat(AT_FDCWD, "/usr/share/nginx/html/index.html", {st_mode=S_IFREG|0644, st_size=615, ...}, 0) = 0
+97    16:09:17.493370 openat(AT_FDCWD, "/usr/share/nginx/html/index.html", O_RDONLY|O_NONBLOCK) = 10
+97    16:09:17.493925 fstat(10, {st_mode=S_IFREG|0644, st_size=615, ...}) = 0
+97    16:09:17.494501 pread64(10, "<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style"..., 615, 0) = 615
+97    16:09:17.495449 writev(6, [{iov_base="HTTP/1.1 200 OK\r\nServer: nginx/1.24.0 (Ubuntu)\r\nDate: Tue, 08 Sep 2026 16:09:17 GMT\r\nContent-Type: text/html\r\nContent-Length: 615\r\nLast-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\nConnection: close\r\nETag"..., iov_len=235}, {iov_base="<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style"..., iov_len=615}], 2) = 850
+97    16:09:17.497705 write(4, "127.0.0.1 - - [08/Sep/2026:16:09:17 +0000] \"GET / HTTP/1.1\" 200 615 \"-\" \"Wget\"\n", 79) = 79
+97    16:09:17.500938 close(10)         = 0
+97    16:09:17.501504 close(6)          = 0
+97    16:09:17.502524 epoll_pwait(8, [{events=EPOLLIN, data={u32=1503336096, u64=93876603524768}}], 512, -1, NULL, 8) = 1
+97    16:09:18.517261 accept4(5, {sa_family=AF_INET, sin_port=htons(52190), sin_addr=inet_addr("127.0.0.1")}, [112 => 16], SOCK_NONBLOCK) = 6
+97    16:09:18.519159 epoll_ctl(8, EPOLL_CTL_ADD, 6, {events=EPOLLIN|EPOLLRDHUP|EPOLLET, data={u32=1503336577, u64=93876603525249}}) = 0
+97    16:09:18.520849 epoll_pwait(8, [{events=EPOLLIN, data={u32=1503336577, u64=93876603525249}}], 512, 60000, NULL, 8) = 1
+97    16:09:18.521995 recvfrom(6, "GET / HTTP/1.1\r\nHost: 127.0.0.1\r\nUser-Agent: Wget\r\nConnection: close\r\n\r\n", 1024, 0, NULL, NULL) = 72
+97    16:09:18.523519 newfstatat(AT_FDCWD, "/usr/share/nginx/html/index.html", {st_mode=S_IFREG|0644, st_size=615, ...}, 0) = 0
+97    16:09:18.524875 openat(AT_FDCWD, "/usr/share/nginx/html/index.html", O_RDONLY|O_NONBLOCK) = 10
+97    16:09:18.525588 fstat(10, {st_mode=S_IFREG|0644, st_size=615, ...}) = 0
+97    16:09:18.526211 pread64(10, "<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style"..., 615, 0) = 615
+97    16:09:18.526808 writev(6, [{iov_base="HTTP/1.1 200 OK\r\nServer: nginx/1.24.0 (Ubuntu)\r\nDate: Tue, 08 Sep 2026 16:09:18 GMT\r\nContent-Type: text/html\r\nContent-Length: 615\r\nLast-Modified: Thu, 01 Jan 1970 00:00:00 GMT\r\nConnection: close\r\nETag"..., iov_len=235}, {iov_base="<!DOCTYPE html>\n<html>\n<head>\n<title>Welcome to nginx!</title>\n<style>\nhtml { color-scheme: light dark; }\nbody { width: 35em; margin: 0 auto;\nfont-family: Tahoma, Verdana, Arial, sans-serif; }\n</style"..., iov_len=615}], 2) = 850
+97    16:09:18.528999 write(4, "127.0.0.1 - - [08/Sep/2026:16:09:18 +0000] \"GET / HTTP/1.1\" 200 615 \"-\" \"Wget\"\n", 79) = 79
+97    16:09:18.532075 close(10)         = 0
+97    16:09:18.532746 close(6)          = 0
+97    16:09:18.534172 epoll_pwait(8, [{events=EPOLLIN, data={u32=1503336096, u64=93876603524768}}], 512, -1, NULL, 8) = 1
+97    16:09:19.547101 accept4(5, {sa_family=AF_INET, sin_port=htons(52202), sin_addr=inet_addr("127.0.0.1")}, [112 => 16], SOCK_NONBLOCK) = 6
+97    16:09:19.548663 epoll_ctl(8, EPOLL_CTL_ADD, 6, {events=EPOLLIN|EPOLLRDHUP|EPOLLET, data={u32=1503336576, u64=93876603525248}}) = 0
+97    16:09:19.549653 epoll_pwait(8, [{events=EPOLLIN, data={u32=1503336576, u64=93876603525248}}], 512, 60000, NULL, 8) = 1
+97    16:09:19.550628 recvfrom(6, "GET /nonexistent HTTP/1.1\r\nHost: 127.0.0.1\r\nUser-Agent: Wget\r\nConnection: close\r\n\r\n", 1024, 0, NULL, NULL) = 83
+97    16:09:19.552808 openat(AT_FDCWD, "/usr/share/nginx/html/nonexistent", O_RDONLY|O_NONBLOCK) = -1 ENOENT (No such file or directory)
+97    16:09:19.554606 gettid()          = 97
+97    16:09:19.556199 write(3, "2026/09/08 16:09:19 [error] 97#97: *5 open() \"/usr/share/nginx/html/nonexistent\" failed (2: No such file or directory), client: 127.0.0.1, server: localhost, request: \"GET /nonexistent HTTP/1.1\", host"..., 214) = 214
+97    16:09:19.559781 writev(6, [{iov_base="HTTP/1.1 404 Not Found\r\nServer: nginx/1.24.0 (Ubuntu)\r\nDate: Tue, 08 Sep 2026 16:09:19 GMT\r\nContent-Type: text/html\r\nContent-Length: 162\r\nConnection: close\r\n\r\n", iov_len=159}, {iov_base="<html>\r\n<head><title>404 Not Found</title></head>\r\n<body>\r\n<center><h1>404 Not Found</h1></center>\r\n", iov_len=100}, {iov_base="<hr><center>nginx/1.24.0 (Ubuntu)</center>\r\n</body>\r\n</html>\r\n", iov_len=62}], 3) = 321
+97    16:09:19.563760 write(4, "127.0.0.1 - - [08/Sep/2026:16:09:19 +0000] \"GET /nonexistent HTTP/1.1\" 404 162 \"-\" \"Wget\"\n", 90) = 90
+97    16:09:19.567833 close(6)          = 0
+97    16:09:19.570294 epoll_pwait(8,  <unfinished ...>
+96    16:09:20.590954 <... rt_sigsuspend resumed>) = ? ERESTARTNOHAND (To be restarted if no handler)
+96    16:09:20.592715 --- SIGQUIT {si_signo=SIGQUIT, si_code=SI_USER, si_pid=1, si_uid=0} ---
+96    16:09:20.594362 rt_sigreturn({mask=[HUP INT QUIT USR1 USR2 ALRM TERM CHLD WINCH IO]}) = -1 EINTR (Interrupted system call)
+96    16:09:20.595522 sendmsg(6, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\377\377\377\377\0\0\0\0", iov_len=32}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+97    16:09:20.597898 <... epoll_pwait resumed>[{events=EPOLLIN, data={u32=1503336336, u64=93876603525008}}], 512, -1, NULL, 8) = 1
+96    16:09:20.598740 close(5 <unfinished ...>
+97    16:09:20.598916 recvmsg(7,  <unfinished ...>
+96    16:09:20.600250 <... close resumed>) = 0
+97    16:09:20.600627 <... recvmsg resumed>{msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\377\377\377\377\0\0\0\0", iov_len=32}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, 0) = 32
+96    16:09:20.601086 rt_sigsuspend([], 8 <unfinished ...>
+97    16:09:20.601574 recvmsg(7, {msg_namelen=0}, 0) = -1 EAGAIN (Resource temporarily unavailable)
+97    16:09:20.602746 epoll_ctl(8, EPOLL_CTL_DEL, 5, 0x7fffeca406a8) = 0
+97    16:09:20.604242 close(5)          = 0
+97    16:09:20.609125 futex(0x7ff57ff0f164, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+97    16:09:20.614998 exit_group(0)     = ?
+97    16:09:20.618000 +++ exited with 0 +++
+96    16:09:20.618365 <... rt_sigsuspend resumed>) = ? ERESTARTNOHAND (To be restarted if no handler)
+96    16:09:20.618665 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=97, si_uid=65534, si_status=0, si_utime=1 /* 0.01 s */, si_stime=3 /* 0.03 s */} ---
+96    16:09:20.619577 wait4(-1, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], WNOHANG, NULL) = 97
+96    16:09:20.620868 wait4(-1, 0x7fffeca403c4, WNOHANG, NULL) = -1 ECHILD (No child processes)
+96    16:09:20.621700 rt_sigreturn({mask=[HUP INT QUIT USR1 USR2 ALRM TERM CHLD WINCH IO]}) = -1 EINTR (Interrupted system call)
+96    16:09:20.622511 close(6)          = 0
+96    16:09:20.623590 close(7)          = 0
+96    16:09:20.624374 unlinkat(AT_FDCWD, "/run/nginx.pid", 0) = 0
+96    16:09:20.628538 futex(0x7ff57ff0f164, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+96    16:09:20.631109 exit_group(0)     = ?
+96    16:09:20.635474 +++ exited with 0 +++

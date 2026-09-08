@@ -1,0 +1,1 @@
+Linux ref-riscv64 7.0.0-31-generic #31.1~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Tue Aug 25 15:43:59 UTC riscv64 GNU/Linux

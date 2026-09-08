@@ -1,0 +1,17 @@
+worker_processes 1;
+daemon off;
+master_process on;
+error_log /dev/stderr warn;
+pid /run/nginx.pid;
+events { worker_connections 256; }
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    access_log /dev/stdout;
+    server {
+        listen 80;
+        server_name localhost;
+        root /usr/share/nginx/html;
+        index index.html;
+    }
+}

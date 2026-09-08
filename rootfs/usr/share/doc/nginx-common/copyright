@@ -1,0 +1,383 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: nginx
+Source: https://nginx.org/en/download.html
+
+Files: *
+Copyright: Valentin V. Bartenev
+ Ruslan Ermilov
+ Roman Arutyunyan
+ Maxim Dounin
+ 2011-2022, Nginx, Inc.
+ 2002-2021, Igor Sysoev
+ 2011-2022, Nginx, Inc.
+ 2002-2021, Igor Sysoev
+License: BSD-2-clause
+
+Files: CHANGES
+  README
+Copyright: Valentin V. Bartenev
+ Ruslan Ermilov
+ Roman Arutyunyan
+ Maxim Dounin
+ 2011-2022, Nginx, Inc.
+ 2002-2021, Igor Sysoev
+License: BSD-2-clause
+
+Files: auto/*
+Copyright: Nginx, Inc.
+ Igor Sysoev
+License: BSD-2-clause
+
+Files: auto/cc/clang
+Copyright: Nginx, Inc.
+License: BSD-2-clause
+
+Files: auto/module
+Copyright: Ruslan Ermilov
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: auto/threads
+Copyright: Nginx, Inc.
+License: BSD-2-clause
+
+Files: conf/*
+Copyright: Valentin V. Bartenev
+ Ruslan Ermilov
+ Roman Arutyunyan
+ Maxim Dounin
+ 2011-2022, Nginx, Inc.
+ 2002-2021, Igor Sysoev
+License: BSD-2-clause
+
+Files: configure
+Copyright: Nginx, Inc.
+ Igor Sysoev
+License: BSD-2-clause
+
+Files: contrib/*
+Copyright: Valentin V. Bartenev
+ Ruslan Ermilov
+ Roman Arutyunyan
+ Maxim Dounin
+ 2011-2022, Nginx, Inc.
+ 2002-2021, Igor Sysoev
+License: BSD-2-clause
+
+Files: contrib/geo2nginx.pl
+Copyright: 2005, Andrei Nigmatulin
+License: BSD-2-clause
+
+Files: debian/*
+Copyright: 2022, 2023, Jan Mojžíš <jan.mojzis@gmail.com>
+ 2020-2022, Ondřej Nový <onovy@debian.org>
+ 2019-2022, Thomas Ward <teward@ubuntu.com>
+ 2013-2016, Christos Trochalakis <ctrochalakis@debian.org>
+ 2011-2013, Cyril Lavier <cyril.lavier@davromaniak.eu>
+ 2011, Dmitry E. Oboukhov <unera@debian.org>
+ 2010-2014, Michael Lustfield <michael@lustfield.net>
+ 2009-2014, Kartik Mistry <kartik@debian.org>
+ 2008, Jose Parrella <joseparrella@cantv.net>
+ 2007-2009, Fabio Tranchitella <kobold@debian.org>
+License: BSD-2-clause
+
+Files: debian/apport/*
+Copyright: 2015, Thomas Ward <teward@ubuntu.com>
+License: BSD-2-clause
+
+Files: debian/debhelper/*
+Copyright: 2022, Miao Wang
+License: Expat
+
+Files: debian/debhelper/dh_nginx
+Copyright: 2016, Christos Trochalakis <ctrochalakis@debian.org>
+License: GPL-2+
+
+Files: debian/debhelper/nginx_mod.pm
+Copyright: © 2022, Miao Wang
+License: BSD-2-clause
+
+Files: debian/help/examples/nginx_modsite
+Copyright: 2010, Michael Lustfield <mtecknology@ubuntu.com>
+License: BSD-2-clause
+
+Files: man/*
+Copyright: Nginx, Inc.
+ 2010, 2019, Sergey A. Osokin
+License: BSD-2-clause
+
+Files: src/*
+Copyright: Nginx, Inc.
+ Igor Sysoev
+License: BSD-2-clause
+
+Files: src/core/ngx_crypt.c
+Copyright: Maxim Dounin
+License: BSD-2-clause
+
+Files: src/core/ngx_md5.c
+Copyright: Valentin V. Bartenev
+ Ruslan Ermilov
+ Roman Arutyunyan
+ Maxim Dounin
+ 2011-2022, Nginx, Inc.
+ 2002-2021, Igor Sysoev
+License: BSD-2-clause
+
+Files: src/core/ngx_module.c
+  src/core/ngx_module.h
+Copyright: Nginx, Inc.
+ Maxim Dounin
+ Igor Sysoev
+License: BSD-2-clause
+
+Files: src/core/ngx_murmurhash.c
+Copyright: Austin Appleby
+License: public-domain
+ All MurmurHash versions are public domain software, and the author
+ disclaims all copyright to their code.
+
+Files: src/core/ngx_proxy_protocol.c
+  src/core/ngx_proxy_protocol.h
+Copyright: Roman Arutyunyan
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/core/ngx_rwlock.c
+  src/core/ngx_rwlock.h
+Copyright: Ruslan Ermilov
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/core/ngx_sha1.c
+Copyright: Nginx, Inc.
+ Maxim Dounin
+License: BSD-2-clause
+
+Files: src/core/ngx_syslog.c
+  src/core/ngx_syslog.h
+Copyright: Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/core/ngx_thread_pool.c
+Copyright: Valentin V. Bartenev
+ Ruslan Ermilov
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/core/ngx_thread_pool.h
+Copyright: Valentin V. Bartenev
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/event/modules/ngx_win32_poll_module.c
+Copyright: Nginx, Inc.
+ Maxim Dounin
+ Igor Sysoev
+License: BSD-2-clause
+
+Files: src/event/ngx_event_openssl_stapling.c
+Copyright: Nginx, Inc.
+ Maxim Dounin
+License: BSD-2-clause
+
+Files: src/event/ngx_event_udp.c
+Copyright: Roman Arutyunyan
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/event/ngx_event_udp.h
+Copyright: Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/http/modules/ngx_http_auth_request_module.c
+  src/http/modules/ngx_http_grpc_module.c
+  src/http/modules/ngx_http_upstream_keepalive_module.c
+  src/http/modules/ngx_http_upstream_least_conn_module.c
+Copyright: Nginx, Inc.
+ Maxim Dounin
+License: BSD-2-clause
+
+Files: src/http/modules/ngx_http_gunzip_filter_module.c
+Copyright: Nginx, Inc.
+ Maxim Dounin
+ Igor Sysoev
+License: BSD-2-clause
+
+Files: src/http/modules/ngx_http_mirror_module.c
+  src/http/modules/ngx_http_slice_filter_module.c
+  src/http/modules/ngx_http_upstream_hash_module.c
+Copyright: Roman Arutyunyan
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/http/modules/ngx_http_scgi_module.c
+Copyright: Nginx, Inc.
+ Manlio Perillo (manlio.perillo@gmail.com)
+ Igor Sysoev
+License: BSD-2-clause
+
+Files: src/http/modules/ngx_http_upstream_random_module.c
+Copyright: Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/http/modules/ngx_http_upstream_zone_module.c
+Copyright: Ruslan Ermilov
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/http/modules/ngx_http_uwsgi_module.c
+Copyright: Nginx, Inc.
+ Igor Sysoev
+ 2009, 2010, Unbit S.a.s.
+ 2008, Manlio Perillo (manlio.perillo@gmail.com)
+License: BSD-2-clause
+
+Files: src/http/modules/perl/typemap
+Copyright: Valentin V. Bartenev
+ Ruslan Ermilov
+ Roman Arutyunyan
+ Maxim Dounin
+ 2011-2022, Nginx, Inc.
+ 2002-2021, Igor Sysoev
+License: BSD-2-clause
+
+Files: src/http/ngx_http_huff_decode.c
+Copyright: Valentin V. Bartenev
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/http/ngx_http_huff_encode.c
+Copyright: Valentin V. Bartenev
+ Nginx, Inc.
+ 2015, Vlad Krasnov
+License: BSD-2-clause
+
+Files: src/http/v2/*
+Copyright: Valentin V. Bartenev
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/http/v2/ngx_http_v2_filter_module.c
+Copyright: Valentin V. Bartenev
+ Ruslan Ermilov
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/misc/*
+Copyright: Valentin V. Bartenev
+ Ruslan Ermilov
+ Roman Arutyunyan
+ Maxim Dounin
+ 2011-2022, Nginx, Inc.
+ 2002-2021, Igor Sysoev
+License: BSD-2-clause
+
+Files: src/misc/ngx_google_perftools_module.c
+Copyright: Nginx, Inc.
+ Igor Sysoev
+License: BSD-2-clause
+
+Files: src/os/unix/ngx_dlopen.c
+  src/os/unix/ngx_dlopen.h
+Copyright: Nginx, Inc.
+ Maxim Dounin
+License: BSD-2-clause
+
+Files: src/os/unix/ngx_setaffinity.c
+  src/os/unix/ngx_setaffinity.h
+Copyright: Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/os/win32/ngx_dlopen.c
+  src/os/win32/ngx_dlopen.h
+Copyright: Nginx, Inc.
+ Maxim Dounin
+License: BSD-2-clause
+
+Files: src/stream/ngx_stream.c
+  src/stream/ngx_stream.h
+  src/stream/ngx_stream_core_module.c
+  src/stream/ngx_stream_handler.c
+  src/stream/ngx_stream_proxy_module.c
+  src/stream/ngx_stream_return_module.c
+  src/stream/ngx_stream_upstream_hash_module.c
+Copyright: Roman Arutyunyan
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/stream/ngx_stream_set_module.c
+Copyright: Pavel Pautov
+ Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/stream/ngx_stream_ssl_preread_module.c
+  src/stream/ngx_stream_upstream_random_module.c
+Copyright: Nginx, Inc.
+License: BSD-2-clause
+
+Files: src/stream/ngx_stream_upstream_least_conn_module.c
+Copyright: Nginx, Inc.
+ Maxim Dounin
+License: BSD-2-clause
+
+Files: src/stream/ngx_stream_upstream_zone_module.c
+Copyright: Ruslan Ermilov
+ Nginx, Inc.
+License: BSD-2-clause
+
+License: BSD-2-clause
+ All rights reserved.
+ .
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+ .
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+License: Expat
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to
+ deal in the Software without restriction, including without limitation the
+ rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ sell copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ IN THE SOFTWARE.
+
+License: GPL-2+
+ This is free software, licensed under:
+ .
+   The GNU General Public License, Version 2, June 1991
+ .
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; version 2 dated June, 1991, or (at
+ your option) any later version.
+ On Debian systems, the complete text of version 2 of the GNU General
+ Public License can be found in '/usr/share/common-licenses/GPL-2'.

@@ -1,0 +1,4 @@
+# exact QEMU full-system command line used by tools/ref_boot_linux.sh
+# kernel: vmlinuz-7.0.0-31-generic
+# qemu:   QEMU emulator version 11.1.1
+/opt/homebrew/bin/qemu-system-riscv64 -M virt -m 2G -smp 1 -display none -monitor none -no-reboot -serial file:/Users/wangrunji/Codes/iJiege-v41-0908/ref/boot-log.txt -kernel /Users/wangrunji/Codes/iJiege-v41-0908/ref/.build/vmlinuz-7.0.0-31-generic -initrd /Users/wangrunji/Codes/iJiege-v41-0908/ref/.build/initramfs.cpio.gz -append console=ttyS0\ rdinit=/init 

@@ -1,0 +1,39 @@
++ docker run --rm --platform linux/riscv64 -v /Users/wangrunji/Codes/iJiege-v41-0908/ref:/ref riscv64/ubuntu:24.04 bash -c '
+set -e
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq
+apt-get install -y -qq strace nginx procps >/dev/null 2>&1 || apt-get install -y -qq strace nginx
+mkdir -p /ref
+nginx -v 2>&1 | tee /ref/nginx-version.txt
+uname -a > /ref/uname.txt
+cat /etc/os-release > /ref/os-release.txt
+ldd /usr/sbin/nginx > /ref/ldd.txt 2>&1
+mkdir -p /tmp/nlog
+sed -e "s#/var/log/nginx#/tmp/nlog#g" /etc/nginx/nginx.conf > /tmp/nginx.conf
+echo "== strace nginx -v =="
+strace -f -o /ref/strace-nginx-v.txt /usr/sbin/nginx -v 2>&1 | tail -3
+echo "== strace nginx startup (daemon off, 2s) =="
+timeout 3 strace -f -tt -o /ref/strace-nginx-run.txt /usr/sbin/nginx -c /tmp/nginx.conf -g "daemon off;" 2>&1 | tail -5
+wc -l /ref/strace-nginx-*.txt
+'
+Unable to find image 'riscv64/ubuntu:24.04' locally
+24.04: Pulling from riscv64/ubuntu
+d85e724d9e83: Pulling fs layer
+d85e724d9e83: Verifying Checksum
+d85e724d9e83: Download complete
+d85e724d9e83: Pull complete
+Digest: sha256:21cf3264226288af6158a4cd236c17c6a87aee421f7695989183b8845fa9ea8f
+Status: Downloaded newer image for riscv64/ubuntu:24.04
+nginx version: nginx/1.24.0 (Ubuntu)
+== strace nginx -v ==
+strace: ptrace(PTRACE_TRACEME, ...): Function not implemented
+strace: PTRACE_SETOPTIONS: Function not implemented
+strace: cleanup: waitpid(-1, __WALL): No child processes
+== strace nginx startup (daemon off, 2s) ==
+strace: test_ptrace_get_syscall_info: PTRACE_TRACEME: Function not implemented
+strace: ptrace(PTRACE_TRACEME, ...): Function not implemented
+strace: PTRACE_SETOPTIONS: Function not implemented
+strace: cleanup: waitpid(-1, __WALL): No child processes
+0 /ref/strace-nginx-run.txt
+0 /ref/strace-nginx-v.txt
+0 total
