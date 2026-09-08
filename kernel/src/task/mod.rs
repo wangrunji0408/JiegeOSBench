@@ -192,6 +192,42 @@ extern "C" fn kernel_thread_entry() -> ! {
     exit_current(0)
 }
 
+/// Boot-time entry: create the first user process.
+pub fn start_init() {
+    if crate::fs::initramfs_ready() {
+        if let Err(e) = process::spawn_init() {
+            crate::println!("[init] failed to start init: {}", e);
+        }
+    } else {
+        spawn_kernel(boot_test);
+    }
+}
+
+fn boot_test() {
+    crate::println!("[test] kernel thread running, tid={}", current().tid);
+    let mut n = 0u64;
+    loop {
+        sleep_ticks(50); // ~200 ms
+        n += 1;
+        if n % 10 == 0 {
+            crate::println!(
+                "[test] tick {} uptime {} ms free frames {}",
+                n,
+                crate::time::uptime_ns() / 1_000_000,
+                crate::mm::frame::free_count()
+            );
+        }
+    }
+}
+
+/// Enter the scheduler as the idle thread.
+pub fn start() -> ! {
+    unsafe {
+        set_sscratch(current().tf as usize);
+    }
+    idle_loop()
+}
+
 fn idle_loop() -> ! {
     loop {
         // Nothing runnable: sleep until an interrupt.
