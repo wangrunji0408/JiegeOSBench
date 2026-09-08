@@ -13,31 +13,32 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 > the web, but must work in the current directory. Keep working until the goal
 > is achieved.
 
-| # | Model | Effort | Harness | First HTTP 200 | Total | Context | Cost | Test date | Tier |
-|---|-------|--------|---------|------------|-------|---------|------|-----------|------|
-| 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | 2026-09-05 | 👑 Jiege |
-| 🥈 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 438K | $0.61 | 2026-09-08 | 🧠 Intelligent Jiege |
-| 🥉 | Claude Fable 5 | High | CC | 36min | 38min | 155K | $21 | 2026-07-05 | 🧠 Intelligent Jiege |
-| 4 | GPT 5.6 Sol | High | Codex | 36min | 49min | 222K | $14 | 2026-07-11 | 🧠 Intelligent Jiege |
-| 5 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 6 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
-| 7 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 8 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 2026-07-27 | 🧠 Intelligent Jiege |
-| 9 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 2026-08-12 | 🧠 Intelligent Jiege |
-| 10 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 2026-07-18 | 🧠 Intelligent Jiege |
-| 11 | GPT 5.6 Luna | xHigh | Codex | 2h 44min | 2h 45min | 243K x4 | $2.3 | 2026-08-08 | 🤖 Machine Jiege |
-| 12 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | 2026-03-24 | 🤖 Machine Jiege |
-| 13 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 2026-07-18 | 🤖 Machine Jiege |
-| 14 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 2026-08-20 | 🤖 Machine Jiege |
-| 15 | GLM 5.3 Flash (fp8) | — | CC | 6h 46min | 7h 10min | 967K | self-hosted | 2026-08-31 | 🤖 Machine Jiege |
-| 16 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 2026-08-01 | 🤖 Machine Jiege |
-| 17 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | 2026-03-18 | 🤖 Machine Jiege |
-| 18 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 2026-07-05 | 💥 Broken Jiege |
-| 19 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 2026-08-21 | 💥 Broken Jiege |
+| # | Model | Effort | Harness | First HTTP 200 | Total | Context | Cost | QEMU runs | Test date | Tier |
+|---|-------|--------|---------|------------|-------|---------|------|-----------|-----------|------|
+| 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | 9 | 2026-09-05 | 👑 Jiege |
+| 🥈 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 438K | $0.61 | 126 | 2026-09-08 | 🧠 Intelligent Jiege |
+| 🥉 | Claude Fable 5 | High | CC | 36min | 38min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
+| 4 | GPT 5.6 Sol | High | Codex | 36min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
+| 5 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 6 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
+| 7 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 8 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
+| 9 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
+| 10 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
+| 11 | GPT 5.6 Luna | xHigh | Codex | 2h 44min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
+| 12 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
+| 13 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
+| 14 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
+| 15 | GLM 5.3 Flash (fp8) | — | CC | 6h 46min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 16 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
+| 17 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
+| 18 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
+| 19 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
 
 
 
 Harness: CC = Claude Code, DSH = DeepSeek Harness.
+QEMU runs: commands that booted QEMU (direct `qemu-system-riscv64` calls plus the run's own wrapper scripts).
 
 ## Who is Jiege
 
