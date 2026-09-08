@@ -1,6 +1,6 @@
 //! Open file descriptions and the per-process file descriptor table.
 
-use super::{chardev, pipe, Inode, Stat};
+use super::{chardev, pipe, Inode, Kind, Stat};
 use crate::errno::*;
 use crate::sync::SpinLock;
 use alloc::sync::Arc;
@@ -109,20 +109,9 @@ impl Epoll {
         let mut items = self.items.lock();
         match op {
             1 => {
-                // EPOLL_CTL_ADD.  A stale entry can survive a close() when the
-                // descriptor number is reused; replace it unless it is the very
-                // same open file description.
-                if let Some(pos) = items.iter().position(|i| i.fd == fd) {
-                    if Arc::ptr_eq(&items[pos].file, &file) {
-                        return Err(EEXIST);
-                    }
-                    items[pos] = EpollItem {
-                        fd,
-                        file,
-                        events,
-                        data,
-                    };
-                    return Ok(());
+                // EPOLL_CTL_ADD
+                if items.iter().any(|i| i.fd == fd) {
+                    return Err(EEXIST);
                 }
                 items.push(EpollItem {
                     fd,
@@ -174,7 +163,7 @@ pub enum FileObj {
         pipe: Arc<pipe::Pipe>,
         write_end: bool,
     },
-    Socket(Arc<crate::socket::Socket>),
+    Socket(Arc<crate::net::socket::Socket>),
     Epoll(Arc<Epoll>),
     EventFd(Arc<EventFd>),
 }
@@ -368,22 +357,6 @@ impl File {
                 }
             }
             FileObj::Epoll(_) => EPOLLIN | EPOLLOUT,
-        }
-    }
-}
-
-impl Drop for File {
-    fn drop(&mut self) {
-        match &*self.obj.lock() {
-            FileObj::Pipe { pipe, write_end } => {
-                if *write_end {
-                    pipe.close_writer();
-                } else {
-                    pipe.close_reader();
-                }
-            }
-            FileObj::Socket(s) => s.on_close(),
-            _ => {}
         }
     }
 }
