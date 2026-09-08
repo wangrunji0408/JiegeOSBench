@@ -28,7 +28,7 @@ fn hex8(b: &[u8]) -> u32 {
 }
 
 /// Iterate over the archive, calling `f` for every entry.
-pub fn walk<F: FnMut(CpioEntry<'static>)>(buf: &'static [u8], mut f: F) {
+pub fn walk<F: FnMut(CpioEntry)>(buf: &'static [u8], mut f: F) {
     let mut off = 0usize;
     while off + 110 <= buf.len() {
         if &buf[off..off + 6] != NEWC_MAGIC {
