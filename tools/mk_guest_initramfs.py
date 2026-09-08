@@ -5,13 +5,14 @@ configuration files the unmodified Ubuntu nginx needs.
 Nothing here rebuilds or patches any vendor binary: files are copied verbatim
 from the unpacked Ubuntu riscv64 packages (see fetch_rootfs.py).
 """
+import gzip
 import os
 import stat
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 ROOTFS = os.path.join(ROOT, "rootfs")
-OUT = os.path.join(ROOT, "build", "initramfs.cpio")
+OUT = os.path.join(ROOT, "build", "initramfs.cpio.gz")
 
 NGINX_CONF = b"""worker_processes 1;
 daemon off;
@@ -34,8 +35,8 @@ http {
 
 EXTRA_FILES = {
     "etc/nginx/nginx.conf": NGINX_CONF,
-    "etc/passwd": b"root:x:0:0:root:/root:/bin/sh\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\n",
-    "etc/group": b"root:x:0:\nwww-data:x:33:\nnogroup:x:65534:\n",
+    "etc/passwd": b"root:x:0:0:root:/root:/bin/sh\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\n",
+    "etc/group": b"root:x:0:\nnogroup:x:65534:\n",
     "etc/nsswitch.conf": b"passwd:         files\ngroup:          files\nshadow:         files\nhosts:          files dns\nnetworks:       files\n",
     "etc/hostname": b"ijiege\n",
     "etc/hosts": b"127.0.0.1 localhost\n10.0.2.15 ijiege\n",
@@ -104,16 +105,17 @@ def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     ino = 100
     seen = set()
-    with open(OUT, "wb") as out:
+    with gzip.open(OUT, "wb", compresslevel=6) as out:
         add_dir(out, ".", ino)
         ino += 1
 
         dirs = set()
         for dirpath, dirnames, _ in os.walk(ROOTFS):
             rel = os.path.relpath(dirpath, ROOTFS)
+            if rel == ".":
+                continue
             for d in dirnames:
-                p = d if rel == "." else os.path.join(rel, d)
-                dirs.add(os.path.normpath(p).replace(os.sep, "/"))
+                dirs.add(os.path.normpath(os.path.join(rel, d)).replace(os.sep, "/"))
         for d in sorted(dirs):
             if d in seen:
                 continue
@@ -152,7 +154,8 @@ def main():
             ino += 1
 
         for name, data in EXTRA_FILES.items():
-            # EXTRA_FILES override vendor files with the same path
+            if name in seen:
+                continue
             parent = os.path.dirname(name)
             if parent:
                 acc = ""
@@ -160,10 +163,8 @@ def main():
                     acc = p if not acc else acc + "/" + p
                     if acc not in seen:
                         seen.add(acc)
-                        # only create it if the archive does not already have it
-                        if acc not in dirs:
-                            add_dir(out, acc, ino)
-                            ino += 1
+                        add_dir(out, acc, ino)
+                        ino += 1
             seen.add(name)
             add_file(out, name, ino, 0o100644, data)
             ino += 1
