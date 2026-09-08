@@ -9,7 +9,6 @@ pub mod pipe;
 use crate::errno::*;
 use crate::mm;
 use crate::sync::SpinLock;
-use alloc::boxed::Box;
 use alloc::collections::BTreeMap;
 use alloc::string::{String, ToString};
 use alloc::sync::Arc;
@@ -70,8 +69,6 @@ pub struct InodeInner {
     pub mtime: i64,
     pub atime: i64,
     pub ctime: i64,
-    /// static content for special files (e.g. /proc entries)
-    pub special: Option<&'static [u8]>,
 }
 
 pub struct Inode {
@@ -124,7 +121,6 @@ impl Inode {
                 mtime: 0,
                 atime: 0,
                 ctime: 0,
-                special: None,
             }),
         })
     }
@@ -214,9 +210,7 @@ impl Inode {
                 i.data = Data::Owned(v);
             }
             Data::Static(_) => {
-                // copy-on-write upgrade to an owned buffer
-                let old = i.data.as_slice().to_vec();
-                let mut v = old;
+                let mut v = i.data.as_slice().to_vec();
                 if v.len() < need {
                     v.resize(need, 0);
                 }
@@ -240,7 +234,7 @@ impl Inode {
         self.inner.lock().data.len() as u64
     }
 
-    pub fn readdir(&self, offset: u64) -> Result<Option<(String, u64, u64, u8)>, Errno> {
+    pub fn readdir(&self, offset: u64) -> Result<Option<(String, u64, u8)>, Errno> {
         let i = self.inner.lock();
         if i.kind != Kind::Dir {
             return Err(ENOTDIR);
@@ -257,9 +251,9 @@ impl Inode {
                     Kind::BlockDev => 6u8,
                     Kind::Fifo => 1u8,
                     Kind::Socket => 12u8,
-                    Kind::FdLink(_) => 8u8,
+                    Kind::FdLink(_) => 10u8,
                 };
-                return Ok(Some((name.clone(), c.ino, c.ino, dtype)));
+                return Ok(Some((name.clone(), c.ino, dtype)));
             }
             idx += 1;
         }
@@ -279,7 +273,7 @@ pub fn root() -> Arc<Inode> {
     ROOT.lock().clone().expect("no root filesystem")
 }
 
-fn mkdir_path(root: &Arc<Inode>, path: &str) {
+pub fn mkdir_path(root: &Arc<Inode>, path: &str) {
     let mut cur = root.clone();
     for comp in path.split('/').filter(|c| !c.is_empty()) {
         let next = match cur.child(comp) {
@@ -291,16 +285,6 @@ fn mkdir_path(root: &Arc<Inode>, path: &str) {
             }
         };
         cur = next;
-    }
-}
-
-/// Create a writable file if it does not exist.
-pub fn touch(root: &Arc<Inode>, path: &str, data: &[u8]) {
-    let (dir, name) = split_parent(path);
-    let parent = lookup_abs(root, dir).unwrap_or_else(|| root.clone());
-    if parent.child(name).is_none() {
-        let f = Inode::new_file(0o644, Data::Owned(data.to_vec()));
-        parent.add_child(name, f);
     }
 }
 
@@ -334,10 +318,7 @@ pub fn lookup(cwd: &Arc<Inode>, path: &str, follow: bool) -> Result<Arc<Inode>, 
     for (i, comp) in comps.iter().enumerate() {
         let node = match *comp {
             "." => continue,
-            ".." => {
-                // we do not track parents; approximate with root
-                continue;
-            }
+            ".." => continue,
             name => cur.child(name).ok_or(ENOENT)?,
         };
         let kind = node.kind();
@@ -347,29 +328,16 @@ pub fn lookup(cwd: &Arc<Inode>, path: &str, follow: bool) -> Result<Arc<Inode>, 
                 return Err(ELOOP);
             }
             let target = node.inner.lock().link.clone();
-            let rest: Vec<&str> = comps[i + 1..].to_vec();
-            let newpath = if target.starts_with('/') {
-                let mut s = target;
-                for r in rest {
-                    s.push('/');
-                    s.push_str(r);
-                }
-                s
+            let mut newpath = target;
+            for r in &comps[i + 1..] {
+                newpath.push('/');
+                newpath.push_str(r);
+            }
+            let base = if newpath.starts_with('/') {
+                root.clone()
             } else {
-                let mut s = String::new();
-                for r in rest {
-                    s.push('/');
-                    s.push_str(r);
-                }
-                if s.is_empty() {
-                    target
-                } else {
-                    let mut t = target;
-                    t.push_str(&s);
-                    t
-                }
+                cur.clone()
             };
-            let base = if newpath.starts_with('/') { root } else { cur.clone() };
             return lookup(&base, &newpath, follow);
         }
         if i + 1 < n && kind != Kind::Dir {
@@ -415,10 +383,8 @@ pub fn unlink_at(cwd: &Arc<Inode>, path: &str) -> Result<(), Errno> {
     let mut p = parent.inner.lock();
     match p.children.get(&name) {
         Some(n) => {
-            if n.is_dir() {
-                if !n.inner.lock().children.is_empty() {
-                    return Err(ENOTEMPTY);
-                }
+            if n.is_dir() && !n.inner.lock().children.is_empty() {
+                return Err(ENOTEMPTY);
             }
             p.children.remove(&name);
             Ok(())
@@ -438,8 +404,7 @@ pub fn rename_at(cwd: &Arc<Inode>, old: &str, new: &str) -> Result<(), Errno> {
 
 pub fn symlink_at(cwd: &Arc<Inode>, target: &str, linkpath: &str) -> Result<(), Errno> {
     let (parent, name) = lookup_parent(cwd, linkpath)?;
-    let node = Inode::new_symlink(target);
-    parent.add_child(&name, node);
+    parent.add_child(&name, Inode::new_symlink(target));
     Ok(())
 }
 
@@ -465,14 +430,29 @@ pub fn init() {
         load_cpio(&root, buf);
     }
 
-    // writable directories and device nodes
     for d in [
-        "/tmp", "/run", "/var", "/var/log", "/var/log/nginx", "/var/lib", "/var/lib/nginx",
-        "/var/lib/nginx/tmp", "/var/lib/nginx/tmp/client_body", "/var/cache", "/dev", "/proc",
-        "/proc/self", "/proc/self/fd", "/sys", "/root", "/home", "/srv",
+        "/tmp",
+        "/run",
+        "/var",
+        "/var/log",
+        "/var/log/nginx",
+        "/var/lib",
+        "/var/lib/nginx",
+        "/var/lib/nginx/tmp",
+        "/var/lib/nginx/tmp/client_body",
+        "/var/cache",
+        "/dev",
+        "/proc",
+        "/proc/self",
+        "/proc/self/fd",
+        "/sys",
+        "/root",
+        "/home",
+        "/srv",
     ] {
         mkdir_path(&root, d);
     }
+
     let dev = lookup_abs(&root, "/dev").unwrap();
     for (name, rdev) in [
         ("null", chardev::DEV_NULL),
@@ -486,47 +466,47 @@ pub fn init() {
         ("stdout", chardev::DEV_CONSOLE),
         ("stdin", chardev::DEV_CONSOLE),
     ] {
-        dev.add_child(name, Inode::new_char(dev));
+        dev.add_child(name, Inode::new_chardev(rdev));
     }
-    // fix: use the right rdev per name
-    let _ = dev;
 
-    // /proc/self/fd/N magic links
     let fddir = lookup_abs(&root, "/proc/self/fd").unwrap();
     for n in 0..64u32 {
-        let i = Inode::new(Kind::FdLink(n), 0o777 | S_IFLNK);
-        fddir.add_child(&alloc::format!("{}", n), i);
+        fddir.add_child(&alloc::format!("{}", n), Inode::new(Kind::FdLink(n), 0o777 | S_IFLNK));
     }
-    // a few static /proc files that glibc/nginx may read
+
     let proc = lookup_abs(&root, "/proc").unwrap();
     proc.add_child(
         "meminfo",
-        Inode::new_file(0o444, Data::Static(b"MemTotal:        2000000 kB\nMemFree:         1500000 kB\nMemAvailable:    1500000 kB\n")),
+        Inode::new_file(
+            0o444,
+            Data::Static(b"MemTotal:        2000000 kB\nMemFree:         1500000 kB\nMemAvailable:    1500000 kB\n"),
+        ),
     );
     proc.add_child(
         "cpuinfo",
-        Inode::new_file(0o444, Data::Static(b"processor\t: 0\nhart\t\t: 0\nisa\t\t: rv64imafdc\nmmu\t\t: sv39\n")),
+        Inode::new_file(
+            0o444,
+            Data::Static(b"processor\t: 0\nhart\t\t: 0\nisa\t\t: rv64imafdc\nmmu\t\t: sv39\n"),
+        ),
     );
     proc.add_child(
         "stat",
-        Inode::new_file(0o444, Data::Static(b"cpu  0 0 0 0 0 0 0 0 0 0\ncpu0 0 0 0 0 0 0 0 0 0 0\nctxt 0\nbtime 0\nprocesses 1\nprocs_running 1\nprocs_blocked 0\n")),
+        Inode::new_file(
+            0o444,
+            Data::Static(b"cpu  0 0 0 0 0 0 0 0 0 0\ncpu0 0 0 0 0 0 0 0 0 0 0\nctxt 0\nbtime 0\nprocesses 1\nprocs_running 1\nprocs_blocked 0\n"),
+        ),
     );
     proc.add_child(
         "version",
         Inode::new_file(0o444, Data::Static(b"Linux version 6.8.0-riscv64 (ijiege) #1 SMP\n")),
     );
-    proc.add_child(
-        "mounts",
-        Inode::new_file(0o444, Data::Static(b"none / rootfs rw 0 0\n")),
-    );
-    proc.add_child("self/mounts", Inode::new_file(0o444, Data::Static(b"none / rootfs rw 0 0\n")));
+    proc.add_child("mounts", Inode::new_file(0o444, Data::Static(b"none / rootfs rw 0 0\n")));
 
     *ROOT.lock() = Some(root);
     crate::println!("[fs] root filesystem ready");
 }
 
 fn load_cpio(root: &Arc<Inode>, buf: &'static [u8]) {
-    use alloc::collections::BTreeMap;
     let mut hardlinks: BTreeMap<u32, Arc<Inode>> = BTreeMap::new();
     let mut count = 0;
     cpio::walk(buf, |e| {
@@ -548,7 +528,6 @@ fn load_cpio(root: &Arc<Inode>, buf: &'static [u8]) {
                 }
             }
         };
-        // hard link?
         if e.nlink > 1 && ftype == S_IFREG {
             if let Some(existing) = hardlinks.get(&e.ino) {
                 existing.inner.lock().nlink += 1;
@@ -558,13 +537,10 @@ fn load_cpio(root: &Arc<Inode>, buf: &'static [u8]) {
         }
         let node = match ftype {
             S_IFDIR => Inode::new_dir(mode & 0o7777),
-            S_IFLNK => {
-                let t = core::str::from_utf8(e.data).unwrap_or("");
-                Inode::new_symlink(t)
-            }
+            S_IFLNK => Inode::new_symlink(core::str::from_utf8(e.data).unwrap_or("")),
             S_IFCHR => Inode::new_chardev(e.rdev),
-            S_IFBLK => Inode::new(Kind::BlockDev, mode & 0o7777 | S_IFBLK),
-            S_IFIFO => Inode::new(Kind::Fifo, mode & 0o7777 | S_IFIFO),
+            S_IFBLK => Inode::new(Kind::BlockDev, (mode & 0o7777) | S_IFBLK),
+            S_IFIFO => Inode::new(Kind::Fifo, (mode & 0o7777) | S_IFIFO),
             _ => Inode::new_file(mode & 0o7777, Data::Static(e.data)),
         };
         {
