@@ -19,10 +19,9 @@ pub const SOCK_CLOEXEC: u32 = 0x80000;
 pub enum SockInner {
     Unconnected { domain: u16, ty: u32 },
     UnixPair { rx: Arc<Pipe>, tx: Arc<Pipe> },
-    InetIdle { port: u16, bound: bool },
+    InetIdle,
     InetListening { handle: TcpHandle },
-    InetConnected { handle: TcpHandle },
-    InetClosed,
+    InetConnected { handle },
 }
 
 pub struct Socket {
@@ -38,10 +37,7 @@ impl Socket {
 
     pub fn new_inet() -> Arc<Self> {
         Arc::new(Self {
-            inner: SpinLock::new(SockInner::InetIdle {
-                port: 0,
-                bound: false,
-            }),
+            inner: SpinLock::new(SockInner::InetIdle),
         })
     }
 
@@ -111,11 +107,9 @@ impl Socket {
                     r |= EPOLLIN;
                 }
                 match net::tcp_state(*handle) {
-                    TcpState::Established => {
-                        r |= EPOLLOUT;
-                    }
+                    TcpState::Established => r |= EPOLLOUT,
                     TcpState::CloseWait | TcpState::Closed | TcpState::LastAck => {
-                        r |= EPOLLIN | EPOLLHUP;
+                        r |= EPOLLIN | EPOLLHUP
                     }
                     TcpState::TimeWait => r |= EPOLLHUP,
                     _ => {}
@@ -134,10 +128,8 @@ impl Socket {
         let inner = self.inner.lock();
         if let SockInner::InetConnected { handle } = &*inner {
             net::tcp_shutdown(*handle, how == 0 || how == 2, how == 1 || how == 2);
-            Ok(())
-        } else {
-            Ok(())
         }
+        Ok(())
     }
 
     pub fn local_addr(&self) -> Option<([u8; 4], u16)> {
@@ -167,10 +159,12 @@ impl Socket {
 
 impl Drop for Socket {
     fn drop(&mut self) {
-        if let SockInner::InetConnected { handle } | SockInner::InetListening { handle } =
-            &*self.inner.lock()
-        {
-            net::tcp_drop(*handle);
+        let mut inner = self.inner.lock();
+        match &mut *inner {
+            SockInner::InetConnected { handle } | SockInner::InetListening { handle } => {
+                net::tcp_drop(*handle);
+            }
+            _ => {}
         }
     }
 }
@@ -199,7 +193,13 @@ fn parse_sockaddr(p: &mut Process, addr: usize, len: usize) -> Result<([u8; 4], 
     Ok((ip, port, family))
 }
 
-fn write_sockaddr(p: &mut Process, addr: usize, addrlen: usize, ip: [u8; 4], port: u16) -> Result<(), Errno> {
+fn write_sockaddr(
+    p: &mut Process,
+    addr: usize,
+    addrlen: usize,
+    ip: [u8; 4],
+    port: u16,
+) -> Result<(), Errno> {
     if addr == 0 || addrlen == 0 {
         return Ok(());
     }
@@ -224,13 +224,23 @@ pub fn sys_socket(p: &mut Process, domain: usize, ty: u32, _proto: u32) -> Resul
     }
     let f = File::new(
         FileObj::Socket(sock),
-        if ty & SOCK_NONBLOCK != 0 { O_NONBLOCK } else { 0 },
+        if ty & SOCK_NONBLOCK != 0 {
+            O_NONBLOCK
+        } else {
+            0
+        },
         ty & SOCK_CLOEXEC != 0,
     );
     Ok(p.files.alloc(f, 0)? as usize)
 }
 
-pub fn sys_socketpair(p: &mut Process, domain: usize, ty: u32, _proto: u32, sv: usize) -> Result<usize, Errno> {
+pub fn sys_socketpair(
+    p: &mut Process,
+    domain: usize,
+    ty: u32,
+    _proto: u32,
+    sv: usize,
+) -> Result<usize, Errno> {
     if domain as u16 != AF_UNIX {
         return Err(EAFNOSUPPORT);
     }
@@ -238,7 +248,11 @@ pub fn sys_socketpair(p: &mut Process, domain: usize, ty: u32, _proto: u32, sv: 
     let b2a = Pipe::new();
     let s0 = Socket::new_unix_pair(a2b.clone(), b2a.clone());
     let s1 = Socket::new_unix_pair(b2a, a2b);
-    let flags = if ty & SOCK_NONBLOCK != 0 { O_NONBLOCK } else { 0 };
+    let flags = if ty & SOCK_NONBLOCK != 0 {
+        O_NONBLOCK
+    } else {
+        0
+    };
     let cloexec = ty & SOCK_CLOEXEC != 0;
     let f0 = File::new(FileObj::Socket(s0), flags, cloexec);
     let f1 = File::new(FileObj::Socket(s1), flags, cloexec);
@@ -259,27 +273,32 @@ pub fn sys_bind(p: &mut Process, fd: i32, addr: usize, len: usize) -> Result<usi
     }
     let _ = ip;
     let handle = net::tcp_listen(port).map_err(|_| EADDRINUSE)?;
-    let mut inner = s.inner.lock();
-    *inner = SockInner::InetListening { handle };
+    *s.inner.lock() = SockInner::InetListening { handle };
     Ok(0)
 }
 
-pub fn sys_listen(_p: &mut Process, fd: i32, _backlog: i32) -> Result<usize, Errno> {
-    let s = get_sock(_p, fd)?;
+pub fn sys_listen(p: &mut Process, fd: i32, _backlog: i32) -> Result<usize, Errno> {
+    let s = get_sock(p, fd)?;
     if !s.is_listening() {
-        // listen on an unbound socket: bind to a random port
         let handle = net::tcp_listen(0).map_err(|_| EADDRINUSE)?;
         *s.inner.lock() = SockInner::InetListening { handle };
     }
     Ok(0)
 }
 
-pub fn sys_accept(p: &mut Process, fd: i32, addr: usize, addrlen: usize, nonblock: bool) -> Result<usize, Errno> {
+pub fn sys_accept(
+    p: &mut Process,
+    fd: i32,
+    addr: usize,
+    addrlen: usize,
+    nonblock: bool,
+) -> Result<usize, Errno> {
     let s = get_sock(p, fd)?;
     let handle = match &*s.inner.lock() {
         SockInner::InetListening { handle } => *handle,
         _ => return Err(EINVAL),
     };
+    let f = p.files.get(fd)?;
     loop {
         net::poll();
         match net::tcp_accept(handle) {
@@ -288,19 +307,15 @@ pub fn sys_accept(p: &mut Process, fd: i32, addr: usize, addrlen: usize, nonbloc
                     write_sockaddr(p, addr, addrlen, ip, port)?;
                 }
                 let ns = Socket::new_connected(nh);
-                let f = File::new(
+                let nf = File::new(
                     FileObj::Socket(ns),
                     if nonblock { O_NONBLOCK } else { 0 },
                     false,
                 );
-                return Ok(p.files.alloc(f, 0)? as usize);
+                return Ok(p.files.alloc(nf, 0)? as usize);
             }
             Ok(None) => {
-                if nonblock || s.readiness() == 0 {
-                    // fall through to the blocking check below
-                }
-                let f = p.files.get(fd)?;
-                if f.nonblocking() {
+                if nonblock || f.nonblocking() {
                     return Err(EAGAIN);
                 }
                 if p.sig.pending & !p.sig.blocked != 0 {
@@ -317,7 +332,6 @@ pub fn sys_connect(p: &mut Process, fd: i32, addr: usize, len: usize) -> Result<
     let s = get_sock(p, fd)?;
     let (ip, port, family) = parse_sockaddr(p, addr, len)?;
     if family == AF_UNIX {
-        // pathname unix sockets are not provided
         return Err(ENOENT);
     }
     if family != AF_INET {
@@ -325,7 +339,6 @@ pub fn sys_connect(p: &mut Process, fd: i32, addr: usize, len: usize) -> Result<
     }
     let handle = net::tcp_connect(ip, port).map_err(|_| ENETUNREACH)?;
     *s.inner.lock() = SockInner::InetConnected { handle };
-    // wait for the connection to establish
     let f = p.files.get(fd)?;
     loop {
         net::poll();
@@ -344,14 +357,24 @@ pub fn sys_connect(p: &mut Process, fd: i32, addr: usize, len: usize) -> Result<
     }
 }
 
-pub fn sys_getsockname(p: &mut Process, fd: i32, addr: usize, addrlen: usize) -> Result<usize, Errno> {
+pub fn sys_getsockname(
+    p: &mut Process,
+    fd: i32,
+    addr: usize,
+    addrlen: usize,
+) -> Result<usize, Errno> {
     let s = get_sock(p, fd)?;
     let (ip, port) = s.local_addr().unwrap_or(([10, 0, 2, 15], 0));
     write_sockaddr(p, addr, addrlen, ip, port)?;
     Ok(0)
 }
 
-pub fn sys_getpeername(p: &mut Process, fd: i32, addr: usize, addrlen: usize) -> Result<usize, Errno> {
+pub fn sys_getpeername(
+    p: &mut Process,
+    fd: i32,
+    addr: usize,
+    addrlen: usize,
+) -> Result<usize, Errno> {
     let s = get_sock(p, fd)?;
     let (ip, port) = s.peer_addr().ok_or(ENOTCONN)?;
     write_sockaddr(p, addr, addrlen, ip, port)?;
@@ -425,12 +448,11 @@ pub fn sys_recvfrom(
     }
 }
 
-fn read_msghdr(p: &mut Process, hdr: usize) -> Result<(usize, Vec<(usize, usize)>, usize), Errno> {
+fn read_msghdr(p: &mut Process, hdr: usize) -> Result<Vec<(usize, usize)>, Errno> {
     let mut b = [0u8; 56];
     p.copy_from_user(hdr, &mut b)?;
     let iov = u64::from_le_bytes(b[16..24].try_into().unwrap()) as usize;
     let iovlen = u64::from_le_bytes(b[24..32].try_into().unwrap()) as usize;
-    let control = u64::from_le_bytes(b[32..40].try_into().unwrap()) as usize;
     let mut iovs = Vec::new();
     for i in 0..iovlen.min(1024) {
         let mut ib = [0u8; 16];
@@ -439,12 +461,12 @@ fn read_msghdr(p: &mut Process, hdr: usize) -> Result<(usize, Vec<(usize, usize)
         let len = u64::from_le_bytes(ib[8..16].try_into().unwrap()) as usize;
         iovs.push((base, len));
     }
-    Ok((iov, iovs, control))
+    Ok(iovs)
 }
 
 pub fn sys_sendmsg(p: &mut Process, fd: i32, hdr: usize, _flags: usize) -> Result<usize, Errno> {
     let s = get_sock(p, fd)?;
-    let (_, iovs, _) = read_msghdr(p, hdr)?;
+    let iovs = read_msghdr(p, hdr)?;
     let mut data = Vec::new();
     for (base, len) in iovs.iter() {
         let mut b = alloc::vec![0u8; *len];
@@ -471,7 +493,7 @@ pub fn sys_sendmsg(p: &mut Process, fd: i32, hdr: usize, _flags: usize) -> Resul
 
 pub fn sys_recvmsg(p: &mut Process, fd: i32, hdr: usize, _flags: usize) -> Result<usize, Errno> {
     let s = get_sock(p, fd)?;
-    let (_, iovs, _) = read_msghdr(p, hdr)?;
+    let iovs = read_msghdr(p, hdr)?;
     let total: usize = iovs.iter().map(|(_, l)| *l).sum();
     if total == 0 {
         return Ok(0);
@@ -502,15 +524,18 @@ pub fn sys_recvmsg(p: &mut Process, fd: i32, hdr: usize, _flags: usize) -> Resul
         p.copy_to_user(*base, &data[off..off + k])?;
         off += k;
     }
-    // msg_flags = 0, msg_namelen = 0
-    let mut b = [0u8; 8];
-    p.copy_from_user(hdr, &mut b)?;
     p.copy_to_user(hdr + 8, &0u32.to_le_bytes())?;
     p.copy_to_user(hdr + 48, &0i32.to_le_bytes())?;
     Ok(n)
 }
 
-pub fn sys_sendmmsg(p: &mut Process, fd: i32, mmsghdr: usize, vlen: usize, flags: usize) -> Result<usize, Errno> {
+pub fn sys_sendmmsg(
+    p: &mut Process,
+    fd: i32,
+    mmsghdr: usize,
+    vlen: usize,
+    flags: usize,
+) -> Result<usize, Errno> {
     let mut done = 0;
     for i in 0..vlen {
         match sys_sendmsg(p, fd, mmsghdr + i * 64, flags) {
