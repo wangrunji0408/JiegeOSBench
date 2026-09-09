@@ -17,8 +17,8 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 |---|-------|--------|---------|------------|-------|---------|------|-----------|-----------|------|
 | 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | 9 | 2026-09-05 | 👑 Jiege |
 | 🥈 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 438K | $0.61 | 126 | 2026-09-08 | 🧠 Intelligent Jiege |
-| 4 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
 | 🥉 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
+| 4 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
 | 5 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
 | 6 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
 | 7 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
