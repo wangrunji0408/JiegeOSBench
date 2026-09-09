@@ -29,8 +29,8 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | 12 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
 | 13 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
 | 14 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
-| 15 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
-| 16 | GLM 5.3 Flash (fp8) | — | CC | 6h 46min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 15 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 16 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
 | 17 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
 | 18 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
 | 19 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
@@ -297,7 +297,7 @@ Claude Code ran for **~3h 52min** (continuous — no idle or API-retry gaps), 35
 | 03:52 | Stable: 4 sequential + 3 concurrent requests all 200 ✅ |
 | 03:53 | README written, goal complete |
 
-### GLM 5.3 Flash (fp8) — 6h 46min / 7h 10min
+### GLM 5.3 Flash (fp8) — 6h 2min / 7h 10min
 
 ![GLM 5.3 Flash Timeline](figures/glm53-flash-timeline.png)
 
