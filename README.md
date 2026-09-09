@@ -17,8 +17,8 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 |---|-------|--------|---------|------------|-------|---------|------|-----------|-----------|------|
 | 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | 9 | 2026-09-05 | 👑 Jiege |
 | 🥈 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 438K | $0.61 | 126 | 2026-09-08 | 🧠 Intelligent Jiege |
-| 🥉 | Claude Fable 5 | High | CC | 36min | 38min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
-| 4 | GPT 5.6 Sol | High | Codex | 36min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
+| 4 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
+| 🥉 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
 | 5 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
 | 6 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
 | 7 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
@@ -48,7 +48,7 @@ In 2019, Jiege ran nginx on [rCore](https://jia.je/programming/2019/03/08/runnin
 
 ![GPT-6 Astra Timeline](figures/gpt6-astra-timeline.png)
 
-OpenAI Codex (desktop) ran for **~6min** to first HTTP 200 — by far the fastest run on this board, ~6× quicker than the previous record (GPT 5.6 Sol, 36min). The kernel came out almost entirely in two first-pass writing bursts: **zero kernel panics, zero web searches** (pure black-box), zero context compactions, one uninterrupted turn (32 API requests, 31 bash tool calls, 1.74M tokens total, peak context 83K). Cost **$4**. Took the Alpine official-APK route — unmodified nginx 1.30.4 (riscv64) + musl/OpenSSL/PCRE2/zlib, byte-verified against the APK; acceptance suite green by ~8min, goal complete at 8.8min.
+OpenAI Codex (desktop) ran for **~6min** to first HTTP 200 — by far the fastest run on this board, ~6× quicker than the previous record (GPT 5.6 Sol, 33min). The kernel came out almost entirely in two first-pass writing bursts: **zero kernel panics, zero web searches** (pure black-box), zero context compactions, one uninterrupted turn (32 API requests, 31 bash tool calls, 1.74M tokens total, peak context 83K). Cost **$4**. Took the Alpine official-APK route — unmodified nginx 1.30.4 (riscv64) + musl/OpenSSL/PCRE2/zlib, byte-verified against the APK; acceptance suite green by ~8min, goal complete at 8.8min.
 
 | Time | Milestone |
 |------|-----------|
@@ -85,11 +85,11 @@ DeepSeek Harness ran for **~47min** (first HTTP 200 at 30min) with the **standar
 | 00:44 | Scheduler starvation fixed (LIFO ready queue → FIFO) |
 | 00:47 | Goal complete — clean rebuild + binary byte-verification |
 
-## Claude Fable 5 — 36min / 38min
+## Claude Fable 5 — 35min / 41min
 
 ![Claude Fable 5 Timeline](figures/fable5-timeline.png)
 
-Claude Code ran for **~38min**, 65 API requests. Total cost approximately **$21**. Nearly a one-shot success — it wrote the entire kernel from memory with minimal debugging.
+Claude Code ran for **~41min**, 65 API requests. Total cost approximately **$21**. Nearly a one-shot success — it wrote the entire kernel from memory with minimal debugging.
 
 | Time | Milestone |
 |------|-----------|
@@ -99,7 +99,9 @@ Claude Code ran for **~38min**, 65 API requests. Total cost approximately **$21*
 | 00:28 | Syscall layer complete, nginx ELF loads |
 | 00:32 | QEMU boot: PANIC at trap.rs — page fault |
 | 00:34 | QEMU boot: nginx listening on port 80 🎉 |
+| 00:35 | First HTTP 200 OK from host — `Server: nginx/1.28.3` 🎉 |
 | 00:37 | Post-fix cleanup (sendfile, README) |
+| 00:41 | Final acceptance: full suite green + README written ✅ |
 
 ### Claude Fable 5.1 — 58min / 1h 45min
 
@@ -123,11 +125,11 @@ Claude Code ran for **~58min** to first HTTP 200 (goal complete at 105min) — t
 | 01:02 | Suite green: index/404/HEAD/sendfile 4MiB/keep-alive |
 | 01:45 | Signal/concurrency/leak/throughput suites, README, git commit ✅ |
 
-### GPT 5.6 Sol — 36min / 49min
+### GPT 5.6 Sol — 33min / 49min
 
 ![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
 
-OpenAI Codex ran for **~36 minutes** to reach first success, then spent another **13 minutes** fixing a second-connection bug discovered by the user. Total cost: **~$14**.
+OpenAI Codex ran for **~33 minutes** to first HTTP 200 (it claimed PASS at 36min), then spent another **13 minutes** fixing a second-connection bug discovered by the user. Total cost: **~$14**.
 
 > ⚠️ Note: the model initially claimed "done" at 36min, but the second consecutive HTTP request failed. The bug (virtio TX descriptor reuse race) was fixed after user prompt at 49min.
 
