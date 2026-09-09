@@ -25,12 +25,12 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | 8 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
 | 9 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
 | 10 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
-| 11 | GPT 5.6 Luna | xHigh | Codex | 2h 44min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
-| 12 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
-| 13 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
+| 11 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
+| 12 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
+| 13 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
 | 14 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
-| 15 | GLM 5.3 Flash (fp8) | — | CC | 6h 46min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
-| 16 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
+| 15 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
+| 16 | GLM 5.3 Flash (fp8) | — | CC | 6h 46min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
 | 17 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
 | 18 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
 | 19 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
@@ -224,7 +224,7 @@ Claude Code ran for **~2h 19min**. 151 API requests, 26.3M tokens total (includi
 | 02:15 | nginx stable again |
 | 02:19 | Final validation: SHA256 + 100 concurrent requests all 200 ✅ |
 
-### GPT 5.6 Luna — 2h 44min / 2h 45min
+### GPT 5.6 Luna — 2h 35min / 2h 45min
 
 ![GPT 5.6 Luna Timeline](figures/gpt56-luna-timeline.png)
 
@@ -242,7 +242,7 @@ OpenAI Codex (desktop) ran for **~2h 45min** of active time (3h 19min wall-clock
 | 61:44 | Dynamic linking OK — all dependency ELFs mapped |
 | 93:47 | Context compact #2 |
 | 113:17 | Context compact #3; nginx binds 0.0.0.0:80 |
-| 164:07 | nginx 200 OK from host 🎉 |
+| 155:12 | nginx 200 OK from host 🎉 |
 | 164:50 | Final validation + goal complete |
 
 ### Claude Opus 4.6 — 2h 46min / 2h 46min
