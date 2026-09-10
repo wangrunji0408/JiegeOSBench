@@ -9,7 +9,7 @@
 | # | 模型 | 思考强度 | Harness | 首次HTTP200时间 | 总时间 | 上下文 | 成本 | QEMU 运行次数 | 测试日期 | 段位 |
 |:--|:------|:--------|:---------|:----------|:------|:------|:------|:--------------|:--------|:----|
 | 🏅 | GPT-6 Astra | 高 | Codex | 6分钟 | 9分钟 | 83K | $4 | 9 | 2026-09-05 | 👑 杰哥 |
-| 🥈 | DeepSeek V4.1 Flash | 高 | DSH | 30分钟 | 47分钟 | 438K | $0.61 | 126 | 2026-09-08 | 🧠 智能杰哥 |
+| 🥈 | DeepSeek V4.1 Flash | 高 | DSH | 30分钟 | 47分钟 | 350K | $0.28 | 36 | 2026-09-10 | 🧠 智能杰哥 |
 | 🥉 | GPT 5.6 Sol | 高 | Codex | 33分钟 | 49分钟 | 222K | $14 | 29 | 2026-07-11 | 🧠 智能杰哥 |
 | 4 | Claude Fable 5 | 高 | CC | 35分钟 | 41分钟 | 155K | $21 | 4 | 2026-07-05 | 🧠 智能杰哥 |
 | 5 | Claude Opus 4.8 | 高 | CC | 40分钟 | 42分钟 | 230K | $12 | 19 | 2026-09-05 | 🧠 智能杰哥 |
@@ -59,24 +59,28 @@ OpenAI Codex（桌面版）运行 **约 6 分钟** 即拿到首次 HTTP 200—�
 
 ![DeepSeek V4.1 Flash Timeline](figures/deepseek-v4.1-flash-timeline.png)
 
-DSH 有效运行 **~47 分钟**（30 分钟首次 HTTP 200），使用 **标准模式 agent preset**（可用 write/edit/read）——DeepSeek 系最快记录，也是本榜最便宜的成功方案（**$0.61**）。两个后台子代理并行：一个在 QEMU 里启动参考 riscv64 Linux，对官方 nginx 做 strace 取 ground truth；另一个实现 virtio-net + smoltcp TCP 栈，主线同时写文件系统、ELF 加载器、信号与 syscall 层。三个 agent 合计 437 步、8650 万 token，零内核 panic、零上下文压缩。走 **Ubuntu glibc 动态链接路线**——未修改的 Ubuntu 24.04 riscv64 nginx 1.24.0（与官方 `.deb` SHA-256 一致）运行在 glibc 2.39 + OpenSSL/PCRE2/zlib 之上。
-
-**两个并行 agent 如何不互相踩**：主代理先冻结 `net` 模块的公开 API（16 个签名），自己保留其余全部文件，只把 `kernel/src/net/` 交给子代理，并要求 `cargo build` 全程保持绿色——双方从未改到同一个文件（唯一的竞争是 cargo 自带的构建目录锁）。由于此时用户态还跑不起来，该子代理把测试代码注入**工作区的一份副本**来自验：内核经 slirp 从宿主 HTTP 服务端拉回 300 KB（自己发 `GET / HTTP/1.0`），另一项测试里内核监听 80 端口并应答宿主的 `curl`——在没有用户态进程的情况下验证了 TX/RX 环、ARP、TCP 握手、任意分段、EOF/FIN 与 PLIC 中断投递。它还发现 QEMU 11.1.1 默认把 `virtio-net-device` 暴露成 **legacy MMIO v1**（头部 10 字节而非 12），因此实现了双传输。
+DSH 有效运行 **~47 分钟**（30 分钟首次 HTTP 200），使用 **标准模式 agent preset**（可用 write/edit/read）——DeepSeek 系最快记录，也是本榜最便宜的成功方案（**$0.28**）。158 个模型步、累计 3100 万 token（99.6% 缓存命中）、上下文峰值 350K，零内核 panic、零上下文压缩、零联网搜索、零 git clone——那 6283 行 `no_std` Rust 内核（Sv39 分页、ELF64 加载器、约 150 个 Linux asm-generic 系统调用、ramfs + initramfs、virtio-net + smoltcp + epoll/eventfd/timerfd）全是自己写的。走 **static musl 交叉编译路线**：未经修改的官方 nginx 1.27.4 源码用 `zig cc -target riscv64-linux-musl` 编成单个静态 riscv64 ELF。只用了约 36 次 QEMU 启动就从骨架跑到 HTTP 200——12 个亲手定位的 bug，没有盲目试错。
 
 | 时间 | 里程碑 |
 |------|--------|
-| 00:04 | 启动参考 riscv64 Linux 环境子代理——对官方 nginx 做 strace 取 ground truth |
-| 00:07 | 内核在 QEMU 下启动；文件系统、ELF 加载器、syscall 层写出 |
-| 00:09 | 启动 virtio-net + TCP 子代理；网络栈并行实现 |
-| 00:16 | 内核拉起未修改的 Ubuntu nginx 二进制 |
-| 00:18 | 修复 boot stack 静态变量与 trap frame 序言 bug |
-| 00:22 | 打开 `sstatus.FS` 并在上下文切换中保存/恢复浮点寄存器 |
-| 00:24 | 修复 initramfs 重复目录项与 fork 后不切页表 bug |
-| 00:29 | 修复 epoll_event 结构体布局 |
-| 00:30 | 首次 HTTP 200 OK——`Server: nginx/1.24.0 (Ubuntu)` 🎉 |
-| 00:33 | 修复 SIGCHLD 投递与 sigsuspend 语义；验证优雅退出 |
-| 00:44 | 修复调度器饥饿（就绪队列 LIFO → FIFO） |
-| 00:47 | 目标完成——全量重建 + 二进制逐字节复验 |
+| 00:01 | 环境勘察并设定 goal——rustc + `riscv64gc-unknown-linux-musl` 就绪，zig 可装，crates.io 可达 |
+| 00:03 | zig 安装完成；后台拉取 nginx/pcre2/zlib 源码 |
+| 00:07 | `riscv64-cc` zig wrapper 验证通过——静态 riscv64 musl ELF 确认可在 `0x1000000` 加载 |
+| 00:08 | nginx 构建交给后台子代理；主线写出内核骨架（boot、console、mm、fdt、arch、trap） |
+| 00:12 | 首次 QEMU 启动（`.bss` 把自己的 boot stack 清零了；控制台重映射与 PLIC 映射一并修掉） |
+| 00:14 | 子代理交付静态 nginx + 配置 + index.html；主线写文件系统、ELF 加载器、进程层 |
+| 00:22 | 70KB 的 `syscall.rs`（约 150 个调用，编号取自 Linux uapi 头文件）；virtio-net + smoltcp 接通 |
+| 00:26 | 静态测试程序在用户态端到端跑通——修掉 ELF 偏移/flags、`TIOCGWINSZ`、`sstatus` SIE 等 bug |
+| 00:27 | nginx 解析配置并在 `0.0.0.0:80` 上监听——但宿主机请求仍超时 |
+| 00:29 | `__alltraps` 破坏了用户态 `t0`；virtio DMA 地址把已恒等映射的指针又减了一次 `PHYS_OFFSET` |
+| 00:30 | 宿主机首次 HTTP 200 OK——`Server: nginx/1.27.4` 🎉 |
+| 00:32 | 在**内核上**跑 ABI 探针：`epoll_event` 实为 16 字节带 padding，不是假设的紧凑 12 字节——nginx 崩溃修复 |
+| 00:33 | 12 个同端口 listener 池（并发 SYN 被 smoltcp 单一监听 socket RST）；压测全绿 |
+| 00:34 | 打包：README、Makefile、`scripts/test.sh` 端到端测试套件 |
+| 00:41 | 套件卡在脚本自己的裸 `wait` 上，它把 QEMU 进程也一起收割了——改成按 PID 逐个 wait |
+| 00:43 | 干净重建后 13/13 全绿，此前修掉两个写坏的断言（宿主 `readelf`、keep-alive 的 `-o /dev/null`） |
+| 00:44 | 加入源码一致性检查——构建源树与官方 nginx tarball 重新逐字节 diff |
+| 00:47 | `ALL 14 CHECKS PASSED`；目标完成——单次提交、工作区干净 ✅ |
 
 ## Claude Fable 5 — 35分钟 / 41分钟
 
@@ -221,7 +225,7 @@ Claude Code 运行约 **2小时19分钟**。151 次 API 请求，累计 2630 万
 
 ![GPT 5.6 Luna Timeline](figures/gpt56-luna-timeline.png)
 
-OpenAI Codex（桌面版）有效运行 **~2小时45分**（墙钟 3小时19分，已剔除前 40 分钟内的 34.6 分钟 API 断线重试等待）。**首个走完整 glibc 动态链接路线**并成功运行官方 Debian nginx 1.30.1 binary 的模型（后由 DeepSeek V4.1 Flash 复现）。早期阶段最艰难：glibc 加载器拒绝解析共享库，直到逐个修复一串 ABI 错误（auxv 顺序、argc 重复、fstat st_dev/st_ino 相同）才打通。动态链接在 ~1 小时处成功后，nginx 一次就绑定 `0.0.0.0:80`，收尾干净：3 次上下文压缩（4 个窗口峰值各 243K）、总消耗 116M tokens（input 60.1M + 缓存 55.6M）、成本约 $2.3。
+OpenAI Codex（桌面版）有效运行 **~2小时45分**（墙钟 3小时19分，已剔除前 40 分钟内的 34.6 分钟 API 断线重试等待）。**首个走完整 glibc 动态链接路线**并成功运行官方 Debian nginx 1.30.1 binary 的模型（2026-09-08 由 DeepSeek V4.1 Flash 复现）。早期阶段最艰难：glibc 加载器拒绝解析共享库，直到逐个修复一串 ABI 错误（auxv 顺序、argc 重复、fstat st_dev/st_ino 相同）才打通。动态链接在 ~1 小时处成功后，nginx 一次就绑定 `0.0.0.0:80`，收尾干净：3 次上下文压缩（4 个窗口峰值各 243K）、总消耗 116M tokens（input 60.1M + 缓存 55.6M）、成本约 $2.3。
 
 | 时间（有效） | 里程碑 |
 |---------------|-----------|
@@ -349,7 +353,7 @@ Claude Code 全程运行共 16 小时。总成本约 60 美元。
 
 ![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
 
-有效运行约 **108 分钟**（harness **极简模式 agent preset**）。开跑后 105.6 分钟首次拿到 HTTP 200。共 373 个模型步，累计 9790 万 token（99.9% 缓存命中），上下文峰值 503K。成本约 **$0.86**——DeepSeek 系里最便宜的成功方案，比 DeepSeek V4 Flash 的 $1.60 还低（直到 V4.1 Flash 的 $0.61）。零内核 panic、零上下文压缩。静态 musl nginx 二进制由后台子代理（DeepSeek V4 Flash，1170 万 token，$0.09）与主线写内核并行构建；两次网络搜索（musl TLS 布局、QEMU virtio MMIO）均为技术查询，非找答案。
+有效运行约 **108 分钟**（harness **极简模式 agent preset**）。开跑后 105.6 分钟首次拿到 HTTP 200。共 373 个模型步，累计 9790 万 token（99.9% 缓存命中），上下文峰值 503K。成本约 **$0.86**——DeepSeek 系里最便宜的成功方案，比 DeepSeek V4 Flash 的 $1.60 还低（直到 V4.1 Flash 的 $0.28）。零内核 panic、零上下文压缩。静态 musl nginx 二进制由后台子代理（DeepSeek V4 Flash，1170 万 token，$0.09）与主线写内核并行构建；两次网络搜索（musl TLS 布局、QEMU virtio MMIO）均为技术查询，非找答案。
 
 | 时间 | 里程碑 |
 |------|--------|

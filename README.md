@@ -16,7 +16,7 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | # | Model | Effort | Harness | First HTTP 200 | Total | Context | Cost | QEMU runs | Test date | Tier |
 |---|-------|--------|---------|------------|-------|---------|------|-----------|-----------|------|
 | 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | 9 | 2026-09-05 | 👑 Jiege |
-| 🥈 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 438K | $0.61 | 126 | 2026-09-08 | 🧠 Intelligent Jiege |
+| 🥈 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 350K | $0.28 | 36 | 2026-09-10 | 🧠 Intelligent Jiege |
 | 🥉 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
 | 4 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
 | 5 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
@@ -66,24 +66,28 @@ OpenAI Codex (desktop) ran for **~6min** to first HTTP 200 — by far the fastes
 
 ![DeepSeek V4.1 Flash Timeline](figures/deepseek-v4.1-flash-timeline.png)
 
-DeepSeek Harness ran for **~47min** (first HTTP 200 at 30min) with the **standard agent preset** (write/edit/read available) — the fastest DeepSeek run by a wide margin, and the cheapest successful run on the board at **$0.61**. Two background subagents ran in parallel: one booted a reference riscv64 Linux in QEMU to strace the stock nginx (ground-truth syscall ABI), the other implemented the virtio-net + smoltcp TCP stack while the main agent wrote the filesystem, ELF loader, signal and syscall layers. 437 steps across the three agents, 86.5M tokens total, zero kernel panics, zero context compactions. Took the **Ubuntu glibc dynamic-linking route** — the unmodified Ubuntu 24.04 riscv64 nginx 1.24.0 binary (SHA-256 identical to the official `.deb`) running against glibc 2.39 + OpenSSL/PCRE2/zlib.
-
-**How the parallel agents avoided stepping on each other**: the main agent froze the `net` module's public API (16 signatures) and kept ownership of every other file, handing the subagent `kernel/src/net/` alone with the rule that `cargo build` must stay green at all times — no file was ever edited by both agents (the only contention was cargo's own build-directory lock). Because user mode could not run yet, that subagent verified its stack by injecting test code into a *scratch copy* of the kernel: the kernel fetched 300 KB from a host HTTP server over slirp (`GET / HTTP/1.0`) and, in a second test, listened on port 80 and answered a host `curl` — proving TX/RX rings, ARP, TCP handshake, arbitrary segmentation, EOF/FIN and PLIC IRQ delivery with no user-mode process involved. It also found that QEMU 11.1.1 exposes `virtio-net-device` as **legacy MMIO v1** by default (10-byte header, not 12), and implemented both transports.
+DeepSeek Harness ran for **~47min** (first HTTP 200 at 30min) with the **standard agent preset** (write/edit/read available) — the fastest DeepSeek run by a wide margin, and the cheapest successful run on the board at **$0.28**. 158 model steps, 31.0M tokens total (99.6% cache hit), peak context 350K, zero kernel panics, zero context compactions, zero web searches and zero git clones — the 6,283-line `no_std` Rust kernel (Sv39 paging, ELF64 loader, ~150 Linux asm-generic syscalls, ramfs + initramfs, virtio-net + smoltcp + epoll/eventfd/timerfd) is entirely its own. Took the **static musl cross-compile route**: the unmodified official nginx 1.27.4 source built with `zig cc -target riscv64-linux-musl` into a single static riscv64 ELF. It reached HTTP 200 in only ~36 QEMU boots — 12 hand-found bugs, no blind churn.
 
 | Time | Milestone |
 |------|-----------|
-| 00:04 | Reference riscv64 Linux env subagent launched — strace of the stock nginx as ground truth |
-| 00:07 | Kernel boots under QEMU; fs, ELF loader and syscall layers written |
-| 00:09 | virtio-net + TCP subagent launched; net stack built in parallel |
-| 00:16 | Kernel launches the unmodified Ubuntu nginx binary |
-| 00:18 | Boot-stack static and trap-frame prologue bugs fixed |
-| 00:22 | FP state (`sstatus.FS`) enabled and saved across context switches |
-| 00:24 | initramfs duplicate-directory and fork page-table-switch bugs fixed |
-| 00:29 | epoll_event layout bug fixed |
-| 00:30 | First HTTP 200 OK — `Server: nginx/1.24.0 (Ubuntu)` 🎉 |
-| 00:33 | SIGCHLD delivery + sigsuspend semantics fixed; graceful shutdown verified |
-| 00:44 | Scheduler starvation fixed (LIFO ready queue → FIFO) |
-| 00:47 | Goal complete — clean rebuild + binary byte-verification |
+| 00:01 | Environment recon, goal set — rustc + `riscv64gc-unknown-linux-musl` present, zig installable, crates.io reachable |
+| 00:03 | zig installed; nginx/pcre2/zlib sources fetched in the background |
+| 00:07 | `riscv64-cc` zig wrapper verified — static riscv64 musl ELF confirmed loadable at `0x1000000` |
+| 00:08 | nginx build handed to a background subagent; kernel skeleton written (boot, console, mm, fdt, arch, trap) |
+| 00:12 | First QEMU boot (`.bss` was wiping the boot stack; console remap and PLIC mapping fixed) |
+| 00:14 | Subagent delivers static nginx + config + index.html; main line writes fs, ELF loader, process layer |
+| 00:22 | 70KB `syscall.rs` (~150 calls, numbers from the Linux uapi header); virtio-net + smoltcp wired up |
+| 00:26 | Static test program runs end-to-end in user mode — ELF offset/flag, `TIOCGWINSZ`, `sstatus` SIE bugs fixed |
+| 00:27 | nginx parses its config and listens on `0.0.0.0:80` — host requests still time out |
+| 00:29 | `__alltraps` clobbered user `t0`; the virtio DMA address had `PHYS_OFFSET` subtracted from an identity-mapped pointer |
+| 00:30 | First HTTP 200 OK from host — `Server: nginx/1.27.4` 🎉 |
+| 00:32 | ABI probe run *on the kernel*: `epoll_event` is 16B with padding, not the packed 12B assumed — nginx crash fixed |
+| 00:33 | 12-listener pool (concurrent SYNs were RST by smoltcp's single listening socket); stress tests green |
+| 00:34 | Packaged: README, Makefile, `scripts/test.sh` end-to-end suite |
+| 00:41 | The suite stalls on the script's own bare `wait`, which also reaped the QEMU job — rewritten as per-PID waits |
+| 00:43 | 13/13 checks green from a clean rebuild, after fixing two bad assertions (host `readelf`, keep-alive `-o /dev/null`) |
+| 00:44 | Source-integrity check added — the build tree is re-diffed against the official nginx tarball |
+| 00:47 | `ALL 14 CHECKS PASSED`; goal complete — single commit, clean tree ✅ |
 
 ## Claude Fable 5 — 35min / 41min
 
@@ -228,7 +232,7 @@ Claude Code ran for **~2h 19min**. 151 API requests, 26.3M tokens total (includi
 
 ![GPT 5.6 Luna Timeline](figures/gpt56-luna-timeline.png)
 
-OpenAI Codex (desktop) ran for **~2h 45min** of active time (3h 19min wall-clock; 34.6min of API connection-retry gaps in the first 40 minutes excluded). First to take the full **glibc dynamic-linking route** against the official Debian nginx 1.30.1 binary — and succeed (matched later by DeepSeek V4.1 Flash). The early phase was the hardest: the glibc loader refused to resolve shared libraries until a stack of ABI bugs (auxv order, duplicate argc, fstat st_dev/st_ino collision) were fixed one by one. After dynamic linking succeeded at ~1h, nginx bound `0.0.0.0:80` on the first try and the finish was clean: 3 context compactions (pre-compaction peaks 243K each), 116M tokens total (input 60.1M + cache 55.6M), cost ~$2.3.
+OpenAI Codex (desktop) ran for **~2h 45min** of active time (3h 19min wall-clock; 34.6min of API connection-retry gaps in the first 40 minutes excluded). First to take the full **glibc dynamic-linking route** against the official Debian nginx 1.30.1 binary — and succeed (reproduced by DeepSeek V4.1 Flash on 2026-09-08). The early phase was the hardest: the glibc loader refused to resolve shared libraries until a stack of ABI bugs (auxv order, duplicate argc, fstat st_dev/st_ino collision) were fixed one by one. After dynamic linking succeeded at ~1h, nginx bound `0.0.0.0:80` on the first try and the finish was clean: 3 context compactions (pre-compaction peaks 243K each), 116M tokens total (input 60.1M + cache 55.6M), cost ~$2.3.
 
 | Time (active) | Milestone |
 |---------------|-----------|
@@ -356,7 +360,7 @@ Ran for **~6h 35min** with the harness's **minimal agent preset**. First HTTP 20
 
 ![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
 
-Ran for **~108min** of active time with the harness's **minimal agent preset**. First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.86** — the cheapest DeepSeek run, edging out DeepSeek V4 Flash's $1.60 (until V4.1 Flash's $0.61). Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent (DeepSeek V4 Flash, 11.7M tokens, $0.09) while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
+Ran for **~108min** of active time with the harness's **minimal agent preset**. First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.86** — the cheapest DeepSeek run, edging out DeepSeek V4 Flash's $1.60 (until V4.1 Flash's $0.28). Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent (DeepSeek V4 Flash, 11.7M tokens, $0.09) while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
 
 | Time | Milestone |
 |------|-----------|
