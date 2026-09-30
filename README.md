@@ -16,25 +16,26 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | # | Model | Effort | Harness | First HTTP 200 | Total | Context | Cost | QEMU runs | Test date | Tier |
 |---|-------|--------|---------|------------|-------|---------|------|-----------|-----------|------|
 | 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | 9 | 2026-09-05 | 👑 Jiege |
-| 🥈 | GPT-6.1 Sol | High | Codex | 18min | 33min | 132K | ~$0.95 | 8 | 2026-09-30 | 🧠 Intelligent Jiege |
-| 🥉 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 350K | $0.28 | 36 | 2026-09-10 | 🧠 Intelligent Jiege |
-| 4 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
-| 5 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
-| 6 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 7 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
-| 8 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 9 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
-| 10 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
-| 11 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
-| 12 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
-| 13 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
-| 14 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
-| 15 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
-| 16 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
-| 17 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
-| 18 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
-| 19 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
-| 20 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
+| 🥈 | Claude Opus 5.5 | High | CC | 12min | 14min | 109K | $9.5 | 2 | 2026-09-30 | 🧠 Intelligent Jiege |
+| 🥉 | GPT-6.1 Sol | High | Codex | 18min | 33min | 132K | ~$0.95 | 8 | 2026-09-30 | 🧠 Intelligent Jiege |
+| 4 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 350K | $0.28 | 36 | 2026-09-10 | 🧠 Intelligent Jiege |
+| 5 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
+| 6 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
+| 7 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 8 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
+| 9 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 10 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
+| 11 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
+| 12 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
+| 13 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
+| 14 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
+| 15 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
+| 16 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
+| 17 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 18 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
+| 19 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
+| 20 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
+| 21 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
 
 
 
@@ -63,11 +64,35 @@ OpenAI Codex (desktop) ran for **~6min** to first HTTP 200 — by far the fastes
 | 00:08 | Final acceptance: 8-way × 120 req, 24MiB, 25 keep-alive, 1MiB file ✅ |
 | 00:09 | Goal complete — README + make start/test/verify |
 
+## Claude Opus 5.5 — 12min / 14min
+
+![Claude Opus 5.5 Timeline](figures/opus55-timeline.png)
+
+Claude Code (CLI 2.1.285), **High** effort, 2026-09-30. First host HTTP 200 at **11min 56s** of active time and done at **14min 17s** (wall clock 14min 31s / 16min 52s; one **2min 35s network stall** mid-turn — a ~700-token response that took 160s to arrive — is subtracted). Second place on the board by first HTTP 200. One uninterrupted turn: 30 API requests, 29 tool calls, **zero web searches**, zero kernel panics, zero context compactions, **2 QEMU boots**. 2.37M tokens (0.70M cache read, 1.60M cache write, 68K output), peak context **109K**. Cost **~$9.5** at Opus 5.5 rates ($4/$20 per M input/output, $5 cache write, $0.20 cache read).
+
+Took the **official Alpine APK route**: unmodified nginx **1.28.3-r7** (v3.22 main/riscv64) plus musl/OpenSSL/PCRE2/zlib; the embedded `/usr/sbin/nginx` has the same SHA-256 as the one extracted from the APK. Launched with Alpine's stock `nginx.conf` via `-g "daemon off; master_process off;"`; only `http.d/default.conf` was replaced (the stock one returns 404 for everything) and `/etc/passwd`/`group` were added. About 4 of the first 5 minutes went into one long design pass. After that the kernel was written file by file with no compile-test loop in between: **~2,700 lines of Rust** (boot/trap assembly inline), in about 5 minutes. It has Sv39 with the kernel identity-mapped by gigapages in the one shared page table, lazy demand paging through VMAs (anonymous and file-backed; working mmap/munmap/mprotect/brk), a PIE + `PT_INTERP` ELF loader, and an in-memory VFS built from an embedded ustar. Networking is a from-scratch legacy virtio-mmio net driver under smoltcp. Listen backlog is a pool of pre-armed smoltcp listen sockets. Epoll supports LT and ET, with ET tracked through a per-file operation generation counter. Epoll registrations hold `Weak` refs, because nginx closes connections without `EPOLL_CTL_DEL`. Only one change was made after the whole kernel was written and before the first build: switching those registrations to `Weak`. The first build had 3 errors (a Makefile dependency on a dangling symlink and 2 type errors). **The first QEMU boot served HTTP 200.** The second boot ran the full acceptance script: 100 sequential requests, 25 keep-alive requests on 1 connection, 404/HEAD/Range, a 1 MiB file via sendfile matching byte for byte, 8×60 parallel requests, and 8 parallel 1 MiB downloads — all pass.
+
+> Scope: single process, busy-polling kernel (no interrupts, no preemption); no fork/exec or signal delivery; IPv6 and AF_UNIX sockets return errors (nginx tolerates both); the rootfs is RAM-only.
+
+| Time (active) | Milestone |
+|------|-----------|
+| 00:01 | Environment survey (QEMU 11.1, Rust 1.86, riscv64gc target); Alpine v3.22 APK index |
+| 00:02 | nginx 1.28.3-r7 + musl/pcre2/libssl3/libcrypto3/zlib APKs downloaded and extracted |
+| 00:03 | Stock nginx.conf and ELF program headers inspected |
+| 00:05 | Design pass done; site overlay, Cargo/linker script/Makefile written |
+| 00:05–00:10 | Kernel written: main/console → mm → fs → elf → trap → virtio → net → syscall |
+| 00:10 | Epoll registrations switched to `Weak` (connections closed without EPOLL_CTL_DEL) |
+| 00:11 | First build: dangling-symlink Makefile dependency + 2 type errors fixed |
+| 00:11:56 | **First QEMU boot → first host HTTP 200** 🎉 |
+| 00:13 | Acceptance script: all kernel checks pass (one script-side `bc` bug) |
+| 00:13:36 | Acceptance ALL PASS |
+| 00:14 | README + SHA256SUMS, done |
+
 ## GPT-6.1 Sol — 18min / 33min
 
 ![GPT-6.1 Sol Timeline](figures/gpt61-sol-timeline.png)
 
-OpenAI Codex (desktop), **High** effort, reached first host HTTP 200 at **18min 28s** and finished at **32min 51s** on 2026-09-30 — second fastest on this board by first HTTP 200. One uninterrupted turn, 38 recorded model responses, 43 shell commands, **3.36M tokens** including cached input (95.9% input cache hit), peak input context **132K**, zero context compactions, and **8 QEMU boots**. Three web calls (one search query) checked Linux syscall numbers and libslirp host forwarding; no OS repository was cloned. The API-equivalent token cost is **~$0.95**, estimated at the [official Standard rates](https://developers.openai.com/api/docs/models/gpt-6.1-sol) of $2/$0.10/$10 per M uncached input/cached input/output tokens; this is not a measured Codex subscription charge and excludes web-tool fees.
+OpenAI Codex (desktop), **High** effort, reached first host HTTP 200 at **18min 28s** and finished at **32min 51s** on 2026-09-30 — third fastest on this board by first HTTP 200. One uninterrupted turn, 38 recorded model responses, 43 shell commands, **3.36M tokens** including cached input (95.9% input cache hit), peak input context **132K**, zero context compactions, and **8 QEMU boots**. Three web calls (one search query) checked Linux syscall numbers and libslirp host forwarding; no OS repository was cloned. The API-equivalent token cost is **~$0.95**, estimated at the [official Standard rates](https://developers.openai.com/api/docs/models/gpt-6.1-sol) of $2/$0.10/$10 per M uncached input/cached input/output tokens; this is not a measured Codex subscription charge and excludes web-tool fees.
 
 Took the **official Alpine APK route**: unmodified nginx **1.28.3-r7** plus musl/OpenSSL/PCRE2/zlib, with all 12 packaged RISC-V ELFs byte-verified against SHA-256-pinned archives. The original kernel is **1,918 lines of Rust + 171 lines of assembly**: Sv39, ELF64 interpreter loading, an embedded RAM filesystem, a Linux ABI subset, an original legacy VirtIO MMIO driver, smoltcp TCP, and epoll/eventfd/Unix socket pairs. Two early kernel panics preceded first HTTP 200; debugging addressed an nginx load-address overlap with UART MMIO, heap exhaustion, incorrect syscall numbers, then a 1 MiB sendfile stall through recorded epoll readiness transitions. The complete fresh-guest suite passed at ~29min and again at ~32min: 100 independent connections, 26 requests on one unchanged keep-alive socket, HEAD/404/Range/pipelining, eight clients × 120 concurrent requests, eight concurrent 1 MiB transfers, and no panic/fault/nginx emerg or alert in the final test log.
 
