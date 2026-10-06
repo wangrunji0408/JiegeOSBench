@@ -33,9 +33,10 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | 16 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
 | 17 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
 | 18 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
-| 19 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
-| 20 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
-| 21 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
+| 19 | DeepSeek V4 Flash (local) | Max | CC | 7h 55min | 7h 57min | 967K x3 | self-hosted | 320 | 2026-10-06 | 🤖 Machine Jiege |
+| 20 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
+| 21 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
+| 22 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
 
 
 
@@ -409,6 +410,26 @@ Ran for **~6h 35min** with the harness's **minimal agent preset**. First HTTP 20
 | 05:34 | Context compact #2 |
 | 06:29 | First HTTP 200 OK 🎉 |
 | 06:35 | Final validation + goal complete |
+
+### DeepSeek V4 Flash (local) — 7h 55min / 7h 57min
+
+![DeepSeek V4 Flash (local) Timeline](figures/deepseek-v4-flash-local-timeline.png)
+
+Self-hosted **DeepSeek-V4-Flash-0731** (1M context) run through Claude Code at **Max** effort against the original prompt. PASS: first HTTP 200 at 7h55min active (7h57min total — one 1.7min pause while the operator typed a continue prompt is excluded), stable right after: 3 consecutive host-side requests 200, `Server: nginx/1.26.3`. Took the **Debian glibc dynamic-linking route**: the unmodified Debian riscv64 nginx 1.26.3 binary plus its glibc loader running inside a hand-written kernel the agent named JzOS. 1,282 API rounds, 1,240 bash calls, 694M input tokens (99.9% cache hit) + 2.4M output, peak context 967K with **2 compactions** — the run's 1M window filled twice, something no other local (1M-window) run needed. **Two caveats worth recording**: the agent ended its first segment at 7h43min with a self-report saying one remaining SIGSEGV (a corrupted stack pointer in `ngx_os_specific_status`) still blocked `accept`, and only finished after the operator's continue prompt bought 13 more minutes; and its final 200 came from a **self-built QEMU 8.2.2 + libslirp 4.7.0 carrying fprintf instrumentation** (patched while hunting the network bug) rather than the stock system QEMU — 320 QEMU boots and 12 kernel panics in total.
+
+| Time | Milestone |
+|------|-----------|
+| 00:08 | Official Debian riscv64 nginx 1.26.3 `.deb` unpacked; guest rootfs assembled |
+| 00:44 | First kernel PANIC (trap/page-fault cluster; 12 panic reports in total) |
+| 00:50 | First QEMU boot of the kernel |
+| 01:04 | User mode up — `init` prints `hello from user mode` |
+| 02:56 | Context compact #1 (1M window full) |
+| 04:36 | virtio-net RX debugged against pcap dumps; ARP/TCP handshake reaches slirp |
+| 05:47 | Context compact #2 |
+| 06:00 | Official nginx binary exec'd inside the guest |
+| 07:43 | Self-report: nginx reaches `epoll_wait`, but SIGSEGV fires before `accept` |
+| 07:55 | First HTTP 200 from host — `Server: nginx/1.26.3` 🎉 |
+| 07:57 | Stable: 3 consecutive 200s (35-byte page, real guest headers); goal complete |
 
 ### DeepSeek V4 Pro — 1h 46min / 1h 48min
 
