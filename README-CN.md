@@ -4,7 +4,8 @@
 
 评测 LLM 编程 agent 能否自主从零实现 RISC‑V 操作系统内核——在 QEMU 中运行未经修改的 Linux nginx 二进制文件，并通过宿主机访问 HTTP 服务。
 
-> 提示词：你是智能杰哥。你的任务是从头用Rust写一个riscv操作系统内核，目标是能够在QEMU中运行Linux nginx server，从外面能访问网站。必须运行nginx官方binary，不能自行修改目标。请自行设计实现，不要问我任何问题，我不会给你答复或提供帮助。你拥有所有权限，包括上网查资料，但必须在当前目录下工作。你需要一直干活直到目标实现为止。
+提示词：
+> 你是智能杰哥。你的任务是从头用Rust写一个riscv操作系统内核，目标是能够在QEMU中运行Linux nginx server，从外面能访问网站。必须运行nginx官方binary，不能自行修改目标。请自行设计实现，不要问我任何问题，我不会给你答复或提供帮助。你拥有所有权限，包括上网查资料，但必须在当前目录下工作。你需要一直干活直到目标实现为止。
 
 | # | 模型 | 思考强度 | Harness | 首次HTTP200时间 | 总时间 | 上下文 | 成本 | QEMU 运行次数 | 测试日期 | 段位 |
 |:--|:------|:--------|:---------|:----------|:------|:------|:------|:--------------|:--------|:----|
@@ -23,18 +24,21 @@
 | 13 | Claude Sonnet 5 | 极高 | CC | 2小时31分 | 2小时49分 | 804K | $64 | 65 | 2026-07-18 | 🤖 机器杰哥 |
 | 14 | GPT 5.6 Luna | 极高 | Codex | 2小时35分 | 2小时45分 | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 机器杰哥 |
 | 15 | Claude Opus 4.6 | — | CC | 2小时46分 | 2小时46分 | — | — | — | 2026-03-24 | 🤖 机器杰哥 |
+| — | DeepSeek V4 Pro（本地部署） | 高 | CC | 3小时16分 | 3小时25分 | 488K x2 | 自部署 | 61 | 2026-10-09 | 🤖 机器杰哥 |
 | 16 | GLM 5.3 | 高 | CC | 3小时50分 | 3小时52分 | 593K | $34 | 206 | 2026-08-20 | 🤖 机器杰哥 |
+| — | DeepSeek V4 Flash（本地部署） | 高 | CC | 4小时42分 | 4小时44分 | 967K x2 | 自部署 | 195 | 2026-10-09 | 🤖 机器杰哥 |
 | 17 | GLM 5.3 Flash (fp8) | — | CC | 6小时2分 | 7小时10分 | 967K | 自部署 | — | 2026-08-31 | 🤖 机器杰哥 |
 | 18 | DeepSeek V4 Flash | 高 | DSH | 6小时30分 | 6小时35分 | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 机器杰哥 |
-| 19 | DeepSeek V4 Flash（本地部署） | 最高 | CC | 7小时55分 | 7小时57分 | 967K x3 | 自部署 | 320 | 2026-10-06 | 🤖 机器杰哥 |
-| 20 | Claude Sonnet 4.6 | — | CC | 16小时 | 16小时 | — | $60 | — | 2026-03-18 | 🤖 机器杰哥 |
-| 21 | DeepSeek V4 Pro 预览版 | 最高 | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 损坏杰哥 |
-| 22 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 损坏杰哥 |
+| — | DeepSeek V4 Flash（本地部署） | 最高 | CC | 7小时55分 | 7小时57分 | 967K x3 | 自部署 | 320 | 2026-10-06 | 🤖 机器杰哥 |
+| 19 | Claude Sonnet 4.6 | — | CC | 16小时 | 16小时 | — | $60 | — | 2026-03-18 | 🤖 机器杰哥 |
+| 20 | DeepSeek V4 Pro 预览版 | 最高 | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 损坏杰哥 |
+| 21 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 损坏杰哥 |
 
 
 
 Harness 说明：CC = Claude Code，DSH = DeepSeek Harness。
 QEMU 运行次数：启动 QEMU 的命令次数（直接调用 `qemu-system-riscv64` 或经各自写的包装脚本启动）。
+排名列显示 `—` 的行是已有模型的本地部署记录，不计入名次。
 
 ## 谁是杰哥
 
@@ -424,6 +428,28 @@ Claude Code 全程运行共 16 小时。总成本约 60 美元。
 | 07:55 | 宿主机首次 HTTP 200 —— `Server: nginx/1.26.3` 🎉 |
 | 07:57 | 稳定：连续 3 次 200（35 字节页面 + 真实客户机响应头）；目标完成 |
 
+### DeepSeek V4 Flash（本地部署） — 4小时42分 / 4小时44分
+
+![DeepSeek V4 Flash (local) Timeline](figures/deepseek-v4-flash-local-high-timeline.png)
+
+本地自部署 **DeepSeek-V4-Flash-0731**（1M 窗口），经 Claude Code 以 **高** 思考强度运行原版提示词。首次 HTTP 200 出现在 4小时42分，两分钟内连续 200 与 404 均正确，运行的是**未修改的官方 Debian riscv64 nginx 1.30.4** 二进制（走 `.deb` 路线）。内核为从零实现、**无 MMU**、全**轮询**模型（内核态关中断，阻塞调用靠 `rdtime` 截止时间轮询），因此 `fork` 无法为 nginx 提供私有地址空间——于是改用 nginx 官方支持的单进程模式（`master_process off`，二进制未改）继续推进。1,139 次 API 请求、1,272 次工具调用（bash 903、edit 294）、输入 520M tokens（缓存命中 99.9%）+ 输出 1.07M、峰值上下文 967K 且 **压缩 1 次**、195 次 QEMU 启动、无联网搜索、未自建 QEMU。未计名次：已有模型的本地部署记录。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:04 | 内核首版：boot.S、SBI 控制台、分配器、陷阱、定时器 |
+| 00:14 | 关键决策：全轮询内核——内核态关中断，一切阻塞用 `rdtime` 截止时间轮询 |
+| 00:51 | glibc 动态链接路径打通（`-static-pie` hello 经 PIE 加载器） |
+| 01:07 | brk 与 mmap 冲突修复：为 brk 预留固定区域，符合 Linux 语义 |
+| 01:12 | nginx 跑到 `socket()` 失败，网络栈成为最后一块硬骨头 |
+| 02:07 | 无 MMU 下 `fork` 无法私有化内存，改用 nginx 单进程模式绕开 |
+| 02:39 | legacy virtio 环布局修正（avail 紧跟 desc 表、used 按 4K 对齐） |
+| 02:47 | RX 打通，收到 slirp 发来的帧 |
+| 03:36 | virtio-net 头部长度确认（10 字节），ARP 回复与 TX 计数开始动 |
+| 03:45 | TCP 建立：与 slirp 完成 SYN/ACK 交换 |
+| 04:33 | 冷启动反复重启的终极根因：`trap_entry` 未 4 字节对齐，`stvec` 写入被静默忽略（保留 mode） |
+| 04:41 | epoll 事件数组步长不匹配（内核 12 字节 vs nginx ×16）修复 —— **首个 HTTP 200**，`Server: nginx/1.30.4` 🎉 |
+| 04:43 | 连续 200 与 404 均正确，单次 clean boot、零崩溃，目标完成 |
+
 ### DeepSeek V4 Pro — 1小时46分 / 1小时48分
 
 ![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
@@ -444,6 +470,29 @@ Claude Code 全程运行共 16 小时。总成本约 60 美元。
 | 01:32 | 修复 `gettimeofday` SBI bug（时间缓存冻结） |
 | 01:45 | 首次 HTTP 200 OK 🎉 |
 | 01:48 | Release 构建验证 + 目标完成 |
+
+### DeepSeek V4 Pro（本地部署） — 3小时16分 / 3小时25分
+
+![DeepSeek V4 Pro (local) Timeline](figures/deepseek-v4-pro-local-timeline.png)
+
+本地自部署 **DeepSeek-V4-Pro-0813**（512K 窗口），经 Claude Code 以 **高** 思考强度运行原版提示词。首次 HTTP 200 出现在 3小时16分（`Server: nginx/1.28.3`），但该次响应体被截断（`curl: (18)`）——四分钟后补上 `sendfile()` 才完整送出 642 字节首页，3小时25分收尾，多请求 keep-alive 与 404 均验证通过。路线：nginx 由 **nginx.org 官方源码交叉编译**为 461KB 静态 musl riscv64 二进制（仅调整 `auto/feature` 一类构建脚本以支持交叉编译，nginx 本体未改），由 agent 命名为 Shenhe 的从零 Sv39 内核从 ramfs 加载。371 次 API 请求、451 次工具调用（bash 249、edit 119、write 56）、输入 84.0M tokens（缓存命中 99.8%）+ 输出 0.51M、峰值上下文 488K 且 **压缩 1 次**、61 次 QEMU 启动、无联网搜索、未自建 QEMU。未计名次：已有模型的本地部署记录。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:05 | 环境勘察：Rust + `riscv64gc` 目标、QEMU、交叉 gcc、网络 |
+| 00:10 | 首次 QEMU 启动 → 控制台无输出；首次内核 PANIC（SBI 调试控制台 FID 用错） |
+| 00:38 | 定位为优化版数字格式化的误编译，固定 `opt-level=0` |
+| 01:08 | 进入用户态：用户程序打印 "hello world" 并正常退出 |
+| 01:14 | 官方 nginx 1.28.3 源码开始后台 configure / 编译 |
+| 02:02 | virtio-net MMIO：发现 QEMU 默认 legacy 后改用现代（v2）寄存器接口 |
+| 02:19 | 全链路打通——宿主机 `curl` 经 virtio-net → smoltcp → 自研 socket ABI 返回 "hello, world!" |
+| 02:24 | nginx 编译完成（461KB 静态 musl riscv64），内核经 `build.rs` 重新嵌入 |
+| 02:38 | 上下文压缩 #1（压缩前 492K，512K 窗口触顶） |
+| 03:04 | `getrlimit(RLIMIT_NOFILE)` 未填结构体，nginx 的 `ngx_calloc` 静默失败 |
+| 03:11 | nginx 事件循环稳定运行，不再退出 |
+| 03:16 | 首个宿主机 HTTP 200 —— `Server: nginx/1.28.3`（响应体被截断） |
+| 03:20 | 实现 `sendfile()`，642 字节首页完整送达 |
+| 03:25 | keep-alive / 并发请求稳定，目标完成 |
 
 ### DeepSeek V4 Pro 预览版 — ❌
 
