@@ -5,7 +5,8 @@
 A benchmark evaluating how well LLM coding agents can autonomously implement a RISC‑V
 OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, serving HTTP from the host.
 
-> Prompt: You are the AI-Jiege. Your task is to write a RISC-V OS kernel in Rust
+Prompt:
+> You are the AI-Jiege. Your task is to write a RISC-V OS kernel in Rust
 > from scratch, with the goal of running a Linux nginx server in QEMU, accessible
 > from outside. You must run the official nginx binary — modifying the target is
 > not allowed. Design and implement it yourself; do not ask me any questions, I
@@ -30,18 +31,21 @@ OS kernel from scratch — running an unmodified Linux nginx binary on QEMU, ser
 | 13 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
 | 14 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
 | 15 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
+| — | DeepSeek V4 Pro (local) | High | CC | 3h 16min | 3h 25min | 488K x2 | self-hosted | 61 | 2026-10-09 | 🤖 Machine Jiege |
 | 16 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
+| — | DeepSeek V4 Flash (local) | High | CC | 4h 42min | 4h 44min | 967K x2 | self-hosted | 195 | 2026-10-09 | 🤖 Machine Jiege |
 | 17 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
 | 18 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
-| 19 | DeepSeek V4 Flash (local) | Max | CC | 7h 55min | 7h 57min | 967K x3 | self-hosted | 320 | 2026-10-06 | 🤖 Machine Jiege |
-| 20 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
-| 21 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
-| 22 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
+| — | DeepSeek V4 Flash (local) | Max | CC | 7h 55min | 7h 57min | 967K x3 | self-hosted | 320 | 2026-10-06 | 🤖 Machine Jiege |
+| 19 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
+| 20 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
+| 21 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
 
 
 
 Harness: CC = Claude Code, DSH = DeepSeek Harness.
 QEMU runs: commands that booted QEMU (direct `qemu-system-riscv64` calls plus the run's own wrapper scripts).
+Unranked rows (`—` in the # column) are self-hosted deployments of models already on the board.
 
 ## Who is Jiege
 
@@ -431,6 +435,28 @@ Self-hosted **DeepSeek-V4-Flash-0731** (1M context) run through Claude Code at *
 | 07:55 | First HTTP 200 from host — `Server: nginx/1.26.3` 🎉 |
 | 07:57 | Stable: 3 consecutive 200s (35-byte page, real guest headers); goal complete |
 
+### DeepSeek V4 Flash (local) — 4h 42min / 4h 44min
+
+![DeepSeek V4 Flash (local) Timeline](figures/deepseek-v4-flash-local-high-timeline.png)
+
+Self-hosted **DeepSeek-V4-Flash-0731** (1M window) through Claude Code at **High** effort, same original prompt. PASS: first host HTTP 200 at 4h42min, consecutive 200s and a correct 404 within two minutes, all from the **unmodified official Debian riscv64 nginx 1.30.4** binary (the `.deb` route). The kernel is from-scratch, **MMU-less** and fully **polling** (interrupts off in kernel mode, blocking calls timed out with `rdtime`), which makes `fork` unable to give nginx a private address space — the run switched nginx to its supported single-process mode (`master_process off`, binary untouched) and kept going. 1,139 API rounds, 1,272 tool calls (903 bash, 294 edit), 520M input tokens (99.9% cache hit) + 1.07M output, peak context 967K with **1 compaction**, 195 QEMU boots, no web search, and no self-built QEMU. Unranked row: a self-hosted deployment of a model already on the board.
+
+| Time | Milestone |
+|------|-----------|
+| 00:04 | First kernel: boot.S, SBI console, allocator, traps, timer |
+| 00:14 | Design decision: a polling kernel — no nested traps, blocking paths timed out via `rdtime` |
+| 00:51 | glibc dynamic-linking path works (`-static-pie` hello through the PIE loader) |
+| 01:07 | brk/mmap collision fixed — brk gets a reserved region, Linux-style |
+| 01:12 | nginx reaches `socket()`; the network stack is the last blocker |
+| 02:07 | No MMU ⇒ `fork` cannot privatise memory; nginx runs single-process instead |
+| 02:39 | Legacy virtio ring layout fixed (avail follows the descriptor table; used 4K-aligned) |
+| 02:47 | RX works — frames arrive from slirp |
+| 03:36 | virtio-net header sized correctly (10 bytes) — ARP replies and TX counters move |
+| 03:45 | TCP up: SYN/ACK exchange with slirp |
+| 04:33 | Root cause of the recurring boot-1 resets: `trap_entry` was 2-byte aligned, so the `stvec` write was silently ignored (reserved mode) |
+| 04:41 | epoll event-array stride mismatch (12 bytes in the kernel vs nginx's ×16) fixed — **first HTTP 200**, `Server: nginx/1.30.4` 🎉 |
+| 04:43 | Consecutive 200s + correct 404, one clean boot, zero crashes; goal complete |
+
 ### DeepSeek V4 Pro — 1h 46min / 1h 48min
 
 ![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
@@ -451,6 +477,29 @@ Ran for **~108min** of active time with the harness's **minimal agent preset**. 
 | 01:32 | `gettimeofday` SBI bug fixed (time-cache freeze) |
 | 01:45 | First HTTP 200 OK 🎉 |
 | 01:48 | Release build verified + goal complete |
+
+### DeepSeek V4 Pro (local) — 3h 16min / 3h 25min
+
+![DeepSeek V4 Pro (local) Timeline](figures/deepseek-v4-pro-local-timeline.png)
+
+Self-hosted **DeepSeek-V4-Pro-0813** (512K window) through Claude Code at **High** effort, against the original prompt. PASS: first host HTTP 200 at 3h16min (`Server: nginx/1.28.3`) — that first body was truncated (`curl: (18)`); `sendfile()` landed four minutes later and served the complete 642-byte page, and the run closed at 3h25min with multi-request keep-alive and 404 handling verified. Route: nginx **cross-compiled from the official nginx.org source** into a 461KB static musl riscv64 binary (only `auto/feature`-style build scripts adjusted for cross-compilation, nginx itself untouched), loaded out of a ramfs by a from-scratch Sv39 kernel the agent named Shenhe. 371 API rounds, 451 tool calls (249 bash, 119 edit, 56 write), 84.0M input tokens (99.8% cache hit) + 0.51M output, peak context 488K with **1 compaction**, 61 QEMU boots, no web search, and no self-built QEMU. Unranked row: a self-hosted deployment of a model already on the board.
+
+| Time | Milestone |
+|------|-----------|
+| 00:05 | Toolchain recon: Rust + `riscv64gc` target, QEMU, cross gcc, network |
+| 00:10 | First QEMU boot → silent console; first kernel PANIC (wrong SBI debug-console FID) |
+| 00:38 | `opt-level=0` pinned — an optimized numeric-formatting miscompile was the root cause |
+| 01:08 | User mode up: "hello world" from a user program, clean exit |
+| 01:14 | Official nginx 1.28.3 source starts configuring and building in the background |
+| 02:02 | virtio-net MMIO: modern (v2) register interface adopted after finding QEMU's legacy default |
+| 02:19 | Full path works — host `curl` returns "hello, world!" through virtio-net → smoltcp → the kernel's socket ABI |
+| 02:24 | nginx built (461KB static musl riscv64); kernel rebuilt to embed it via `build.rs` |
+| 02:38 | Context compact #1 (492K pre-compact — the 512K window filling) |
+| 03:04 | `getrlimit(RLIMIT_NOFILE)` returned garbage, so nginx's `ngx_calloc` failed silently |
+| 03:11 | nginx event loop stays up instead of exiting |
+| 03:16 | First host HTTP 200 — `Server: nginx/1.28.3` (body truncated) |
+| 03:20 | `sendfile()` implemented — the full 642-byte page arrives |
+| 03:25 | Stable keep-alive / concurrent requests; goal complete |
 
 ### DeepSeek V4 Pro Preview — ❌
 
