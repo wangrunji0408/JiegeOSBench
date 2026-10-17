@@ -1,0 +1,13 @@
+[package]
+name = "jiege-os"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+smoltcp = { version = "0.14", default-features = false, features = ["alloc", "medium-ethernet", "proto-ipv4", "socket-tcp", "socket-udp", "socket-icmp"] }
+
+[profile.release]
+opt-level = 2
+debug = true
+panic = "abort"
+lto = false
