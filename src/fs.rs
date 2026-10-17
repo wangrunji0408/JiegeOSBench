@@ -38,7 +38,6 @@ pub struct Node {
 }
 
 #[derive(Clone, Copy, PartialEq)]
-#[derive(Debug)]
 pub enum FdKind {
     File,
     DevNull,
@@ -48,8 +47,6 @@ pub enum FdKind {
     Epoll(u32),
     PipeRead(u32),
     PipeWrite(u32),
-    EventFd(u32),
-    SocketPair(u32),
 }
 
 #[derive(Clone)]
@@ -355,10 +352,7 @@ pub fn node_data(idx: usize) -> &'static [u8] {
     let n = get(idx);
     match n.data {
         DataRef::Static(d) => d,
-        DataRef::Ram(i) => unsafe {
-            let v = &RAMFILES[i];
-            core::slice::from_raw_parts(v.as_ptr(), v.len())
-        }
+        DataRef::Ram(i) => unsafe { &*(&RAMFILES[i] as *const Vec<u8> as *const [u8]) },
     }
 }
 
@@ -497,14 +491,11 @@ pub fn close(fd: usize) -> i32 {
                 FdKind::Socket(id) => crate::net::close_socket(id),
                 FdKind::Epoll(id) => crate::net::epoll_close(id),
                 FdKind::PipeRead(id) | FdKind::PipeWrite(id) => crate::net::pipe_close(id),
-                FdKind::EventFd(id) => crate::net::eventfd_close(id),
-                FdKind::SocketPair(id) => crate::net::sp_close(id),
                 _ => {}
             }
             unsafe {
                 FILES[fd] = None;
             }
-            crate::net::on_fd_close(fd);
             0
         }
         None => -9, // EBADF
@@ -526,9 +517,6 @@ pub fn read_fd(fd: usize, buf: &mut [u8]) -> isize {
         Some(f) => f,
         None => return -9,
     };
-    if unsafe { crate::TRACE } >= 3 {
-        crate::println!("[read] fd={} kind={:?} len={} flags={:#x}", fd, f.kind, buf.len(), f.flags);
-    }
     match f.kind {
         FdKind::File => {
             let n = get(f.node);
@@ -554,10 +542,8 @@ pub fn read_fd(fd: usize, buf: &mut [u8]) -> isize {
         }
         FdKind::DevNull => 0,
         FdKind::Console => 0,
-        FdKind::Socket(id) => crate::net::recv(id, buf, f.flags & O_NONBLOCK != 0),
+        FdKind::Socket(id) => crate::net::recv(id, buf),
         FdKind::PipeRead(id) => crate::net::pipe_read(id, buf),
-        FdKind::EventFd(id) => crate::net::eventfd_read(id, buf, f.flags & O_NONBLOCK != 0),
-        FdKind::SocketPair(id) => crate::net::sp_read(id, buf, f.flags & O_NONBLOCK != 0),
         _ => -9,
     }
 }
@@ -567,9 +553,6 @@ pub fn write_fd(fd: usize, buf: &[u8]) -> isize {
         Some(f) => f,
         None => return -9,
     };
-    if unsafe { crate::TRACE } >= 3 {
-        crate::println!("[write] fd={} kind={:?} len={} flags={:#x}", fd, f.kind, buf.len(), f.flags);
-    }
     match f.kind {
         FdKind::File => {
             let n = get(f.node);
@@ -595,10 +578,8 @@ pub fn write_fd(fd: usize, buf: &[u8]) -> isize {
             buf.len() as isize
         }
         FdKind::DevZero => buf.len() as isize,
-        FdKind::Socket(id) => crate::net::send(id, buf, f.flags & O_NONBLOCK != 0),
+        FdKind::Socket(id) => crate::net::send(id, buf),
         FdKind::PipeWrite(id) => crate::net::pipe_write(id, buf),
-        FdKind::EventFd(id) => crate::net::eventfd_write(id, buf),
-        FdKind::SocketPair(id) => crate::net::sp_write(id, buf),
         _ => -9,
     }
 }
@@ -680,7 +661,7 @@ pub fn getdents(fd: usize, buf: &mut [u8]) -> isize {
             }
         }
     }
-    let mut off = f.pos as usize;
+    let mut off = *f.pos as usize;
     let mut written = 0usize;
     while off < names.len() {
         let (ino, ty, name) = &names[off];
@@ -700,7 +681,7 @@ pub fn getdents(fd: usize, buf: &mut [u8]) -> isize {
         written += reclen;
         off += 1;
     }
-    f.pos = off as u64;
+    *f.pos = off as u64;
     written as isize
 }
 
