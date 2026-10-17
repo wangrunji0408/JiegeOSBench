@@ -98,7 +98,5 @@ cat > rootfs/www/index.html <<'EOF'
 </body></html>
 EOF
 
-python3 -c "open('rootfs/www/large.txt','w').write('0123456789abcdef'*8192)"
-
 echo "rootfs prepared"
 sha256sum rootfs/sbin/nginx 2>/dev/null || shasum -a 256 rootfs/sbin/nginx
