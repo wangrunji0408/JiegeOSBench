@@ -18,28 +18,29 @@ Prompt:
 |---|-------|--------|---------|------------|-------|---------|------|-----------|-----------|------|
 | 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | 9 | 2026-09-05 | 👑 Jiege |
 | 🥈 | Claude Opus 5.5 | High | CC | 12min | 14min | 109K | $9.5 | 2 | 2026-09-30 | 🧠 Intelligent Jiege |
-| 🥉 | GPT-6.1 Sol | High | Codex | 18min | 33min | 132K | ~$0.95 | 8 | 2026-09-30 | 🧠 Intelligent Jiege |
-| 4 | DeepSeek V4.1 Flash | High | DSH | 30min | 47min | 350K | $0.28 | 36 | 2026-09-10 | 🧠 Intelligent Jiege |
+| 🥉 | GPT-6.1 Sol | High | Codex | 18min | 33min | 132K | $0.95 | 8 | 2026-09-30 | 🧠 Intelligent Jiege |
+| 4 | DeepSeek V4.1 Flash 0910 | High | DSH | 30min | 47min | 350K | $0.28 | 36 | 2026-09-10 | 🧠 Intelligent Jiege |
 | 5 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
 | 6 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
-| 7 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 8 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
-| 9 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 10 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
-| 11 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
-| 12 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
-| 13 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
-| 14 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
-| 15 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
+| 7 | DeepSeek V4.1 Flash 1017 | High | DSH | 40min | 1h 2min | 645K | $0.65 | 124 | 2026-10-17 | 🧠 Intelligent Jiege |
+| 8 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 9 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
+| 10 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 11 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
+| 12 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
+| 13 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
+| 14 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
+| 15 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
+| 16 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Pro (local) | High | CC | 3h 16min | 3h 25min | 488K x2 | self-hosted | 61 | 2026-10-09 | 🤖 Machine Jiege |
-| 16 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
+| 17 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | High | CC | 4h 42min | 4h 44min | 967K x2 | self-hosted | 195 | 2026-10-09 | 🤖 Machine Jiege |
-| 17 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
-| 18 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
+| 18 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 19 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | Max | CC | 7h 55min | 7h 57min | 967K x3 | self-hosted | 320 | 2026-10-06 | 🤖 Machine Jiege |
-| 19 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
-| 20 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
-| 21 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
+| 20 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
+| 21 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
+| 22 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
 
 
 
@@ -121,9 +122,9 @@ Took the **official Alpine APK route**: unmodified nginx **1.28.3-r7** plus musl
 | 00:32 | Final suite passes again; KERNEL.md documents scope; formatting and Python syntax checks pass |
 | 00:33 | Host HTTP rechecked after startup; final response completes ✅ |
 
-## DeepSeek V4.1 Flash — 30min / 47min
+## DeepSeek V4.1 Flash 0910 — 30min / 47min
 
-![DeepSeek V4.1 Flash Timeline](figures/deepseek-v4.1-flash-timeline.png)
+![DeepSeek V4.1 Flash 0910 Timeline](figures/deepseek-v4.1-flash-timeline.png)
 
 DeepSeek Harness ran for **~47min** (first HTTP 200 at 30min) with the **standard agent preset** (write/edit/read available) — the fastest DeepSeek run by a wide margin, and the cheapest successful run on the board at **$0.28**. 158 model steps, 31.0M tokens total (99.6% cache hit), peak context 350K, zero kernel panics, zero context compactions, zero web searches and zero git clones — the 6,283-line `no_std` Rust kernel (Sv39 paging, ELF64 loader, ~150 Linux asm-generic syscalls, ramfs + initramfs, virtio-net + smoltcp + epoll/eventfd/timerfd) is entirely its own. Took the **static musl cross-compile route**: the unmodified official nginx 1.27.4 source built with `zig cc -target riscv64-linux-musl` into a single static riscv64 ELF. It reached HTTP 200 in only ~36 QEMU boots — 12 hand-found bugs, no blind churn.
 
@@ -187,6 +188,21 @@ Claude Code ran for **~58min** to first HTTP 200 (goal complete at 105min) — t
 | 00:58 | First HTTP 200 OK from host — `Server: nginx/1.28.3` 🎉 |
 | 01:02 | Suite green: index/404/HEAD/sendfile 4MiB/keep-alive |
 | 01:45 | Signal/concurrency/leak/throughput suites, README, git commit ✅ |
+
+## DeepSeek V4.1 Flash 1017 — 40min / 1h 2min
+
+![DeepSeek V4.1 Flash 1017 Timeline](figures/deepseek-v4.1-flash-1017-timeline.png)
+
+The freshly released **DeepSeek-V4.1-Flash (1017)** at **High** effort in DSH's **standard** preset: **61 minutes active with zero idle gaps**, first host HTTP 200 at **40min** (`Server: nginx/1.28.3`). Same route as 0910 — official `nginx-1.28.3.tar.gz` (sha256-verified), `zig cc -target riscv64-linux-musl -static`, **zero nginx source edits** (only configure-time probes patched) — with a bigger kernel (~7,400 lines, legacy **and** modern virtio-net, `sendfile`, signals via a kernel-side sigreturn trampoline); verified by `tools/test.sh` (byte-identical 512 KiB, 404, HEAD, keep-alive, 20 concurrent, 60-second soak, SIGTERM). Pure black-box, 645K peak context, **$0.65**.
+
+| Time | Milestone |
+|------|-----------|
+| 00:02 | Official `nginx-1.28.3.tar.gz` fetched + sha256-verified; `zig cc` cross-build starts |
+| 00:10 | First kernel output in QEMU (OpenSBI → kernel); first panics within seconds |
+| 00:26 | nginx worker processes start inside the guest |
+| 00:40 | First host HTTP 200 — `Server: nginx/1.28.3` 🎉 |
+| 00:55 | `tools/test.sh` green (byte-identical 512 KiB, 404, HEAD, keep-alive, 20× concurrent, 60 s soak) |
+| 01:01 | Final `curl -i`: full 2054-byte page with keep-alive + ETag; SIGTERM shutdown verified |
 
 ### GPT 5.6 Sol — 33min / 49min
 
