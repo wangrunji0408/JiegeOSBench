@@ -113,7 +113,11 @@ pub extern "C" fn kmain(hartid: usize, dtb: usize) -> ! {
     println!("==============================================");
     println!("  jiege-os - a RISC-V Linux-compatible kernel");
     println!("  hartid={} dtb={:#x}", hartid, dtb);
-    println!("  rootfs {} bytes, {} nodes", fs::ROOTFS.len(), fs::nodes().len());
+    println!(
+        "  rootfs {} bytes, {} nodes",
+        fs::ROOTFS.len(),
+        fs::nodes().len()
+    );
     println!("==============================================");
 
     let trace = find_arg(dtb, b"JTRACE=");
@@ -159,4 +163,27 @@ pub extern "C" fn kmain(hartid: usize, dtb: usize) -> ! {
     }
 
     user::exec(&prog, &argv, &envp);
+}
+
+#[panic_handler]
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    println!("[panic] {}", info);
+    sbi::shutdown(true);
+}
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => {{
+        use core::fmt::Write;
+        let _ = write!($crate::uart::UartWriter, $($arg)*);
+    }};
+}
+
+#[macro_export]
+macro_rules! println {
+    () => { $crate::print!("\n") };
+    ($($arg:tt)*) => {{
+        $crate::print!($($arg)*);
+        $crate::print!("\n");
+    }};
 }
