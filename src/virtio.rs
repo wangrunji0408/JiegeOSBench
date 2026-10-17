@@ -32,6 +32,8 @@ static mut TX_AVAIL: u16 = 0;
 static mut TX_USED_LAST: u16 = 0;
 
 pub static mut MAC: [u8; 6] = [0x52, 0x54, 0x00, 0x12, 0x34, 0x56];
+pub static mut RX_COUNT: u64 = 0;
+pub static mut TX_COUNT: u64 = 0;
 
 fn rd(off: usize) -> u32 {
     unsafe { core::ptr::read_volatile((BASE + off) as *const u32) }
@@ -68,22 +70,22 @@ pub fn init() -> [u8; 6] {
         wr(0x70, 0);
         wr(0x70, 1); // ACKNOWLEDGE
         wr(0x70, 3); // ACKNOWLEDGE | DRIVER
-        wr(0x20, 4096); // guest page size
+        wr(0x28, 4096); // guest page size
 
         let host = rd(0x10);
         let mut guest = 0u32;
         if host & (1 << 5) != 0 {
             guest |= 1 << 5; // VIRTIO_NET_F_MAC
         }
-        wr(0x14, guest);
+        wr(0x20, guest);
 
         // RX queue
         let rxaddr = (&raw const RXR) as usize;
-        wr(0x28, 0);
-        let max = rd(0x2c);
+        wr(0x30, 0);
+        let max = rd(0x34);
         let num = (max as usize).min(NUM).max(2);
-        wr(0x30, num as u32);
-        wr(0x34, 4096);
+        wr(0x38, num as u32);
+        wr(0x3c, 4096);
         let desc = rxaddr as *mut Desc;
         for i in 0..num {
             (*desc.add(i)).addr = (&raw const RXB[i]) as u64;
@@ -101,15 +103,15 @@ pub fn init() -> [u8; 6] {
         let used = (rxaddr + 4096) as *mut u16;
         *used = 0;
         *used.add(1) = 0;
-        wr(0x38, (rxaddr >> 12) as u32);
+        wr(0x40, (rxaddr >> 12) as u32);
 
         // TX queue
         let txaddr = (&raw const TXR) as usize;
-        wr(0x28, 1);
-        let max2 = rd(0x2c);
+        wr(0x30, 1);
+        let max2 = rd(0x34);
         let num2 = (max2 as usize).min(NUM).max(2);
-        wr(0x30, num2 as u32);
-        wr(0x34, 4096);
+        wr(0x38, num2 as u32);
+        wr(0x3c, 4096);
         let desc2 = txaddr as *mut Desc;
         for i in 0..num2 {
             (*desc2.add(i)).addr = (&raw const TXB[i]) as u64;
@@ -124,10 +126,12 @@ pub fn init() -> [u8; 6] {
         let used2 = (txaddr + 4096) as *mut u16;
         *used2 = 0;
         *used2.add(1) = 0;
-        wr(0x38, (txaddr >> 12) as u32);
+        wr(0x40, (txaddr >> 12) as u32);
 
         wr(0x70, 7); // DRIVER_OK
         fence(Ordering::SeqCst);
+        wr(0x50, 0); // notify RX queue: descriptors available
+
 
         if guest & (1 << 5) != 0 {
             let p = (BASE + 0x100) as *const u8;
@@ -165,6 +169,7 @@ pub fn rx_pop() -> Option<(usize, usize, usize)> {
         let id = core::ptr::read_volatile(ent) as usize;
         let len = core::ptr::read_volatile(ent.add(1)) as usize;
         RX_LAST = RX_LAST.wrapping_add(1);
+        RX_COUNT += 1;
         if id >= NUM || len > BSIZE {
             return None;
         }
@@ -184,7 +189,7 @@ pub fn rx_release(id: usize) {
         RX_AVAIL = RX_AVAIL.wrapping_add(1);
         *avail.add(1) = RX_AVAIL;
         fence(Ordering::SeqCst);
-        wr(0x40, 0);
+        wr(0x50, 0);
     }
 }
 
@@ -230,8 +235,31 @@ pub fn tx_send<R>(len: usize, f: impl FnOnce(&mut [u8]) -> R) -> Option<R> {
         TX_AVAIL = TX_AVAIL.wrapping_add(1);
         *avail.add(1) = TX_AVAIL;
         TX_HEAD = TX_HEAD.wrapping_add(1);
+        TX_COUNT += 1;
         fence(Ordering::SeqCst);
-        wr(0x40, 1);
+        wr(0x50, 1);
         Some(out)
+    }
+}
+
+pub fn debug_dump() {
+    unsafe {
+        if BASE == 0 {
+            return;
+        }
+        wr(0x30, 0);
+        let num = rd(0x38);
+        let pfn = rd(0x40);
+        let mem = (&raw const RXR) as usize;
+        let avail_idx = core::ptr::read_volatile((mem + NUM * 16 + 2) as *const u16);
+        let used_idx = core::ptr::read_volatile((mem + 4096 + 2) as *const u16);
+        let status = rd(0x70);
+        let isr = rd(0x60);
+        let d0 = core::ptr::read_volatile(mem as *const u64);
+        let d0len = core::ptr::read_volatile((mem + 8) as *const u32);
+        crate::println!(
+            "[virtio] status={} num={} pfn={:#x} avail_idx={} used_idx={} isr={:#x} desc0={:#x}/{}",
+            status, num, pfn, avail_idx, used_idx, isr, d0, d0len
+        );
     }
 }

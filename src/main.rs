@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![allow(static_mut_refs)]
+#![allow(dead_code)]
 
 extern crate alloc;
 
@@ -17,6 +18,7 @@ mod syscall;
 mod syscall_nr;
 mod trap;
 mod uart;
+mod virtio;
 mod user;
 
 global_asm!(
@@ -105,6 +107,7 @@ pub extern "C" fn kmain(hartid: usize, dtb: usize) -> ! {
     fs::init();
     mm::init();
     arch::init_trap();
+    net::init();
 
     unsafe {
         syscall::BOOT_WALL_NS = 1_767_225_600u64 * 1_000_000_000; // 2026-01-01

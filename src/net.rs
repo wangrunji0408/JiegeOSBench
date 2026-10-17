@@ -3,7 +3,6 @@ use crate::arch;
 use crate::fs;
 use crate::println;
 use crate::virtio;
-use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
 use smoltcp::iface::{Config, Interface, SocketHandle, SocketSet};
@@ -18,11 +17,13 @@ pub const EPOLLIN: u32 = 0x001;
 pub const EPOLLOUT: u32 = 0x004;
 pub const EPOLLERR: u32 = 0x008;
 pub const EPOLLHUP: u32 = 0x010;
+pub const EPOLLRDHUP: u32 = 0x2000;
 
+const POOL: usize = 24;
 const RXBUF: usize = 32768;
 const TXBUF: usize = 32768;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 enum Role {
     Unbound,
     Listener,
@@ -37,6 +38,8 @@ struct SockEntry {
     addr: Option<Ipv4Address>,
     nonblock: bool,
     closing: bool,
+    pending: [Option<SocketHandle>; 64],
+    pool: [Option<SocketHandle>; POOL],
 }
 
 struct EpollEntry {
@@ -64,6 +67,10 @@ fn sset() -> &'static mut SocketSet<'static> {
 }
 fn entries() -> &'static mut Vec<Option<SockEntry>> {
     unsafe { &mut ENTRIES }
+}
+
+fn valid(h: SocketHandle) -> bool {
+    sset().iter().any(|(x, _)| x == h)
 }
 
 fn now() -> Instant {
@@ -103,18 +110,24 @@ impl TxToken for TxTok {
     where
         F: FnOnce(&mut [u8]) -> R,
     {
-        if self.ok && len + 10 <= 2048 {
-            if let Some(r) = virtio::tx_send(len + 10, |buf| {
+        let n = len.min(1500);
+        let mut fopt: Option<F> = Some(f);
+        if self.ok && n + 10 <= 2048 && virtio::tx_can_send() {
+            let mut out: Option<R> = None;
+            let ok = virtio::tx_send(n + 10, |buf| {
                 for b in buf[..10].iter_mut() {
                     *b = 0;
                 }
-                f(&mut buf[10..])
-            }) {
-                return r;
+                let ff = fopt.take().unwrap();
+                out = Some(ff(&mut buf[10..]));
+            });
+            if ok.is_some() {
+                return out.unwrap();
             }
         }
+        let f = fopt.take().unwrap();
         unsafe {
-            let s = &mut SCRATCH[..len.min(2048)];
+            let s = &mut SCRATCH[..n];
             f(s)
         }
     }
@@ -183,7 +196,73 @@ pub fn poll() {
     let t = now();
     let dev = &mut VirtioDev;
     iface().poll(t, dev, sset());
+    harvest();
     cleanup();
+}
+
+fn harvest() {
+    let es = entries();
+    for i in 0..es.len() {
+        let mut e = match es[i] {
+            Some(e) => e,
+            None => continue,
+        };
+        if e.role != Role::Listener {
+            continue;
+        }
+        let mut changed = false;
+        for k in 0..POOL {
+            if let Some(h) = e.pool[k] {
+                if !valid(h) {
+                    e.pool[k] = None;
+                    changed = true;
+                    continue;
+                }
+                let st = sset().get::<tcp::Socket>(h).state();
+                if st != tcp::State::Listen {
+                    if let Some(pk) = e.pending.iter().position(|p| p.is_none()) {
+                        e.pending[pk] = Some(h);
+                        e.pool[k] = None;
+                        let nh = new_socket();
+                        let ep = IpListenEndpoint {
+                            addr: e.addr.map(IpAddress::Ipv4),
+                            port: e.port,
+                        };
+                        if sset().get_mut::<tcp::Socket>(nh).listen(ep).is_ok() {
+                            e.pool[k] = Some(nh);
+                        } else {
+                            sset().remove(nh);
+                        }
+                        changed = true;
+                    }
+                }
+            }
+        }
+        for p in e.pending.iter_mut() {
+            if let Some(h) = *p {
+                if !valid(h) {
+                    *p = None;
+                    changed = true;
+                    continue;
+                }
+                let st = sset().get::<tcp::Socket>(h).state();
+                if matches!(
+                    st,
+                    tcp::State::Closed
+                        | tcp::State::TimeWait
+                        | tcp::State::LastAck
+                        | tcp::State::Closing
+                ) {
+                    sset().remove(h);
+                    *p = None;
+                    changed = true;
+                }
+            }
+        }
+        if changed {
+            es[i] = Some(e);
+        }
+    }
 }
 
 fn cleanup() {
@@ -192,6 +271,10 @@ fn cleanup() {
     for (i, e) in es.iter().enumerate() {
         if let Some(e) = e {
             if e.closing {
+                if !valid(e.handle) {
+                    remove.push(i);
+                    continue;
+                }
                 let st = sset().get::<tcp::Socket>(e.handle).state();
                 if st == tcp::State::Closed {
                     remove.push(i);
@@ -208,10 +291,10 @@ fn cleanup() {
 }
 
 fn new_socket() -> SocketHandle {
-    let rx = vec![0u8; RXBUF];
-    let tx = vec![0u8; TXBUF];
-    let rx: &'static mut [u8] = Box::leak(rx.into_boxed_slice());
-    let tx: &'static mut [u8] = Box::leak(tx.into_boxed_slice());
+    let rx: smoltcp::storage::RingBuffer<'static, u8> =
+        smoltcp::storage::RingBuffer::new(vec![0u8; RXBUF]);
+    let tx: smoltcp::storage::RingBuffer<'static, u8> =
+        smoltcp::storage::RingBuffer::new(vec![0u8; TXBUF]);
     let s = tcp::Socket::new(rx, tx);
     sset().add(s)
 }
@@ -261,14 +344,8 @@ fn write_addr(out: &mut [u8], ip: Option<Ipv4Address>, port: u16) {
     }
     out[0..2].copy_from_slice(&2u16.to_ne_bytes());
     out[2..4].copy_from_slice(&port.to_be_bytes());
-    match ip {
-        Some(Ipv4Address::v4(a, b, c, d)) => {
-            out[4] = a;
-            out[5] = b;
-            out[6] = c;
-            out[7] = d;
-        }
-        _ => {}
+    if let Some(ip) = ip {
+        out[4..8].copy_from_slice(&ip.octets());
     }
 }
 
@@ -289,6 +366,8 @@ pub fn socket(domain: i32, ty: i32, _proto: i32) -> isize {
         addr: None,
         nonblock,
         closing: false,
+        pending: [None; 64],
+        pool: [None; POOL],
     });
     let fd = fs::alloc_fd(fs::File {
         kind: fs::FdKind::Socket(id),
@@ -298,6 +377,9 @@ pub fn socket(domain: i32, ty: i32, _proto: i32) -> isize {
     });
     if fd == usize::MAX {
         return -24;
+    }
+    if unsafe { crate::TRACE } >= 2 {
+        println!("[net] socket id={} fd={}", id, fd);
     }
     fd as isize
 }
@@ -309,6 +391,9 @@ pub fn set_nonblock(id: u32, on: bool) {
 }
 
 pub fn bind(id: u32, addr: &[u8]) -> isize {
+    if unsafe { crate::TRACE } >= 2 {
+        println!("[net] bind id={} addr={:?}", id, addr);
+    }
     let (a, port) = match parse_addr(addr) {
         Some(v) => v,
         None => return -22,
@@ -334,20 +419,35 @@ pub fn listen(id: u32, _backlog: i32) -> isize {
     if e.role == Role::Listener {
         return 0;
     }
-    if e.audit_port() == 0 {
+    if e.port == 0 {
         return -22;
     }
     let ep = IpListenEndpoint {
         addr: e.addr.map(IpAddress::Ipv4),
         port: e.port,
     };
-    let h = e.handle;
-    match sset().get_mut::<tcp::Socket>(h).listen(ep) {
-        Ok(()) => {
+    if unsafe { crate::TRACE } >= 2 {
+        println!("[net] listen id={} port={}", id, e.port);
+    }
+    let mut first: Option<SocketHandle> = None;
+    for k in 0..POOL {
+        let h = new_socket();
+        if sset().get_mut::<tcp::Socket>(h).listen(ep).is_ok() {
+            e.pool[k] = Some(h);
+            if first.is_none() {
+                first = Some(h);
+            }
+        } else {
+            sset().remove(h);
+        }
+    }
+    match first {
+        Some(h) => {
+            e.handle = h;
             e.role = Role::Listener;
             0
         }
-        Err(_) => -22,
+        None => -22,
     }
 }
 
@@ -358,55 +458,52 @@ impl SockEntry {
 }
 
 pub fn accept(id: u32, flags: u32, addr_out: &mut [u8]) -> isize {
-    let e0 = match entry(id) {
-        Some(e) => e,
-        None => return -9,
-    };
-    if e0.role != Role::Listener {
-        return -22;
-    }
     loop {
         poll();
         let e = match entry(id) {
             Some(e) => e,
             None => return -9,
         };
-        let st = sset().get::<tcp::Socket>(e.handle).state();
-        if st == tcp::State::Established || st == tcp::State::CloseWait {
-            let remote = sset()
-                .get::<tcp::Socket>(e.handle)
-                .remote_endpoint()
-                .map(|ep| match ep.addr {
-                    IpAddress::Ipv4(a) => a,
-                    _ => Ipv4Address::new(0, 0, 0, 0),
-                });
-            let rport = sset()
-                .get::<tcp::Socket>(e.handle)
-                .remote_endpoint()
-                .map(|ep| ep.port)
-                .unwrap_or(0);
-            write_addr(addr_out, remote, rport);
-            // New listener for subsequent connections.
-            let nh = new_socket();
-            let ep = IpListenEndpoint {
-                addr: e.addr.map(IpAddress::Ipv4),
-                port: e.port,
-            };
-            if sset().get_mut::<tcp::Socket>(nh).listen(ep).is_err() {
-                return -24;
+        if e.role != Role::Listener {
+            return -22;
+        }
+        let mut chosen: Option<(usize, SocketHandle)> = None;
+        for (k, p) in e.pending.iter().enumerate() {
+            if let Some(h) = *p {
+                if !valid(h) {
+                    if let Some(em) = entry_mut(id) {
+                        em.pending[k] = None;
+                    }
+                    continue;
+                }
+                let st = sset().get::<tcp::Socket>(h).state();
+                if st == tcp::State::Established || st == tcp::State::CloseWait {
+                    chosen = Some((k, h));
+                    break;
+                }
             }
-            let old = e.handle;
+        }
+        if let Some((k, h)) = chosen {
+            let sock = sset().get::<tcp::Socket>(h);
+            let remote = sock.remote_endpoint().map(|ep| match ep.addr {
+                IpAddress::Ipv4(a) => a,
+                _ => Ipv4Address::new(0, 0, 0, 0),
+            });
+            let rport = sock.remote_endpoint().map(|ep| ep.port).unwrap_or(0);
+            write_addr(addr_out, remote, rport);
             if let Some(em) = entry_mut(id) {
-                em.handle = nh;
+                em.pending[k] = None;
             }
             let nonblock = flags & 0x800 != 0;
             let nid = add_entry(SockEntry {
-                handle: old,
+                handle: h,
                 role: Role::Conn,
                 port: e.port,
                 addr: e.addr,
                 nonblock,
                 closing: false,
+                pending: [None; 64],
+                pool: [None; POOL],
             });
             let fd = fs::alloc_fd(fs::File {
                 kind: fs::FdKind::Socket(nid),
@@ -417,7 +514,26 @@ pub fn accept(id: u32, flags: u32, addr_out: &mut [u8]) -> isize {
             if fd == usize::MAX {
                 return -24;
             }
+            if unsafe { crate::TRACE } >= 3 {
+                println!("[net] accept id={} new id={} fd={}", id, nid, fd);
+            }
             return fd as isize;
+        }
+        if unsafe { crate::TRACE } >= 3 {
+            crate::print!("[net] accept miss id={} nb={} states:", id, e.nonblock);
+            for p in e.pending.iter() {
+                match *p {
+                    Some(h) => {
+                        if valid(h) {
+                            crate::print!(" {:?}", sset().get::<tcp::Socket>(h).state());
+                        } else {
+                            crate::print!(" BAD");
+                        }
+                    }
+                    None => crate::print!(" -"),
+                }
+            }
+            println!();
         }
         if e.nonblock {
             return -11;
@@ -459,7 +575,7 @@ pub fn connect(id: u32, addr: &[u8]) -> isize {
     }
 }
 
-pub fn recv(id: u32, buf: &mut [u8]) -> isize {
+pub fn recv(id: u32, buf: &mut [u8], nonblock: bool) -> isize {
     loop {
         poll();
         let e = match entry(id) {
@@ -485,17 +601,17 @@ pub fn recv(id: u32, buf: &mut [u8]) -> isize {
         ) {
             return 0;
         }
-        if e.nonblock {
+        if nonblock || e.nonblock {
             return -11;
         }
     }
 }
 
 pub fn recvfrom(id: u32, buf: &mut [u8], _addr_out: &mut [u8]) -> isize {
-    recv(id, buf)
+    recv(id, buf, false)
 }
 
-pub fn send(id: u32, buf: &[u8]) -> isize {
+pub fn send(id: u32, buf: &[u8], nonblock: bool) -> isize {
     loop {
         poll();
         let e = match entry(id) {
@@ -512,14 +628,14 @@ pub fn send(id: u32, buf: &[u8]) -> isize {
                 Err(_) => -32,
             };
         }
-        if e.nonblock {
+        if nonblock || e.nonblock {
             return -11;
         }
     }
 }
 
 pub fn sendto(id: u32, buf: &[u8], _addr: &[u8]) -> isize {
-    send(id, buf)
+    send(id, buf, false)
 }
 
 pub fn shutdown_socket(id: u32, how: i32) -> isize {
@@ -644,8 +760,23 @@ pub fn close_socket(id: u32) {
         Some(e) => e,
         None => return,
     };
+    if !valid(e.handle) && e.role != Role::Listener {
+        if let Some(slot) = entries().get_mut(id as usize) {
+            *slot = None;
+        }
+        return;
+    }
     if e.role == Role::Listener {
-        sset().remove(e.handle);
+        for p in e.pool.iter() {
+            if let Some(h) = *p {
+                sset().remove(h);
+            }
+        }
+        for p in e.pending.iter() {
+            if let Some(h) = *p {
+                sset().remove(h);
+            }
+        }
         if let Some(slot) = entries().get_mut(id as usize) {
             *slot = None;
         }
@@ -700,8 +831,11 @@ pub fn epoll_close(id: u32) {
 pub fn epoll_ctl(id: u32, op: i32, fd: i32, event: &[u8]) -> isize {
     let events = u32::from_ne_bytes([event[0], event[1], event[2], event[3]]);
     let data = u64::from_ne_bytes([
-        event[4], event[5], event[6], event[7], event[8], event[9], event[10], event[11],
+        event[8], event[9], event[10], event[11], event[12], event[13], event[14], event[15],
     ]);
+    if unsafe { crate::TRACE } >= 3 {
+        println!("[net] epoll_ctl ep={} op={} fd={} ev={:#x} data={:#x}", id, op, fd, events, data);
+    }
     let eps = unsafe { &mut EPOLLS };
     let ep = match eps.get_mut(id as usize).and_then(|e| e.as_mut()) {
         Some(e) => e,
@@ -746,36 +880,88 @@ fn fd_ready(fd: i32, want: u32) -> u32 {
                 Some(e) => e,
                 None => return EPOLLERR,
             };
+            let _ = want;
+            if e.role == Role::Listener {
+                let mut r = 0u32;
+                for p in e.pending.iter() {
+                    if let Some(h) = *p {
+                        if !valid(h) {
+                            continue;
+                        }
+                        let ps = sset().get::<tcp::Socket>(h).state();
+                        if matches!(ps, tcp::State::Established | tcp::State::CloseWait) {
+                            r |= EPOLLIN;
+                        }
+                        if matches!(ps, tcp::State::Closed | tcp::State::LastAck) {
+                            r |= EPOLLERR | EPOLLHUP;
+                        }
+                    }
+                }
+                return r;
+            }
+            if !valid(e.handle) {
+                return EPOLLERR;
+            }
             let s = sset().get::<tcp::Socket>(e.handle);
             let st = s.state();
             let mut r = 0u32;
-            if e.role == Role::Listener {
-                if matches!(st, tcp::State::Established | tcp::State::CloseWait) {
-                    r |= EPOLLIN;
-                }
-            } else {
-                if s.can_recv()
-                    || matches!(
-                        st,
-                        tcp::State::CloseWait
-                            | tcp::State::Closed
-                            | tcp::State::LastAck
-                            | tcp::State::Closing
-                            | tcp::State::TimeWait
-                    )
-                {
-                    r |= EPOLLIN;
-                }
-                if s.can_send() {
-                    r |= EPOLLOUT;
-                }
-                if st == tcp::State::Closed {
-                    r |= EPOLLHUP | EPOLLERR;
-                }
+            if s.can_recv()
+                || matches!(
+                    st,
+                    tcp::State::CloseWait
+                        | tcp::State::Closed
+                        | tcp::State::LastAck
+                        | tcp::State::Closing
+                        | tcp::State::TimeWait
+                )
+            {
+                r |= EPOLLIN;
             }
-            let _ = want;
+            if s.can_send() {
+                r |= EPOLLOUT;
+            }
+            if matches!(
+                st,
+                tcp::State::CloseWait
+                    | tcp::State::LastAck
+                    | tcp::State::Closing
+                    | tcp::State::TimeWait
+            ) {
+                r |= EPOLLRDHUP;
+            }
+            if st == tcp::State::Closed {
+                r |= EPOLLHUP | EPOLLERR;
+            }
             r
         }
+        fs::FdKind::EventFd(id) => {
+            let evs = unsafe { &EVENTFDS };
+            if let Some(Some(v)) = evs.get(id as usize) {
+                if *v != 0 {
+                    EPOLLIN
+                } else {
+                    0
+                }
+            } else {
+                EPOLLERR
+            }
+        }
+        fs::FdKind::SocketPair(id) => {
+            let ps = unsafe { &PAIRS };
+            if let Some(Some(e)) = ps.get(id as usize) {
+                let mut r = 0;
+                if !e.rq.is_empty() || e.closed || e.peer_closed {
+                    r |= EPOLLIN;
+                }
+                if e.peer_closed {
+                    r |= EPOLLRDHUP;
+                }
+                r
+            } else {
+                EPOLLERR
+            }
+        }
+        fs::FdKind::PipeRead(_) | fs::FdKind::PipeWrite(_) => 0,
         _ => EPOLLIN,
     }
 }
@@ -786,8 +972,44 @@ pub fn epoll_wait(id: u32, events: &mut [u8], maxevents: i32, timeout_ms: i32) -
     } else {
         None
     };
+    let mut last_report = now().total_micros();
     loop {
         poll();
+        if unsafe { crate::TRACE } >= 4 {
+            let t = now().total_micros();
+            if t - last_report > 1_000_000 {
+                last_report = t;
+                let eps = unsafe { &mut EPOLLS };
+                let es = entries();
+                for (ei, ee) in es.iter().enumerate() {
+                    if let Some(ee) = ee {
+                        if ee.role == Role::Listener {
+                            let mut line = alloc::string::String::new();
+                            for k in 0..POOL {
+                                match ee.pool[k] {
+                                    Some(h) => {
+                                        if valid(h) {
+                                            line.push_str(&alloc::format!("{:?} ", sset().get::<tcp::Socket>(h).state()));
+                                        } else {
+                                            line.push_str("BAD ");
+                                        }
+                                    }
+                                    None => line.push_str("- "),
+                                }
+                            }
+                            let np = ee.pending.iter().filter(|p| p.is_some()).count();
+                            println!("[net] listener {} pending={} pool: {}", ei, np, line);
+                        }
+                    }
+                }
+                if let Some(ep) = eps.get_mut(id as usize).and_then(|e| e.as_mut()) {
+                    for ent in ep.list.iter() {
+                        unsafe { println!("[net] wait fd={} ev={:#x} ready={:#x} rx={} tx={}", ent.fd, ent.events, fd_ready(ent.fd, ent.events), virtio::RX_COUNT, virtio::TX_COUNT); }
+                    virtio::debug_dump();
+                    }
+                }
+            }
+        }
         let mut n = 0usize;
         let maxn = maxevents.max(0) as usize;
         let eps = unsafe { &mut EPOLLS };
@@ -798,9 +1020,30 @@ pub fn epoll_wait(id: u32, events: &mut [u8], maxevents: i32, timeout_ms: i32) -
                 }
                 let r = fd_ready(ent.fd, ent.events);
                 if r & (ent.events | EPOLLERR | EPOLLHUP) != 0 {
-                    let off = n * 12;
+                    if unsafe { crate::TRACE } >= 3 {
+                        let extra = match fs::file(ent.fd as usize) {
+                            Some(f) => match f.kind {
+                                fs::FdKind::Socket(id) => match entry(id) {
+                                    Some(e) => {
+                                        let st = if valid(e.handle) {
+                                            sset().get::<tcp::Socket>(e.handle).state()
+                                        } else {
+                                            tcp::State::Closed
+                                        };
+                                        alloc::format!("sock id={} role={:?} st={:?}", id, e.role, st)
+                                    }
+                                    None => alloc::format!("sock id={} MISSING", id),
+                                },
+                                k => alloc::format!("kind={:?}", k),
+                            },
+                            None => alloc::format!("NOFILE"),
+                        };
+                        println!("[net] event fd={} r={:#x} {}", ent.fd, r, extra);
+                    }
+                    let off = n * 16;
                     events[off..off + 4].copy_from_slice(&r.to_ne_bytes());
-                    events[off + 4..off + 12].copy_from_slice(&ent.data.to_ne_bytes());
+                    events[off + 4..off + 8].copy_from_slice(&0u32.to_ne_bytes());
+                    events[off + 8..off + 16].copy_from_slice(&ent.data.to_ne_bytes());
                     n += 1;
                 }
             }
@@ -819,6 +1062,15 @@ pub fn epoll_wait(id: u32, events: &mut [u8], maxevents: i32, timeout_ms: i32) -
     }
 }
 
+pub fn on_fd_close(fd: usize) {
+    let eps = unsafe { &mut EPOLLS };
+    for e in eps.iter_mut() {
+        if let Some(ep) = e.as_mut() {
+            ep.list.retain(|x| x.fd as usize != fd);
+        }
+    }
+}
+
 pub fn pipe2(_fds: &mut [u8], _flags: u32) -> isize {
     -38
 }
@@ -829,3 +1081,166 @@ pub fn pipe_write(_id: u32, _buf: &[u8]) -> isize {
     -38
 }
 pub fn pipe_close(_id: u32) {}
+
+// ---- eventfd ----
+
+static mut EVENTFDS: Vec<Option<u64>> = Vec::new();
+
+pub fn eventfd(initval: u32, nonblock: bool) -> isize {
+    let evs = unsafe { &mut EVENTFDS };
+    let id = evs.len();
+    evs.push(Some(initval as u64));
+    let fd = fs::alloc_fd(fs::File {
+        kind: fs::FdKind::EventFd(id as u32),
+        node: 0,
+        pos: 0,
+        flags: if nonblock { fs::O_NONBLOCK } else { 0 },
+    });
+    if fd == usize::MAX {
+        return -24;
+    }
+    fd as isize
+}
+
+pub fn eventfd_close(id: u32) {
+    let evs = unsafe { &mut EVENTFDS };
+    if let Some(s) = evs.get_mut(id as usize) {
+        *s = None;
+    }
+}
+
+pub fn eventfd_read(id: u32, buf: &mut [u8], nonblock: bool) -> isize {
+    if buf.len() < 8 {
+        return -22;
+    }
+    let evs = unsafe { &mut EVENTFDS };
+    loop {
+        if let Some(Some(v)) = evs.get_mut(id as usize) {
+            if *v != 0 {
+                let val = *v;
+                *v = 0;
+                buf[..8].copy_from_slice(&val.to_ne_bytes());
+                return 8;
+            }
+        } else {
+            return -9;
+        }
+        if nonblock {
+            return -11;
+        }
+        poll();
+    }
+}
+
+pub fn eventfd_write(id: u32, buf: &[u8]) -> isize {
+    if buf.len() < 8 {
+        return -22;
+    }
+    let v = u64::from_ne_bytes([buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]]);
+    let evs = unsafe { &mut EVENTFDS };
+    if let Some(Some(x)) = evs.get_mut(id as usize) {
+        *x = x.wrapping_add(v);
+        return 8;
+    }
+    -9
+}
+
+// ---- socketpair / pipe ----
+
+struct Endpoint {
+    rq: alloc::collections::VecDeque<u8>,
+    peer: usize,
+    closed: bool,
+    peer_closed: bool,
+}
+
+static mut PAIRS: Vec<Option<Endpoint>> = Vec::new();
+
+pub fn socketpair(_domain: i32, ty: i32, _proto: i32, sv: &mut [u8]) -> isize {
+    if ty & 0xf != 1 {
+        return -93;
+    }
+    let a = unsafe { PAIRS.len() };
+    let b = a + 1;
+    unsafe {
+        PAIRS.push(Some(Endpoint { rq: alloc::collections::VecDeque::new(), peer: b, closed: false, peer_closed: false }));
+        PAIRS.push(Some(Endpoint { rq: alloc::collections::VecDeque::new(), peer: a, closed: false, peer_closed: false }));
+    }
+    let fd1 = fs::alloc_fd(fs::File {
+        kind: fs::FdKind::SocketPair(a as u32),
+        node: 0,
+        pos: 0,
+        flags: 0,
+    });
+    let fd2 = fs::alloc_fd(fs::File {
+        kind: fs::FdKind::SocketPair(b as u32),
+        node: 0,
+        pos: 0,
+        flags: 0,
+    });
+    if fd1 == usize::MAX || fd2 == usize::MAX {
+        return -24;
+    }
+    sv[0..4].copy_from_slice(&(fd1 as i32).to_ne_bytes());
+    sv[4..8].copy_from_slice(&(fd2 as i32).to_ne_bytes());
+    0
+}
+
+pub fn sp_close(id: u32) {
+    let ps = unsafe { &mut PAIRS };
+    let peer = match ps.get(id as usize).and_then(|e| e.as_ref()) {
+        Some(e) => e.peer,
+        None => return,
+    };
+    if let Some(Some(e)) = ps.get_mut(id as usize) {
+        e.closed = true;
+    }
+    if let Some(Some(e)) = ps.get_mut(peer) {
+        e.peer_closed = true;
+    }
+}
+
+pub fn sp_read(id: u32, buf: &mut [u8], nonblock: bool) -> isize {
+    let ps = unsafe { &mut PAIRS };
+    loop {
+        match ps.get_mut(id as usize).and_then(|e| e.as_mut()) {
+            Some(e) => {
+                if !e.rq.is_empty() {
+                    let n = buf.len().min(e.rq.len());
+                    for i in 0..n {
+                        buf[i] = e.rq.pop_front().unwrap();
+                    }
+                    return n as isize;
+                }
+                if e.closed || e.peer_closed {
+                    return 0;
+                }
+                if nonblock {
+                    return -11;
+                }
+            }
+            None => return -9,
+        }
+        poll();
+    }
+}
+
+pub fn sp_write(id: u32, buf: &[u8]) -> isize {
+    let ps = unsafe { &mut PAIRS };
+    let peer = match ps.get(id as usize).and_then(|e| e.as_ref()) {
+        Some(e) => e.peer,
+        None => return -9,
+    };
+    match ps.get_mut(peer).and_then(|e| e.as_mut()) {
+        Some(e) => {
+            if e.closed {
+                return -32;
+            }
+            for &b in buf {
+                e.rq.push_back(b);
+            }
+            buf.len() as isize
+        }
+        None => -32,
+    }
+}

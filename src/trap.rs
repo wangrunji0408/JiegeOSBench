@@ -20,11 +20,14 @@ pub extern "C" fn trap_handler(tf: &mut TrapFrame) {
         }
         _ => {
             println!(
-                "[trap] fatal exception code={} sepc={:#x} stval={:#x} sp={:#x}",
+                "[trap] fatal exception code={} sepc={:#x} stval={:#x} ra={:#x} a0={:#x} a1={:#x} a7={:#x}",
                 code,
                 arch::sepc(),
                 arch::stval(),
-                tf.x[2]
+                tf.x[1],
+                tf.x[10],
+                tf.x[11],
+                tf.x[17]
             );
             crate::sbi::shutdown(true);
         }
