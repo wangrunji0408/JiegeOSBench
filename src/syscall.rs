@@ -258,26 +258,6 @@ fn do_getrlimit(res: i32, ptr: usize) -> isize {
     0
 }
 
-fn epoll_id(fd: usize) -> Option<u32> {
-    match fs::file(fd) {
-        Some(f) => match f.kind {
-            fs::FdKind::Epoll(id) => Some(id),
-            _ => None,
-        },
-        None => None,
-    }
-}
-
-fn sock_id(fd: usize) -> Option<u32> {
-    match fs::file(fd) {
-        Some(f) => match f.kind {
-            fs::FdKind::Socket(id) => Some(id),
-            _ => None,
-        },
-        None => None,
-    }
-}
-
 fn do_rt_sigaction(_sig: i32, act: usize, old: usize) -> isize {
     if old != 0 && mm::in_user_range(old, 32) {
         unsafe {
@@ -296,9 +276,6 @@ fn do_exit(code: i32) -> ! {
 pub fn dispatch(tf: &mut TrapFrame) {
     tick();
     let nr = tf.x[17];
-    if unsafe { crate::TRACE } >= 2 {
-        println!("[sys] nr={} a0={:#x} a1={:#x} a2={:#x} a3={:#x}", nr, tf.x[10], tf.x[11], tf.x[12], tf.x[13]);
-    }
     let a0 = tf.x[10];
     let a1 = tf.x[11];
     let a2 = tf.x[12];
@@ -306,16 +283,6 @@ pub fn dispatch(tf: &mut TrapFrame) {
     let a4 = tf.x[14];
     let a5 = tf.x[15];
     let r = match nr {
-        IO_SETUP => {
-            if mm::in_user_range(a1, 8) {
-                write_u64(a1, 1);
-                0
-            } else {
-                -EFAULT
-            }
-        }
-        IO_DESTROY => 0,
-        IO_SUBMIT | IO_CANCEL | IO_GETEVENTS => -ENOSYS,
         READ => {
             let fd = a0;
             match user_slice(a1, a2) {
@@ -367,25 +334,13 @@ pub fn dispatch(tf: &mut TrapFrame) {
             let off = a3;
             let r = fs::lseek(fd, off as i64, 0);
             if r < 0 {
-                r as isize
+                r
             } else {
                 match user_slice(a1, a2) {
                     Some(buf) => fs::read_fd(fd, buf),
                     None => -EFAULT,
                 }
             }
-        }
-        PWRITE64 => {
-            let fd = a0;
-            let off = a3;
-            let old = fs::lseek(fd, 0, 1);
-            fs::lseek(fd, off as i64, 0);
-            let r = match user_slice_ro(a1, a2) {
-                Some(buf) => fs::write_fd(fd, buf),
-                None => -EFAULT,
-            };
-            fs::lseek(fd, old, 0);
-            r
         }
         OPENAT => {
             let path = match cstr(a1) {
@@ -429,7 +384,7 @@ pub fn dispatch(tf: &mut TrapFrame) {
                 None => -EFAULT,
             }
         }
-        FACCESSAT | FACCESSAT2 => {
+        FACESSAT | FACCESSAT2 => {
             let path = match cstr(a1) {
                 Some(p) => p,
                 None => return tf.set_ret(-EFAULT),
@@ -492,7 +447,6 @@ pub fn dispatch(tf: &mut TrapFrame) {
             }
         }
         FSYNC | FDATASYNC | SYNC => 0,
-        FCHOWNAT | FCHOWN | FCHMOD | FCHMODAT | UTIMENSAT => 0,
         FTRUNCATE => {
             if a0 < 1024 {
                 if let Some(f) = fs::file(a0) {
@@ -694,17 +648,12 @@ pub fn dispatch(tf: &mut TrapFrame) {
                 }
                 1 | 2 => 0, // F_GETFD / F_SETFD
                 3 => match fs::file(fd) {
-                    Some(f) => (f.flags & !fs::O_CLOEXEC) as isize,
+                    Some(f) => f.flags as isize & !(fs::O_CLOEXEC),
                     None => -EBADF,
                 },
                 4 => {
                     if let Some(f) = fs::file(fd) {
                         f.flags = (f.flags & !(fs::O_NONBLOCK)) | (arg as u32 & fs::O_NONBLOCK);
-                        let nb = f.flags & fs::O_NONBLOCK != 0;
-                        let kind = f.kind;
-                        if let fs::FdKind::Socket(id) = kind {
-                            net::set_nonblock(id, nb);
-                        }
                         0
                     } else {
                         -EBADF
@@ -725,10 +674,6 @@ pub fn dispatch(tf: &mut TrapFrame) {
                             f.flags |= fs::O_NONBLOCK;
                         } else {
                             f.flags &= !fs::O_NONBLOCK;
-                        }
-                        let kind = f.kind;
-                        if let fs::FdKind::Socket(id) = kind {
-                            net::set_nonblock(id, on);
                         }
                         0
                     } else {
@@ -788,28 +733,17 @@ pub fn dispatch(tf: &mut TrapFrame) {
         },
         SOCKET => net::socket(a0 as i32, a1 as i32, a2 as i32),
         BIND => {
-            let id = match sock_id(a0) {
-                Some(id) => id,
-                None => return tf.set_ret(-EBADF),
-            };
             let addr = match user_slice_ro(a1, a2) {
                 Some(b) => b,
                 None => return tf.set_ret(-EFAULT),
             };
-            net::bind(id, addr)
+            net::bind(a0 as u32, addr)
         }
-        LISTEN => match sock_id(a0) {
-            Some(id) => net::listen(id, a1 as i32),
-            None => -EBADF,
-        },
+        LISTEN => net::listen(a0 as u32, a1 as i32),
         ACCEPT | ACCEPT4 => {
-            let id = match sock_id(a0) {
-                Some(id) => id,
-                None => return tf.set_ret(-EBADF),
-            };
             let flags = if nr == ACCEPT4 { a3 as u32 } else { 0 };
             let mut addr = [0u8; 128];
-            let mut res = net::accept(id, flags, &mut addr);
+            let mut res = net::accept(a0 as u32, flags, &mut addr);
             if res >= 0 {
                 if a1 != 0 && a2 != 0 {
                     if let Some(buf) = user_slice(a1, 16) {
@@ -820,7 +754,7 @@ pub fn dispatch(tf: &mut TrapFrame) {
             } else if res == -EAGAIN {
                 // try again after polling
                 net::poll();
-                res = net::accept(id, flags, &mut addr);
+                res = net::accept(a0 as u32, flags, &mut addr);
                 if res >= 0 && a1 != 0 {
                     if let Some(buf) = user_slice(a1, 16) {
                         buf.copy_from_slice(&addr[..16]);
@@ -833,25 +767,19 @@ pub fn dispatch(tf: &mut TrapFrame) {
             res
         }
         CONNECT => {
-            let id = match sock_id(a0) {
-                Some(id) => id,
-                None => return tf.set_ret(-EBADF),
-            };
             let addr = match user_slice_ro(a1, a2) {
                 Some(b) => b,
                 None => return tf.set_ret(-EFAULT),
             };
-            net::connect(id, addr)
+            net::connect(a0 as u32, addr)
         }
-        GETSOCKNAME => match (sock_id(a0), user_slice(a1, a2)) {
-            (Some(id), Some(buf)) => net::getsockname(id, buf),
-            (None, _) => -EBADF,
-            _ => -EFAULT,
+        GETSOCKNAME => match user_slice(a1, a2) {
+            Some(buf) => net::getsockname(a0 as u32, buf),
+            None => -EFAULT,
         },
-        GETPEERNAME => match (sock_id(a0), user_slice(a1, a2)) {
-            (Some(id), Some(buf)) => net::getpeername(id, buf),
-            (None, _) => -EBADF,
-            _ => -EFAULT,
+        GETPEERNAME => match user_slice(a1, a2) {
+            Some(buf) => net::getpeername(a0 as u32, buf),
+            None => -EFAULT,
         },
         SENDFILE => {
             let out = a0 as usize;
@@ -872,7 +800,7 @@ pub fn dispatch(tf: &mut TrapFrame) {
             }
             let n = count.min((size - off) as usize).min(1 << 20);
             let data = fs::node_data(f.node);
-            let r = net::send(out as u32, &data[off as usize..off as usize + n], false);
+            let r = net::send(out as u32, &data[off as usize..off as usize + n]);
             if r > 0 {
                 off += r as u64;
                 if offp != 0 {
@@ -903,7 +831,7 @@ pub fn dispatch(tf: &mut TrapFrame) {
                     let base = read_u64(iov) as usize;
                     let l = read_u64(iov + 8) as usize;
                     match user_slice(base, l) {
-                        Some(b) => net::recv(id, b, false),
+                        Some(b) => net::recv(id, b),
                         None => -EFAULT,
                     }
                 } else {
@@ -932,7 +860,7 @@ pub fn dispatch(tf: &mut TrapFrame) {
                     let base = read_u64(iov) as usize;
                     let l = read_u64(iov + 8) as usize;
                     match user_slice_ro(base, l) {
-                        Some(b) => net::send(id, b, false),
+                        Some(b) => net::send(id, b),
                         None => -EFAULT,
                     }
                 } else {
@@ -948,52 +876,25 @@ pub fn dispatch(tf: &mut TrapFrame) {
                 }
             }
         }
-        SETSOCKOPT => match (sock_id(a0), user_slice_ro(a3, a4)) {
-            (Some(id), Some(v)) => net::setsockopt(id, a1 as i32, a2 as i32, v),
-            (None, _) => -EBADF,
-            _ => -EFAULT,
+        SETSOCKOPT => match user_slice_ro(a3, a4) {
+            Some(v) => net::setsockopt(a0 as u32, a1 as i32, a2 as i32, v),
+            None => -EFAULT,
         },
-        GETSOCKOPT => match (sock_id(a0), user_slice(a3, a4)) {
-            (Some(id), Some(v)) => net::getsockopt(id, a1 as i32, a2 as i32, v),
-            (None, _) => -EBADF,
-            _ => -EFAULT,
+        GETSOCKOPT => match user_slice(a3, a4) {
+            Some(v) => net::getsockopt(a0 as u32, a1 as i32, a2 as i32, v),
+            None => -EFAULT,
         },
-        SHUTDOWN => match sock_id(a0) {
-            Some(id) => net::shutdown_socket(id, a1 as i32),
-            None => -EBADF,
-        },
+        SHUTDOWN => net::shutdown_socket(a0 as u32, a1 as i32),
         EPOLL_CREATE1 => net::epoll_create(),
-        EPOLL_CTL => {
-            let eid = match epoll_id(a0) {
-                Some(id) => id,
-                None => return tf.set_ret(-EBADF),
-            };
-            match user_slice_ro(a3, 16) {
-                Some(ev) => net::epoll_ctl(eid, a1 as i32, a2 as i32, ev),
-                None => -EFAULT,
-            }
-        }
+        EPOLL_CTL => match user_slice_ro(a3, 12) {
+            Some(ev) => net::epoll_ctl(a0 as u32, a1 as i32, a2 as i32, ev),
+            None => -EFAULT,
+        },
         EPOLL_PWAIT | EPOLL_PWAIT2 => {
             let maxevents = a2 as i32;
-            let timeout = if nr == EPOLL_PWAIT {
-                a3 as i32
-            } else if a3 != 0 && mm::in_user_range(a3, 16) {
-                let sec = read_u64(a3) as i64;
-                let nsec = read_u64(a3 + 8) as i64;
-                if sec < 0 {
-                    -1
-                } else {
-                    (sec * 1000 + nsec / 1_000_000).min(i32::MAX as i64) as i32
-                }
-            } else {
-                -1
-            };
-            let eid = match epoll_id(a0) {
-                Some(id) => id,
-                None => return tf.set_ret(-EBADF),
-            };
-            match user_slice(a1, (maxevents as usize) * 16) {
-                Some(ev) => net::epoll_wait(eid, ev, maxevents, timeout),
+            let timeout = if nr == EPOLL_PWAIT { a4 as i32 } else { -1 };
+            match user_slice(a1, (maxevents as usize) * 12) {
+                Some(ev) => net::epoll_wait(a0 as u32, ev, maxevents, timeout),
                 None => -EFAULT,
             }
         }
@@ -1042,14 +943,7 @@ pub fn dispatch(tf: &mut TrapFrame) {
         GETCPU => 0,
         SETITIMER | GETITIMER => 0,
         TIMERFD_CREATE | TIMERFD_SETTIME | TIMERFD_GETTIME => -ENOSYS,
-        EVENTFD2 => {
-            let nbf = a1 as u32 & 0x800 != 0;
-            net::eventfd(a0 as u32, nbf)
-        }
-        SOCKETPAIR => match user_slice(a3, 8) {
-            Some(sv) => net::socketpair(a0 as i32, a1 as i32, a2 as i32, sv),
-            None => -EFAULT,
-        },
+        EVENTFD2 => -ENOSYS,
         SIGNALFD4 => -ENOSYS,
         FALLOCATE => 0,
         FLOCK => 0,
