@@ -12,10 +12,10 @@
 | 🏅 | GPT-6 Astra | 高 | Codex | 6分钟 | 9分钟 | 83K | $4 | 9 | 2026-09-05 | 👑 杰哥 |
 | 🥈 | Claude Opus 5.5 | 高 | CC | 12分钟 | 14分钟 | 109K | $9.5 | 2 | 2026-09-30 | 🧠 智能杰哥 |
 | 🥉 | GPT-6.1 Sol | 高 | Codex | 18分钟 | 33分钟 | 132K | $0.95 | 8 | 2026-09-30 | 🧠 智能杰哥 |
-| 4 | DeepSeek V4.1 Flash 0910 | 高 | DSH | 30分钟 | 47分钟 | 350K | $0.28 | 36 | 2026-09-10 | 🧠 智能杰哥 |
-| 5 | GPT 5.6 Sol | 高 | Codex | 33分钟 | 49分钟 | 222K | $14 | 29 | 2026-07-11 | 🧠 智能杰哥 |
-| 6 | Claude Fable 5 | 高 | CC | 35分钟 | 41分钟 | 155K | $21 | 4 | 2026-07-05 | 🧠 智能杰哥 |
-| 7 | DeepSeek V4.1 Flash 1017 | 高 | DSH | 40分钟 | 1小时2分 | 645K | $0.65 | 124 | 2026-10-17 | 🧠 智能杰哥 |
+| 4 | DeepSeek V4.1 Flash 1017 | 高 | DSH | 28分钟 | 40分钟 | 323K | $0.26 | 60 | 2026-10-18 | 🧠 智能杰哥 |
+| 5 | DeepSeek V4.1 Flash 0910 | 高 | DSH | 30分钟 | 47分钟 | 350K | $0.28 | 36 | 2026-09-10 | 🧠 智能杰哥 |
+| 6 | GPT 5.6 Sol | 高 | Codex | 33分钟 | 49分钟 | 222K | $14 | 29 | 2026-07-11 | 🧠 智能杰哥 |
+| 7 | Claude Fable 5 | 高 | CC | 35分钟 | 41分钟 | 155K | $21 | 4 | 2026-07-05 | 🧠 智能杰哥 |
 | 8 | Claude Opus 4.8 | 高 | CC | 40分钟 | 42分钟 | 230K | $12 | 19 | 2026-09-05 | 🧠 智能杰哥 |
 | 9 | Claude Opus 4.7 | — | CC | 45分钟 | 48分钟 | — | — | — | 2026-04-18 | 🧠 智能杰哥 |
 | 10 | Claude Fable 5.1 | 高 | CC | 58分钟 | 1小时45分 | 516K | $34 | 13 | 2026-09-05 | 🧠 智能杰哥 |
@@ -182,20 +182,19 @@ Claude Code 运行 **约 58 分钟** 达成首次 HTTP 200（105 分钟全部完
 | 01:02 | 套件全绿：index/404/HEAD/sendfile 4MiB/keep-alive |
 | 01:45 | 信号/并发/泄漏/吞吐套件、README、git 提交 ✅ |
 
-## DeepSeek V4.1 Flash 1017 — 40分钟 / 1小时2分
+## DeepSeek V4.1 Flash 1017 — 28分钟 / 40分钟
 
 ![DeepSeek V4.1 Flash 1017 Timeline](figures/deepseek-v4.1-flash-1017-timeline.png)
 
-刚发布的 **DeepSeek-V4.1-Flash（1017）**，DSH **标准模式**、**高**思考强度：**活跃 61 分钟、零停顿**，首次 host 侧 HTTP 200 在 **40 分钟**（`Server: nginx/1.28.3`）。路线与 0910 相同——官方 `nginx-1.28.3.tar.gz`（sha256 校验）+ `zig cc -target riscv64-linux-musl -static`，**nginx 源码一行未改**（只改 configure 的交叉编译探测脚本）——内核更大（约 7,400 行、legacy **与** modern virtio-net、`sendfile`、信号走内核侧 sigreturn trampoline），`tools/test.sh` 验证通过（512 KiB 字节级一致、404、HEAD、keep-alive、20 并发、60 秒 soak、SIGTERM）。纯黑盒、上下文峰值 645K、**$0.65**。
+同一个 **DeepSeek-V4.1-Flash（1017）**、DSH **标准模式**，换了一套完全不同的设计重跑：**首次 host 侧 HTTP 200 用 28 分钟，总时长 40 分钟**，无停顿，上下文峰值 323K，非峰价 **$0.26**。这次内核**没有 MMU**（单地址空间，nginx 在 S 态经系统调用兼容层直接运行），rootfs 用**官方 Alpine apk 原包**——nginx 1.26.3 + pcre2/zlib/openssl，从 `dl-cdn.alpinelinux.org` 解包、二进制未改、musl 动态链接——nginx 单进程运行（`master_process off`）。60 次 QEMU 启动、1 次 panic、纯黑盒（0 搜索、0 clone）；验证：`curl -i` → `200 OK`、`Server: nginx/1.26.3`、211 字节页面。
 
 | 时间 | 里程碑 |
 |------|--------|
-| 00:02 | 下载官方 `nginx-1.28.3.tar.gz` 并校验 sha256，`zig cc` 交叉编译启动 |
-| 00:10 | 内核首次在 QEMU 里出输出（OpenSBI → 内核），随后数秒内首次 panic |
-| 00:26 | 客户机内 nginx worker 进程起来 |
-| 00:40 | 宿主机首次拿到 HTTP 200 —— `Server: nginx/1.28.3` 🎉 |
-| 00:55 | `tools/test.sh` 全绿（512 KiB 字节一致、404、HEAD、keep-alive、20 并发、60 秒 soak） |
-| 01:01 | 最终 `curl -i`：2054 字节完整页面，keep-alive + ETag；SIGTERM 优雅退出验证通过 |
+| 00:02 | 拉取 Alpine 3.20 riscv64 apk（nginx 1.26.3 + pcre2/zlib/openssl）解包进内嵌 rootfs；首次 QEMU 启动 |
+| 00:13 | guest 内 nginx 1.26.3 跑起来（musl 动态、未改） |
+| 00:25 | 首次 panic（内存路径），随后修复 |
+| 00:28 | 宿主机首次 HTTP 200 —— `Server: nginx/1.26.3` 🎉 |
+| 00:40 | 最终 `curl -i`：211 字节页面，keep-alive + ETag；目标达成 |
 
 ### GPT 5.6 Sol — 33分钟 / 49分钟
 

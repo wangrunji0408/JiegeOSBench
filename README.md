@@ -19,10 +19,10 @@ Prompt:
 | 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | 9 | 2026-09-05 | 👑 Jiege |
 | 🥈 | Claude Opus 5.5 | High | CC | 12min | 14min | 109K | $9.5 | 2 | 2026-09-30 | 🧠 Intelligent Jiege |
 | 🥉 | GPT-6.1 Sol | High | Codex | 18min | 33min | 132K | $0.95 | 8 | 2026-09-30 | 🧠 Intelligent Jiege |
-| 4 | DeepSeek V4.1 Flash 0910 | High | DSH | 30min | 47min | 350K | $0.28 | 36 | 2026-09-10 | 🧠 Intelligent Jiege |
-| 5 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
-| 6 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
-| 7 | DeepSeek V4.1 Flash 1017 | High | DSH | 40min | 1h 2min | 645K | $0.65 | 124 | 2026-10-17 | 🧠 Intelligent Jiege |
+| 4 | DeepSeek V4.1 Flash 1017 | High | DSH | 28min | 40min | 323K | $0.26 | 60 | 2026-10-18 | 🧠 Intelligent Jiege |
+| 5 | DeepSeek V4.1 Flash 0910 | High | DSH | 30min | 47min | 350K | $0.28 | 36 | 2026-09-10 | 🧠 Intelligent Jiege |
+| 6 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
+| 7 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
 | 8 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
 | 9 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
 | 10 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
@@ -189,20 +189,19 @@ Claude Code ran for **~58min** to first HTTP 200 (goal complete at 105min) — t
 | 01:02 | Suite green: index/404/HEAD/sendfile 4MiB/keep-alive |
 | 01:45 | Signal/concurrency/leak/throughput suites, README, git commit ✅ |
 
-## DeepSeek V4.1 Flash 1017 — 40min / 1h 2min
+## DeepSeek V4.1 Flash 1017 — 28min / 40min
 
 ![DeepSeek V4.1 Flash 1017 Timeline](figures/deepseek-v4.1-flash-1017-timeline.png)
 
-The freshly released **DeepSeek-V4.1-Flash (1017)** at **High** effort in DSH's **standard** preset: **61 minutes active with zero idle gaps**, first host HTTP 200 at **40min** (`Server: nginx/1.28.3`). Same route as 0910 — official `nginx-1.28.3.tar.gz` (sha256-verified), `zig cc -target riscv64-linux-musl -static`, **zero nginx source edits** (only configure-time probes patched) — with a bigger kernel (~7,400 lines, legacy **and** modern virtio-net, `sendfile`, signals via a kernel-side sigreturn trampoline); verified by `tools/test.sh` (byte-identical 512 KiB, 404, HEAD, keep-alive, 20 concurrent, 60-second soak, SIGTERM). Pure black-box, 645K peak context, **$0.65**.
+The same **DeepSeek-V4.1-Flash (1017)** model on DSH's **standard** preset, rerun with a completely different design: **28 minutes to the first host HTTP 200, 40 minutes total**, no idle gaps, peak context 323K, **$0.26** at the off-peak rates. This kernel has **no MMU** (single address space; nginx runs in S-mode behind a syscall shim) and serves from the **official Alpine apk set** — nginx 1.26.3 + pcre2/zlib/openssl unpacked from `dl-cdn.alpinelinux.org`, binary untouched, musl dynamic — with nginx as a single process (`master_process off`). 60 QEMU boots, 1 panic, pure black-box (0 web searches, 0 git clones); verified by `curl -i` → `200 OK`, `Server: nginx/1.26.3`, 211-byte page.
 
 | Time | Milestone |
 |------|-----------|
-| 00:02 | Official `nginx-1.28.3.tar.gz` fetched + sha256-verified; `zig cc` cross-build starts |
-| 00:10 | First kernel output in QEMU (OpenSBI → kernel); first panics within seconds |
-| 00:26 | nginx worker processes start inside the guest |
-| 00:40 | First host HTTP 200 — `Server: nginx/1.28.3` 🎉 |
-| 00:55 | `tools/test.sh` green (byte-identical 512 KiB, 404, HEAD, keep-alive, 20× concurrent, 60 s soak) |
-| 01:01 | Final `curl -i`: full 2054-byte page with keep-alive + ETag; SIGTERM shutdown verified |
+| 00:02 | Alpine 3.20 riscv64 apks (nginx 1.26.3 + pcre2/zlib/openssl) fetched and unpacked into an embedded rootfs; first QEMU boot |
+| 00:13 | nginx 1.26.3 running in the guest (musl dynamic, unmodified) |
+| 00:25 | First panic (memory path), fixed |
+| 00:28 | First host HTTP 200 — `Server: nginx/1.26.3` 🎉 |
+| 00:40 | Final `curl -i`: 211-byte page with keep-alive + ETag; objective complete |
 
 ### GPT 5.6 Sol — 33min / 49min
 
