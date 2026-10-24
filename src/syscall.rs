@@ -175,7 +175,7 @@ pub fn dispatch(frame: &mut TrapFrame) {
         223 => Ok(0),
         226 => mprotect(arguments),
         227 | 228 | 229 | 233 => Ok(0),
-        242 => Err(ENOSYS),
+        242 => socket_accept(arguments, arguments[3] as u32),
         258 | 259 => Err(ENOSYS),
         260 => Err(ECHILD),
         261 => prlimit64(arguments),
