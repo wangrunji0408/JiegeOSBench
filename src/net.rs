@@ -184,6 +184,9 @@ pub fn bind(id: usize, address: [u8; 4], port: u16) -> NetResult<()> {
 pub fn listen(id: usize) -> NetResult<()> {
     let result = with_network(|network| {
         let record = network.records.get_mut(&id).ok_or(EBADF)?;
+        if record.listening {
+            return Ok(());
+        }
         let binding = record.binding.ok_or(EINVAL)?;
         let socket = network.sockets.get_mut::<tcp::Socket>(record.handle);
         socket.listen(binding.endpoint()).map_err(|_| EINVAL)?;
