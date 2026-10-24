@@ -458,15 +458,12 @@ fn getdents64(arguments: [usize; 6]) -> SysResult {
 }
 
 fn fcntl(arguments: [usize; 6]) -> SysResult {
-    match arguments[1] as u32 {
-        0 => crate::fd::duplicate(arguments[0] as i32, None).map(|fd| {
-            let _ = fd;
-            fd as usize
-        }),
-        1 | 2 | 4 => Ok(0),
-        3 => Ok(0),
-        _ => Err(EINVAL),
-    }
+    crate::fd::fcntl(
+        arguments[0] as i32,
+        arguments[1] as u32,
+        arguments[2] as u32,
+    )
+    .map(|value| value as usize)
 }
 
 fn dup3(arguments: [usize; 6]) -> SysResult {
