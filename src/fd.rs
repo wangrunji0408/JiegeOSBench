@@ -503,18 +503,45 @@ pub fn epoll_ctl(
 }
 
 fn descriptor_events(fd: i32) -> Result<u32, i32> {
-    let id = {
+    let (unix, id, endpoint) = {
         let guard = DESCRIPTORS.lock();
         let descriptors = guard.as_ref().unwrap();
         match descriptors.get(&fd).ok_or(EBADF)? {
             Descriptor::File(_) => return Ok(EPOLLIN | EPOLLOUT),
             Descriptor::Stdout | Descriptor::Stderr => return Ok(EPOLLOUT),
             Descriptor::Stdin => return Ok(EPOLLIN),
-            Descriptor::Socket(socket) => socket.id,
+            Descriptor::Socket(socket) => (false, socket.id, 0),
+            Descriptor::EventFd(event) => {
+                return Ok(if event.counter == 0 {
+                    EPOLLOUT
+                } else {
+                    EPOLLIN | EPOLLOUT
+                });
+            }
+            Descriptor::UnixSocket(socket) => (true, socket.pair, socket.endpoint),
             Descriptor::Epoll(_) => return Ok(0),
         }
     };
-    Ok(crate::net::event_flags(id))
+    if !unix {
+        return Ok(crate::net::event_flags(id));
+    }
+    let pairs = UNIX_PAIRS.lock();
+    let pair = pairs
+        .as_ref()
+        .unwrap()
+        .get(&id)
+        .ok_or(EBADF)?;
+    let peer_closed = pair.closed[1 - endpoint];
+    let mut events = 0;
+    if !pair.queues[endpoint].is_empty() {
+        events |= EPOLLIN;
+    }
+    if peer_closed {
+        events |= EPOLLIN | EPOLLHUP | EPOLLRDHUP;
+    } else {
+        events |= EPOLLOUT;
+    }
+    Ok(events)
 }
 
 pub fn epoll_wait(
