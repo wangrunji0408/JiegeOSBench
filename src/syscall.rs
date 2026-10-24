@@ -156,7 +156,7 @@ pub fn dispatch(frame: &mut TrapFrame) {
         179 => sysinfo(arguments[0]),
         198 => crate::fd::socket(arguments[0] as u32, arguments[1] as u32, arguments[2] as u32)
             .map(|fd| fd as usize),
-        199 => Err(ENOSYS),
+        199 => socket_pair(arguments),
         200 => socket_bind(arguments),
         201 => crate::fd::listen(arguments[0] as i32).map(|_| 0),
         202 => socket_accept(arguments, 0),
