@@ -31,9 +31,12 @@ pub fn start() -> ! {
         mmap_next,
     });
     crate::println!("process: entering official nginx in U-mode");
-    let process = PROCESS.lock();
-    let process = process.as_ref().unwrap();
-    crate::arch::enter_user(process.image.entry, process.image.stack)
+    let (entry, stack) = {
+        let process = PROCESS.lock();
+        let process = process.as_ref().unwrap();
+        (process.image.entry, process.image.stack)
+    };
+    crate::arch::enter_user(entry, stack)
 }
 
 pub fn with_state<R>(function: impl FnOnce(&mut ProcessState) -> R) -> R {
