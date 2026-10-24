@@ -654,7 +654,7 @@ fn gettimeofday(address: usize) -> SysResult {
     if address == 0 {
         return Ok(0);
     }
-    let time = current_timespec();
+    let time = realtime_timespec();
     copy_to_user(
         address,
         &Timeval {
