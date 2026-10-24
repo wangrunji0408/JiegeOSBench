@@ -765,6 +765,110 @@ fn getrandom(arguments: [usize; 6]) -> SysResult {
     Ok(buffer.len())
 }
 
+fn epoll_ctl(arguments: [usize; 6]) -> SysResult {
+    let interest = if arguments[3] == 0 {
+        None
+    } else {
+        Some(crate::fd::EpollInterest {
+            events: memory::read_user::<u32>(arguments[3]).map_err(|_| EFAULT)?,
+            data: memory::read_user::<u64>(arguments[3] + 8).map_err(|_| EFAULT)?,
+        })
+    };
+    crate::fd::epoll_ctl(
+        arguments[0] as i32,
+        arguments[1] as u32,
+        arguments[2] as i32,
+        interest,
+    )
+    .map(|_| 0)
+}
+
+fn epoll_wait(arguments: [usize; 6]) -> SysResult {
+    if arguments[2] == 0 {
+        return Err(EINVAL);
+    }
+    let results = crate::fd::epoll_wait(
+        arguments[0] as i32,
+        arguments[2],
+        arguments[3] as i32,
+    )?;
+    let mut output = Vec::new();
+    for result in &results {
+        output.extend_from_slice(&result.events.to_le_bytes());
+        output.extend_from_slice(&[0; 4]);
+        output.extend_from_slice(&result.data.to_le_bytes());
+    }
+    memory::copy_to_user(arguments[1], &output).map_err(|_| EFAULT)?;
+    Ok(results.len())
+}
+
+fn read_sockaddr(address: usize) -> Result<([u8; 4], u16), i32> {
+    let sockaddr: [u8; 16] = memory::read_user(address).map_err(|_| EFAULT)?;
+    if u16::from_le_bytes([sockaddr[0], sockaddr[1]]) != 2 {
+        return Err(EINVAL);
+    }
+    Ok((
+        [sockaddr[4], sockaddr[5], sockaddr[6], sockaddr[7]],
+        u16::from_be_bytes([sockaddr[2], sockaddr[3]]),
+    ))
+}
+
+fn write_sockaddr(
+    address: usize,
+    length_address: usize,
+    endpoint: Option<smoltcp::wire::IpEndpoint>,
+) -> SysResult {
+    if address == 0 {
+        return Ok(0);
+    }
+    let supplied = memory::read_user::<u32>(length_address).map_err(|_| EFAULT)? as usize;
+    let mut sockaddr = [0u8; 16];
+    sockaddr[..2].copy_from_slice(&2u16.to_le_bytes());
+    if let Some(endpoint) = endpoint {
+        sockaddr[2..4].copy_from_slice(&endpoint.port.to_be_bytes());
+        if let smoltcp::wire::IpAddress::Ipv4(address) = endpoint.addr {
+            sockaddr[4..8].copy_from_slice(&address.octets());
+        }
+    }
+    let count = supplied.min(sockaddr.len());
+    memory::copy_to_user(address, &sockaddr[..count]).map_err(|_| EFAULT)?;
+    memory::write_user(length_address, &(sockaddr.len() as u32)).map_err(|_| EFAULT)?;
+    Ok(0)
+}
+
+fn socket_bind(arguments: [usize; 6]) -> SysResult {
+    let (address, port) = read_sockaddr(arguments[1])?;
+    crate::fd::bind(arguments[0] as i32, address, port).map(|_| 0)
+}
+
+fn socket_accept(arguments: [usize; 6], flags: u32) -> SysResult {
+    let (fd, remote) = crate::fd::accept(arguments[0] as i32, flags)?;
+    if arguments[1] != 0 {
+        write_sockaddr(arguments[1], arguments[2], remote)?;
+    }
+    Ok(fd as usize)
+}
+
+fn socket_name(arguments: [usize; 6], local: bool) -> SysResult {
+    let endpoint = if local {
+        crate::fd::local_endpoint(arguments[0] as i32)?
+    } else {
+        crate::fd::remote_endpoint(arguments[0] as i32)?
+    };
+    write_sockaddr(arguments[1], arguments[2], endpoint)
+}
+
+fn socket_get_option(arguments: [usize; 6]) -> SysResult {
+    crate::fd::socket_id(arguments[0] as i32)?;
+    if arguments[3] != 0 {
+        memory::write_user(arguments[3], &0i32).map_err(|_| EFAULT)?;
+    }
+    if arguments[4] != 0 {
+        memory::write_user(arguments[4], &4u32).map_err(|_| EFAULT)?;
+    }
+    Ok(0)
+}
+
 fn exit(status: usize) -> ! {
     crate::println!("process: nginx exited with status {status}");
     crate::sbi::shutdown()
