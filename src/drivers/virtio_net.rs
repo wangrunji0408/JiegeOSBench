@@ -1,6 +1,6 @@
 use alloc::{vec, vec::Vec};
 use core::mem::size_of;
-use core::ptr::{read_volatile, write_bytes, write_volatile};
+use core::ptr::{read_volatile, write_volatile};
 use core::sync::atomic::{Ordering, compiler_fence};
 use smoltcp::phy::{self, Device, DeviceCapabilities, Medium};
 use smoltcp::time::Instant;
@@ -21,26 +21,26 @@ const MMIO_VERSION: usize = 0x004;
 const MMIO_DEVICE_ID: usize = 0x008;
 const MMIO_DEVICE_FEATURES: usize = 0x010;
 const MMIO_DEVICE_FEATURES_SEL: usize = 0x014;
-const MMIO_DRIVER_FEATURES: usize = 0x020;
-const MMIO_DRIVER_FEATURES_SEL: usize = 0x024;
-const MMIO_QUEUE_SEL: usize = 0x030;
-const MMIO_QUEUE_NUM_MAX: usize = 0x034;
-const MMIO_QUEUE_NUM: usize = 0x038;
-const MMIO_QUEUE_READY: usize = 0x044;
-const MMIO_QUEUE_NOTIFY: usize = 0x050;
-const MMIO_INTERRUPT_STATUS: usize = 0x060;
-const MMIO_INTERRUPT_ACK: usize = 0x064;
-const MMIO_STATUS: usize = 0x070;
-const MMIO_QUEUE_DESC_LOW: usize = 0x080;
-const MMIO_QUEUE_DESC_HIGH: usize = 0x084;
-const MMIO_QUEUE_AVAIL_LOW: usize = 0x090;
-const MMIO_QUEUE_AVAIL_HIGH: usize = 0x094;
-const MMIO_QUEUE_USED_LOW: usize = 0x0a0;
-const MMIO_QUEUE_USED_HIGH: usize = 0x0a4;
+const MMIO_DRIVER_FEATURES: usize = 0x018;
+const MMIO_DRIVER_FEATURES_SEL: usize = 0x01c;
+const MMIO_QUEUE_SEL: usize = 0x020;
+const MMIO_QUEUE_NUM_MAX: usize = 0x024;
+const MMIO_QUEUE_NUM: usize = 0x028;
+const MMIO_QUEUE_READY: usize = 0x02c;
+const MMIO_QUEUE_NOTIFY: usize = 0x030;
+const MMIO_INTERRUPT_STATUS: usize = 0x034;
+const MMIO_INTERRUPT_ACK: usize = 0x038;
+const MMIO_STATUS: usize = 0x03c;
+const MMIO_QUEUE_DESC_LOW: usize = 0x040;
+const MMIO_QUEUE_DESC_HIGH: usize = 0x044;
+const MMIO_QUEUE_AVAIL_LOW: usize = 0x048;
+const MMIO_QUEUE_AVAIL_HIGH: usize = 0x04c;
+const MMIO_QUEUE_USED_LOW: usize = 0x050;
+const MMIO_QUEUE_USED_HIGH: usize = 0x054;
 
 const VIRTIO_MAGIC: u32 = 0x7472_6976;
 const VIRTIO_VERSION_MODERN: u32 = 2;
-const VIRTIO_DEVICE_NET: u32 = 1;
+const VIRTIO_DEVICE_NET: u32 = 2;
 
 const STATUS_ACKNOWLEDGE: u32 = 1;
 const STATUS_DRIVER: u32 = 2;
@@ -369,8 +369,12 @@ impl VirtioNet {
         };
 
         compiler_fence(Ordering::SeqCst);
-        self.rx
-            .set_descriptor(descriptor as u16, buffer, PAGE_SIZE as u32, DESC_F_WRITE);
+        self.rx.set_descriptor(
+            descriptor as u16,
+            buffer,
+            PAGE_SIZE as u32,
+            DESC_F_WRITE,
+        );
         self.rx.push_available(descriptor as u16);
         self.mmio.notify(RX_QUEUE);
         packet
@@ -434,8 +438,12 @@ impl VirtioNet {
         };
         let result = f(packet);
         compiler_fence(Ordering::SeqCst);
-        self.tx
-            .set_descriptor(descriptor, buffer, (NET_HEADER_LEN + length) as u32, 0);
+        self.tx.set_descriptor(
+            descriptor,
+            buffer,
+            (NET_HEADER_LEN + length) as u32,
+            0,
+        );
         self.tx.push_available(descriptor);
         self.mmio.notify(TX_QUEUE);
         result
@@ -522,10 +530,11 @@ impl Device for VirtioNet {
     }
 
     fn capabilities(&self) -> DeviceCapabilities {
-        let mut capabilities = DeviceCapabilities::default();
-        capabilities.medium = Medium::Ethernet;
-        capabilities.max_transmission_unit = ETHERNET_MTU;
-        capabilities.max_burst_size = Some(QUEUE_SIZE);
-        capabilities
+        DeviceCapabilities {
+            medium: Medium::Ethernet,
+            max_transmission_unit: ETHERNET_MTU,
+            max_burst_size: Some(QUEUE_SIZE),
+            ..DeviceCapabilities::default()
+        }
     }
 }
