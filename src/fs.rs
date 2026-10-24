@@ -413,7 +413,7 @@ impl Fs {
                 *field = parse_hex(&archive[start..start + 8])?;
             }
 
-            let name_size = fields[12] as usize;
+            let name_size = fields[11] as usize;
             if name_size == 0 {
                 return Err(EINVAL);
             }
