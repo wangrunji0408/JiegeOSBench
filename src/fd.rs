@@ -233,6 +233,44 @@ pub fn read(fd: i32, buffer: &mut [u8]) -> Result<usize, i32> {
         Descriptor::Stdout | Descriptor::Stderr => Err(EBADF),
         Descriptor::File(file) => file.read(buffer),
         Descriptor::Socket(socket) => crate::net::receive(socket.id, buffer),
+        Descriptor::EventFd(event) => {
+            if buffer.len() != 8 {
+                return Err(EINVAL);
+            }
+            if event.counter == 0 {
+                return Err(EAGAIN);
+            }
+            let value = if event.flags & 1 != 0 {
+                event.counter -= 1;
+                1
+            } else {
+                core::mem::take(&mut event.counter)
+            };
+            buffer.copy_from_slice(&value.to_le_bytes());
+            Ok(8)
+        }
+        Descriptor::UnixSocket(socket) => {
+            let mut pairs = UNIX_PAIRS.lock();
+            let pair = pairs
+                .as_mut()
+                .unwrap()
+                .get_mut(&socket.pair)
+                .ok_or(EBADF)?;
+            let peer_closed = pair.closed[1 - socket.endpoint];
+            let queue = &mut pair.queues[socket.endpoint];
+            if queue.is_empty() {
+                return if peer_closed { Ok(0) } else { Err(EAGAIN) };
+            }
+            let mut count = 0;
+            while count < buffer.len() {
+                let Some(byte) = queue.pop_front() else {
+                    break;
+                };
+                buffer[count] = byte;
+                count += 1;
+            }
+            Ok(count)
+        }
         Descriptor::Epoll(_) => Err(EINVAL),
     }
 }
@@ -248,6 +286,30 @@ pub fn write(fd: i32, buffer: &[u8]) -> Result<usize, i32> {
         }
         Descriptor::File(file) => file.write(buffer),
         Descriptor::Socket(socket) => crate::net::send(socket.id, buffer),
+        Descriptor::EventFd(event) => {
+            if buffer.len() != 8 {
+                return Err(EINVAL);
+            }
+            let value = u64::from_le_bytes(buffer.try_into().unwrap());
+            if value == u64::MAX || event.counter > u64::MAX - 1 - value {
+                return Err(EAGAIN);
+            }
+            event.counter += value;
+            Ok(8)
+        }
+        Descriptor::UnixSocket(socket) => {
+            let mut pairs = UNIX_PAIRS.lock();
+            let pair = pairs
+                .as_mut()
+                .unwrap()
+                .get_mut(&socket.pair)
+                .ok_or(EBADF)?;
+            if pair.closed[1 - socket.endpoint] {
+                return Err(32);
+            }
+            pair.queues[1 - socket.endpoint].extend(buffer.iter().copied());
+            Ok(buffer.len())
+        }
         Descriptor::Epoll(_) => Err(EINVAL),
     }
 }
