@@ -358,6 +358,17 @@ fn utimensat(arguments: [usize; 6]) -> SysResult {
         .map(|_| 0)
 }
 
+fn fchmodat(arguments: [usize; 6]) -> SysResult {
+    let path = path_at(arguments[0] as i32, arguments[1])?;
+    crate::fs::metadata(&path, true).map(|_| 0)
+}
+
+fn fchownat(arguments: [usize; 6]) -> SysResult {
+    let path = path_at(arguments[0] as i32, arguments[1])?;
+    crate::fs::metadata(&path, arguments[4] & 0x100 == 0)
+        .map(|_| 0)
+}
+
 fn ftruncate(arguments: [usize; 6]) -> SysResult {
     let metadata = crate::fd::metadata(arguments[0] as i32)?;
     if metadata.size == arguments[1] as u64 {
