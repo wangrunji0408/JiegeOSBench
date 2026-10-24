@@ -11,6 +11,7 @@ mod fd;
 mod fs;
 mod heap;
 mod memory;
+mod net;
 mod process;
 mod sbi;
 mod syscall;

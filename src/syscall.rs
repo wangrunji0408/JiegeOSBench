@@ -95,6 +95,9 @@ pub fn dispatch(frame: &mut TrapFrame) {
     trace(number, &arguments);
     let result = match number {
         17 => getcwd(arguments[0], arguments[1]),
+        20 => crate::fd::epoll_create().try_into().map_err(|_| EINVAL),
+        21 => epoll_ctl(arguments),
+        22 => epoll_wait(arguments),
         23 => crate::fd::duplicate(arguments[0] as i32, None).map(|fd| fd as usize),
         24 => dup3(arguments),
         25 => fcntl(arguments),

@@ -257,7 +257,7 @@ pub fn ticks() -> u64 {
 }
 
 pub fn arm_timer() {
-    crate::sbi::set_timer(time() + 10_000_000);
+    crate::sbi::set_timer(time() + 100_000);
 }
 
 pub fn enable_interrupts() {
