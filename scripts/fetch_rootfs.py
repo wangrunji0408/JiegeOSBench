@@ -369,7 +369,9 @@ def write_source_metadata(records, package_paths):
             "elf_bytes_modified": False,
         },
         "locally_generated_files": (
+            "/etc/group",
             "/etc/nginx/nginx.conf",
+            "/etc/passwd",
             "/var/www/html/index.html",
         ),
     }
