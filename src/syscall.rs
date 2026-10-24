@@ -522,6 +522,9 @@ fn mmap(arguments: [usize; 6]) -> SysResult {
             let address = process.mmap_next;
             process.mmap_next = process.mmap_next.checked_add(length).ok_or(ENOMEM)?;
             Ok::<usize, i32>(address)
+        })?
+    };
+    if fixed {
         memory::unmap_user(address, length).map_err(|_| EPERM)?;
     }
     memory::map_user(address, length, protection).map_err(|_| ENOMEM)?;
