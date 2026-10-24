@@ -90,6 +90,7 @@ pub fn init() {
         let mac = [0x52, 0x54, 0x00, 0x12, 0x34, 0x56];
         match VirtioNet::new(base, mac) {
             Ok(mut device) => {
+                let mac = device.mac();
                 let mut config = Config::new(HardwareAddress::Ethernet(EthernetAddress(mac)));
                 config.random_seed = crate::arch::time();
                 let mut interface = Interface::new(config, &mut device, instant());
