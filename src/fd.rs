@@ -442,11 +442,18 @@ pub fn fcntl(fd: i32, command: u32, argument: u32) -> Result<i32, i32> {
         1 | 2 => Ok(0),
         3 => match descriptor {
             Descriptor::Socket(socket) => Ok((socket.flags | 2) as i32),
+            Descriptor::EventFd(event) => Ok(((event.flags & O_NONBLOCK) | 2) as i32),
+            Descriptor::UnixSocket(socket) => Ok((socket.flags | 2) as i32),
             _ => Ok(0),
         },
         4 => {
-            if let Descriptor::Socket(socket) = descriptor {
-                socket.flags = argument & O_NONBLOCK;
+            match descriptor {
+                Descriptor::Socket(socket) => socket.flags = argument & O_NONBLOCK,
+                Descriptor::EventFd(event) => {
+                    event.flags = (event.flags & 1) | (argument & O_NONBLOCK)
+                }
+                Descriptor::UnixSocket(socket) => socket.flags = argument & O_NONBLOCK,
+                _ => {}
             }
             Ok(0)
         }
