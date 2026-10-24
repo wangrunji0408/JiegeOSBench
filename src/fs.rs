@@ -4,26 +4,19 @@ use alloc::vec::Vec;
 use core::str;
 use spin::Mutex;
 
-pub const EPERM: i32 = 1;
 pub const ENOENT: i32 = 2;
 pub const EIO: i32 = 5;
 pub const EBADF: i32 = 9;
-pub const EACCES: i32 = 13;
 pub const EEXIST: i32 = 17;
 pub const ENODEV: i32 = 19;
 pub const ENOTDIR: i32 = 20;
 pub const EISDIR: i32 = 21;
 pub const EINVAL: i32 = 22;
 pub const EFBIG: i32 = 27;
-pub const ENOSPC: i32 = 28;
-pub const EROFS: i32 = 30;
-pub const ENAMETOOLONG: i32 = 36;
-pub const ENOTEMPTY: i32 = 39;
 pub const ELOOP: i32 = 40;
 
 pub const O_RDONLY: u32 = 0;
 pub const O_WRONLY: u32 = 1;
-pub const O_RDWR: u32 = 2;
 pub const O_ACCMODE: u32 = 3;
 pub const O_CREAT: u32 = 0x40;
 pub const O_EXCL: u32 = 0x80;

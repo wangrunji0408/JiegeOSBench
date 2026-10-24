@@ -1,8 +1,6 @@
 use core::arch::{asm, global_asm};
-use core::sync::atomic::{AtomicU64, Ordering};
 
 pub const SCAUSE_INTERRUPT: usize = 1usize << 63;
-static TICKS: AtomicU64 = AtomicU64::new(0);
 
 global_asm!(
     r#"

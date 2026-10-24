@@ -14,7 +14,6 @@ const EAGAIN: i32 = 11;
 const ENOMEM: i32 = 12;
 const EACCES: i32 = 13;
 const EFAULT: i32 = 14;
-const EEXIST: i32 = 17;
 const ENOTDIR: i32 = 20;
 const EINVAL: i32 = 22;
 const ENOTTY: i32 = 25;

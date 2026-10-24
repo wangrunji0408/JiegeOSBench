@@ -15,8 +15,13 @@ const INTERP_BASE: usize = 0x20_0000_0000;
 const STACK_TOP: usize = 0x3f_0000_0000;
 const STACK_SIZE: usize = 8 * 1024 * 1024;
 
-#[derive(Debug)]
 pub struct ElfError(pub &'static str);
+
+impl core::fmt::Debug for ElfError {
+    fn fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        formatter.write_str(self.0)
+    }
+}
 
 struct Header {
     kind: u16,
