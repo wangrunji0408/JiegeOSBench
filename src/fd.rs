@@ -1,4 +1,4 @@
-use alloc::collections::BTreeMap;
+use alloc::collections::{BTreeMap, VecDeque};
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use smoltcp::wire::IpEndpoint;
@@ -10,12 +10,31 @@ use crate::net::{EPOLLERR, EPOLLHUP, EPOLLIN, EPOLLOUT, EPOLLRDHUP};
 const EBADF: i32 = 9;
 const EINVAL: i32 = 22;
 const ESPIPE: i32 = 29;
+const EAGAIN: i32 = 11;
 const O_NONBLOCK: u32 = 0x800;
 
 #[derive(Clone, Copy)]
 struct SocketFd {
     id: usize,
     flags: u32,
+}
+
+#[derive(Clone, Copy)]
+struct EventFd {
+    counter: u64,
+    flags: u32,
+}
+
+#[derive(Clone, Copy)]
+struct UnixSocketFd {
+    pair: usize,
+    endpoint: usize,
+    flags: u32,
+}
+
+struct UnixPair {
+    queues: [VecDeque<u8>; 2],
+    closed: [bool; 2],
 }
 
 #[derive(Clone, Copy)]
@@ -36,10 +55,14 @@ enum Descriptor {
     Stderr,
     File(File),
     Socket(SocketFd),
+    EventFd(EventFd),
+    UnixSocket(UnixSocketFd),
     Epoll(BTreeMap<i32, EpollInterest>),
 }
 
 static DESCRIPTORS: Mutex<Option<BTreeMap<i32, Descriptor>>> = Mutex::new(None);
+static UNIX_PAIRS: Mutex<Option<BTreeMap<usize, UnixPair>>> = Mutex::new(None);
+static NEXT_UNIX_PAIR: Mutex<usize> = Mutex::new(1);
 
 pub fn init() {
     let mut descriptors = BTreeMap::new();
@@ -47,6 +70,7 @@ pub fn init() {
     descriptors.insert(1, Descriptor::Stdout);
     descriptors.insert(2, Descriptor::Stderr);
     *DESCRIPTORS.lock() = Some(descriptors);
+    *UNIX_PAIRS.lock() = Some(BTreeMap::new());
 }
 
 fn allocate(descriptors: &BTreeMap<i32, Descriptor>) -> i32 {
