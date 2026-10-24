@@ -872,6 +872,16 @@ fn write_sockaddr(
     Ok(0)
 }
 
+fn socket_pair(arguments: [usize; 6]) -> SysResult {
+    let descriptors = crate::fd::socketpair(arguments[0] as u32, arguments[1] as u32)?;
+    memory::write_user(
+        arguments[3],
+        &[descriptors.0, descriptors.1],
+    )
+    .map_err(|_| EFAULT)?;
+    Ok(0)
+}
+
 fn socket_bind(arguments: [usize; 6]) -> SysResult {
     let (address, port) = read_sockaddr(arguments[1])?;
     crate::fd::bind(arguments[0] as i32, address, port).map(|_| 0)
