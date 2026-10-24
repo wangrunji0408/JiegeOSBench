@@ -159,7 +159,7 @@ pub fn map_user(virtual_address: usize, length: usize, flags: usize) -> MemoryRe
                 *entry |= flags | PTE_A | PTE_D;
             } else {
                 let physical = alloc_frame()?;
-                *entry = pte(physical, flags | PTE_U | PTE_A | PTE_D);
+                *entry = pte(physical, flags | PTE_V | PTE_U | PTE_A | PTE_D);
             }
         }
     }

@@ -171,22 +171,8 @@ fn load_elf(data: &[u8], dynamic_base: usize) -> Result<LoadedElf, ElfError> {
     }
     for segment in segments {
         let address = base + segment.virtual_address;
-        crate::println!(
-            "elf: segment va={address:#x} file={:#x} mem={:#x} flags={:#x}",
-            segment.file_size,
-            segment.memory_size,
-            segment.flags
-        );
         memory::map_user(address, segment.memory_size, protection(segment.flags))
             .map_err(|_| ElfError("cannot map ELF segment"))?;
-        match memory::translate(address) {
-            Ok(translation) => crate::println!(
-                "elf: translated pa={:#x} flags={:#x}",
-                translation.physical,
-                translation.flags
-            ),
-            Err(_) => crate::println!("elf: translation failed at {address:#x}"),
-        }
         memory::loader_write(
             address,
             &data[segment.offset..segment.offset + segment.file_size],
