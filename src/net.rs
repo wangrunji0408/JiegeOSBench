@@ -14,7 +14,6 @@ const EBADF: i32 = 9;
 const EAGAIN: i32 = 11;
 const EINVAL: i32 = 22;
 const EPIPE: i32 = 32;
-const ENOSYS: i32 = 38;
 const ENETDOWN: i32 = 100;
 const EADDRINUSE: i32 = 98;
 
