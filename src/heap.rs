@@ -10,12 +10,7 @@ static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
 pub fn init() {
     unsafe {
-        let start = (&raw mut HEAP).cast::<u8>() as usize;
+        let start = (&raw mut HEAP).cast::<u8>();
         ALLOCATOR.lock().init(start, HEAP_SIZE);
     }
-}
-
-#[alloc_error_handler]
-fn out_of_memory(layout: core::alloc::Layout) -> ! {
-    panic!("kernel heap exhausted: {layout:?}")
 }
