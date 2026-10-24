@@ -196,7 +196,7 @@ pub fn protect_user(virtual_address: usize, length: usize, flags: usize) -> Memo
             if *entry & (PTE_V | PTE_U) != (PTE_V | PTE_U) {
                 return Err(MemoryError);
             }
-            *entry = (*entry & !PTE_PERM) | (flags & PTE_PERM);
+            *entry = (*entry & !PTE_PERM) | (flags & PTE_PERM) | PTE_U;
         }
     }
     unsafe { asm!("sfence.vma") };
