@@ -296,6 +296,16 @@ fn dispatch(frame: &mut TrapFrame, from_user: bool) {
         crate::syscall::dispatch(frame);
         return;
     }
+    if from_user && matches!(frame.scause, 12 | 13 | 15) {
+        match crate::memory::translate(frame.stval) {
+            Ok(translation) => crate::println!(
+                "fault translation: pa={:#x} flags={:#x}",
+                translation.physical,
+                translation.flags
+            ),
+            Err(_) => crate::println!("fault translation: unmapped"),
+        }
+    }
     panic!(
         "trap from_user={from_user} cause={:#x} sepc={:#x} stval={:#x}\n{frame:#x?}",
         frame.scause, frame.sepc, frame.stval
