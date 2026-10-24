@@ -14,6 +14,7 @@ const EBADF: i32 = 9;
 const EAGAIN: i32 = 11;
 const EINVAL: i32 = 22;
 const EPIPE: i32 = 32;
+const ENOSYS: i32 = 38;
 const ENETDOWN: i32 = 100;
 const EADDRINUSE: i32 = 98;
 
@@ -83,11 +84,13 @@ fn poll_network(network: &mut Network) {
 }
 
 pub fn init() {
-    for (index, base) in (0x1000_1000..=0x1000_8000).step_by(0x1000).enumerate() {
+    for (index, base) in (0x1000_1000..=0x1000_8000)
+        .step_by(0x1000)
+        .enumerate()
+    {
         let mac = [0x52, 0x54, 0x00, 0x12, 0x34, 0x56];
         match VirtioNet::new(base, mac) {
             Ok(mut device) => {
-                let mac = device.mac();
                 let mut config = Config::new(HardwareAddress::Ethernet(EthernetAddress(mac)));
                 config.random_seed = crate::arch::time();
                 let mut interface = Interface::new(config, &mut device, instant());
@@ -160,18 +163,18 @@ pub fn close(id: usize) {
 
 pub fn bind(id: usize, address: [u8; 4], port: u16) -> NetResult<()> {
     with_network(|network| {
-        for (other_id, record) in &network.records {
-            if *other_id != id && record.binding.is_some_and(|binding| binding.port == port) {
-                return Err(EADDRINUSE);
-            }
+        if network.records.values().any(|record| {
+            record.binding.is_some_and(|binding| {
+                binding.port == port && id != 0 && !core::ptr::eq(record, network.records.get(&id).unwrap())
+            })
+        }) {
+            return Err(EADDRINUSE);
         }
         let record = network.records.get_mut(&id).ok_or(EBADF)?;
         let address = if address == [0, 0, 0, 0] {
             None
         } else {
-            Some(IpAddress::v4(
-                address[0], address[1], address[2], address[3],
-            ))
+            Some(IpAddress::v4(address[0], address[1], address[2], address[3]))
         };
         record.binding = Some(Binding { address, port });
         Ok(())
@@ -181,9 +184,6 @@ pub fn bind(id: usize, address: [u8; 4], port: u16) -> NetResult<()> {
 pub fn listen(id: usize) -> NetResult<()> {
     let result = with_network(|network| {
         let record = network.records.get_mut(&id).ok_or(EBADF)?;
-        if record.listening {
-            return Ok(());
-        }
         let binding = record.binding.ok_or(EINVAL)?;
         let socket = network.sockets.get_mut::<tcp::Socket>(record.handle);
         socket.listen(binding.endpoint()).map_err(|_| EINVAL)?;
@@ -195,10 +195,8 @@ pub fn listen(id: usize) -> NetResult<()> {
 }
 
 fn accept_ready(socket: &tcp::Socket) -> bool {
-    matches!(
-        socket.state(),
-        tcp::State::Established | tcp::State::CloseWait
-    ) || socket.recv_queue() != 0
+    matches!(socket.state(), tcp::State::Established | tcp::State::CloseWait)
+        || socket.recv_queue() != 0
 }
 
 pub fn accept(id: usize) -> NetResult<(usize, Option<IpEndpoint>)> {
@@ -250,11 +248,7 @@ pub fn receive(id: usize, buffer: &mut [u8]) -> NetResult<usize> {
         }
         let socket = network.sockets.get_mut::<tcp::Socket>(record.handle);
         if socket.recv_queue() == 0 {
-            return if socket.may_recv() {
-                Err(EAGAIN)
-            } else {
-                Ok(0)
-            };
+            return if socket.may_recv() { Err(EAGAIN) } else { Ok(0) };
         }
         socket.recv_slice(buffer).map_err(|_| EAGAIN)
     })?
@@ -284,10 +278,7 @@ pub fn send(id: usize, buffer: &[u8]) -> NetResult<usize> {
 pub fn shutdown(id: usize) -> NetResult<()> {
     let result = with_network(|network| {
         let record = network.records.get_mut(&id).ok_or(EBADF)?;
-        network
-            .sockets
-            .get_mut::<tcp::Socket>(record.handle)
-            .close();
+        network.sockets.get_mut::<tcp::Socket>(record.handle).close();
         Ok(())
     })?;
     poll();
@@ -356,4 +347,8 @@ pub fn remote_endpoint(id: usize) -> NetResult<Option<IpEndpoint>> {
             .get::<tcp::Socket>(record.handle)
             .remote_endpoint())
     })?
+}
+
+pub fn connect(_id: usize, _address: [u8; 4], _port: u16) -> NetResult<()> {
+    Err(ENOSYS)
 }
