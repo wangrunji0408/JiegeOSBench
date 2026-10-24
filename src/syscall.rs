@@ -602,8 +602,18 @@ fn current_timespec() -> Timespec {
     }
 }
 
-fn clock_gettime(_clock: usize, address: usize) -> SysResult {
-    copy_to_user(address, &current_timespec())
+fn realtime_timespec() -> Timespec {
+    let mut time = current_timespec();
+    time.seconds += env!("JIEGE_UNIX_EPOCH").parse::<i64>().unwrap();
+    time
+}
+
+fn clock_gettime(clock: usize, address: usize) -> SysResult {
+    if clock == 0 {
+        copy_to_user(address, &realtime_timespec())
+    } else {
+        copy_to_user(address, &current_timespec())
+    }
 }
 
 fn clock_getres(address: usize) -> SysResult {

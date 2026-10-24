@@ -12,6 +12,11 @@ struct Entry {
 }
 
 fn main() {
+    let unix_epoch = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    println!("cargo:rustc-env=JIEGE_UNIX_EPOCH={unix_epoch}");
     println!("cargo:rerun-if-changed=linker.ld");
 
     if let Err(error) = build_archive() {
