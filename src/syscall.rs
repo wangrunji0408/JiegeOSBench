@@ -826,9 +826,8 @@ fn write_sockaddr(
     sockaddr[..2].copy_from_slice(&2u16.to_le_bytes());
     if let Some(endpoint) = endpoint {
         sockaddr[2..4].copy_from_slice(&endpoint.port.to_be_bytes());
-        if let smoltcp::wire::IpAddress::Ipv4(address) = endpoint.addr {
-            sockaddr[4..8].copy_from_slice(&address.octets());
-        }
+        let smoltcp::wire::IpAddress::Ipv4(address) = endpoint.addr;
+        sockaddr[4..8].copy_from_slice(&address.octets());
     }
     let count = supplied.min(sockaddr.len());
     memory::copy_to_user(address, &sockaddr[..count]).map_err(|_| EFAULT)?;

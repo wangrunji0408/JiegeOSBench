@@ -99,7 +99,7 @@ pub fn close(fd: i32) -> Result<(), i32> {
     Ok(())
 }
 
-fn socket_id(fd: i32) -> Result<usize, i32> {
+pub fn socket_id(fd: i32) -> Result<usize, i32> {
     match DESCRIPTORS
         .lock()
         .as_ref()
