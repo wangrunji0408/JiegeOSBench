@@ -7,6 +7,7 @@ build = "build.rs"
 [dependencies]
 linked_list_allocator = "0.10.5"
 spin = "0.9.8"
+smoltcp = { version = "0.12.0", default-features = false, features = ["alloc", "medium-ethernet", "proto-ipv4", "socket-tcp"] }
 
 [profile.dev]
 panic = "abort"
