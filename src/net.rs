@@ -348,7 +348,3 @@ pub fn remote_endpoint(id: usize) -> NetResult<Option<IpEndpoint>> {
             .remote_endpoint())
     })?
 }
-
-pub fn connect(_id: usize, _address: [u8; 4], _port: u16) -> NetResult<()> {
-    Err(ENOSYS)
-}

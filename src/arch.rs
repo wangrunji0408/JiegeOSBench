@@ -250,10 +250,6 @@ pub fn time() -> u64 {
     value
 }
 
-pub fn ticks() -> u64 {
-    TICKS.load(Ordering::Relaxed)
-}
-
 pub fn arm_timer() {
     crate::sbi::set_timer(time() + 100_000);
 }

@@ -332,11 +332,6 @@ impl File {
     pub fn path(&self) -> &str {
         &self.path
     }
-
-    pub fn is_dir(&self) -> bool {
-        self.metadata()
-            .is_ok_and(|metadata| metadata.mode & S_IFMT == S_IFDIR)
-    }
 }
 
 impl Node {
