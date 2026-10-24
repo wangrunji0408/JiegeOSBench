@@ -58,26 +58,28 @@ pub struct ProcessImage {
 }
 
 fn u16_at(data: &[u8], offset: usize) -> Result<u16, ElfError> {
-    let bytes = data.get(offset..offset + 2).ok_or(ElfError("short ELF u16"))?;
+    let bytes = data
+        .get(offset..offset + 2)
+        .ok_or(ElfError("short ELF u16"))?;
     Ok(u16::from_le_bytes([bytes[0], bytes[1]]))
 }
 
 fn u32_at(data: &[u8], offset: usize) -> Result<u32, ElfError> {
-    let bytes = data.get(offset..offset + 4).ok_or(ElfError("short ELF u32"))?;
+    let bytes = data
+        .get(offset..offset + 4)
+        .ok_or(ElfError("short ELF u32"))?;
     Ok(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]))
 }
 
 fn u64_at(data: &[u8], offset: usize) -> Result<usize, ElfError> {
-    let bytes = data.get(offset..offset + 8).ok_or(ElfError("short ELF u64"))?;
+    let bytes = data
+        .get(offset..offset + 8)
+        .ok_or(ElfError("short ELF u64"))?;
     Ok(u64::from_le_bytes(bytes.try_into().unwrap()) as usize)
 }
 
 fn header(data: &[u8]) -> Result<Header, ElfError> {
-    if data.len() < 64
-        || data.get(0..4) != Some(b"\x7fELF")
-        || data[4] != 2
-        || data[5] != 1
-    {
+    if data.len() < 64 || data.get(0..4) != Some(b"\x7fELF") || data[4] != 2 || data[5] != 1 {
         return Err(ElfError("unsupported ELF identification"));
     }
     if u16_at(data, 18)? != EM_RISCV {
@@ -201,12 +203,17 @@ fn push_bytes(stack: &mut usize, bytes: &[u8]) -> usize {
     *stack
 }
 
-pub fn load(path: &str, arguments: &[&str], environment: &[&str]) -> Result<ProcessImage, ElfError> {
+pub fn load(
+    path: &str,
+    arguments: &[&str],
+    environment: &[&str],
+) -> Result<ProcessImage, ElfError> {
     let executable = crate::fs::read_file(path).map_err(|_| ElfError("cannot read executable"))?;
     let main = load_elf(&executable, MAIN_BASE)?;
     let interpreter = match &main.interpreter {
         Some(path) => {
-            let data = crate::fs::read_file(path).map_err(|_| ElfError("cannot read musl loader"))?;
+            let data =
+                crate::fs::read_file(path).map_err(|_| ElfError("cannot read musl loader"))?;
             let loaded = load_elf(&data, INTERP_BASE)?;
             crate::println!(
                 "elf: interpreter={path} base={:#x} entry={:#x}",
@@ -276,10 +283,7 @@ pub fn load(path: &str, arguments: &[&str], environment: &[&str]) -> Result<Proc
         words.push(value);
     }
     words.extend([0, 0]);
-    let stack = memory::align_down(
-        string_pointer - words.len() * size_of::<usize>(),
-        16,
-    );
+    let stack = memory::align_down(string_pointer - words.len() * size_of::<usize>(), 16);
     for (index, word) in words.iter().enumerate() {
         memory::write_user(stack + index * size_of::<usize>(), word)
             .map_err(|_| ElfError("cannot write stack vectors"))?;

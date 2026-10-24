@@ -46,9 +46,10 @@ fn build_archive() -> io::Result<()> {
     };
     append_entry(&mut archive, &trailer, 0)?;
 
-    let output = PathBuf::from(env::var_os("OUT_DIR").ok_or_else(|| {
-        io::Error::new(io::ErrorKind::NotFound, "OUT_DIR is not set")
-    })?);
+    let output = PathBuf::from(
+        env::var_os("OUT_DIR")
+            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "OUT_DIR is not set"))?,
+    );
     fs::write(output.join("rootfs.cpio"), archive)
 }
 

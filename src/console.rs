@@ -37,7 +37,11 @@ pub fn init() {
 
 pub fn _print(args: fmt::Arguments) {
     unsafe {
-        (&raw mut UART).as_mut().unwrap_unchecked().write_fmt(args).ok();
+        (&raw mut UART)
+            .as_mut()
+            .unwrap_unchecked()
+            .write_fmt(args)
+            .ok();
     }
 }
 

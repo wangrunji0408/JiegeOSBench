@@ -252,19 +252,13 @@ impl File {
                 NodeKind::Directory => Err(EISDIR),
                 NodeKind::Device(Device::Null) => Ok(0),
                 NodeKind::Device(Device::Zero) => {
-                    let next = self
-                        .offset
-                        .checked_add(buf.len() as u64)
-                        .ok_or(EFBIG)?;
+                    let next = self.offset.checked_add(buf.len() as u64).ok_or(EFBIG)?;
                     buf.fill(0);
                     self.offset = next;
                     Ok(buf.len())
                 }
                 NodeKind::Device(Device::Random) => {
-                    let next = self
-                        .offset
-                        .checked_add(buf.len() as u64)
-                        .ok_or(EFBIG)?;
+                    let next = self.offset.checked_add(buf.len() as u64).ok_or(EFBIG)?;
                     fill_random(buf);
                     self.offset = next;
                     Ok(buf.len())
@@ -415,9 +409,7 @@ impl Fs {
             }
 
             let data_start = align_four(name_end)?;
-            let data_end = data_start
-                .checked_add(fields[6] as usize)
-                .ok_or(EIO)?;
+            let data_end = data_start.checked_add(fields[6] as usize).ok_or(EIO)?;
             let next = align_four(data_end)?;
             if next > archive.len() {
                 return Err(EIO);
@@ -458,14 +450,7 @@ impl Fs {
                 }
                 _ => NodeKind::Other,
             };
-            fs.nodes.insert(
-                path,
-                Node {
-                    mode,
-                    inode,
-                    kind,
-                },
-            );
+            fs.nodes.insert(path, Node { mode, inode, kind });
             offset = next;
         }
     }
@@ -676,7 +661,10 @@ fn parse_hex(bytes: &[u8]) -> Result<u32, i32> {
             b'A'..=b'F' => (byte - b'A' + 10) as u32,
             _ => return Err(EINVAL),
         };
-        value = value.checked_mul(16).and_then(|value| value.checked_add(digit)).ok_or(EINVAL)?;
+        value = value
+            .checked_mul(16)
+            .and_then(|value| value.checked_add(digit))
+            .ok_or(EINVAL)?;
     }
     Ok(value)
 }

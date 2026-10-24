@@ -83,10 +83,7 @@ fn poll_network(network: &mut Network) {
 }
 
 pub fn init() {
-    for (index, base) in (0x1000_1000..=0x1000_8000)
-        .step_by(0x1000)
-        .enumerate()
-    {
+    for (index, base) in (0x1000_1000..=0x1000_8000).step_by(0x1000).enumerate() {
         let mac = [0x52, 0x54, 0x00, 0x12, 0x34, 0x56];
         match VirtioNet::new(base, mac) {
             Ok(mut device) => {
@@ -163,18 +160,18 @@ pub fn close(id: usize) {
 
 pub fn bind(id: usize, address: [u8; 4], port: u16) -> NetResult<()> {
     with_network(|network| {
-        if network.records.values().any(|record| {
-            record.binding.is_some_and(|binding| {
-                binding.port == port && id != 0 && !core::ptr::eq(record, network.records.get(&id).unwrap())
-            })
-        }) {
-            return Err(EADDRINUSE);
+        for (other_id, record) in &network.records {
+            if *other_id != id && record.binding.is_some_and(|binding| binding.port == port) {
+                return Err(EADDRINUSE);
+            }
         }
         let record = network.records.get_mut(&id).ok_or(EBADF)?;
         let address = if address == [0, 0, 0, 0] {
             None
         } else {
-            Some(IpAddress::v4(address[0], address[1], address[2], address[3]))
+            Some(IpAddress::v4(
+                address[0], address[1], address[2], address[3],
+            ))
         };
         record.binding = Some(Binding { address, port });
         Ok(())
@@ -198,8 +195,10 @@ pub fn listen(id: usize) -> NetResult<()> {
 }
 
 fn accept_ready(socket: &tcp::Socket) -> bool {
-    matches!(socket.state(), tcp::State::Established | tcp::State::CloseWait)
-        || socket.recv_queue() != 0
+    matches!(
+        socket.state(),
+        tcp::State::Established | tcp::State::CloseWait
+    ) || socket.recv_queue() != 0
 }
 
 pub fn accept(id: usize) -> NetResult<(usize, Option<IpEndpoint>)> {
@@ -251,7 +250,11 @@ pub fn receive(id: usize, buffer: &mut [u8]) -> NetResult<usize> {
         }
         let socket = network.sockets.get_mut::<tcp::Socket>(record.handle);
         if socket.recv_queue() == 0 {
-            return if socket.may_recv() { Err(EAGAIN) } else { Ok(0) };
+            return if socket.may_recv() {
+                Err(EAGAIN)
+            } else {
+                Ok(0)
+            };
         }
         socket.recv_slice(buffer).map_err(|_| EAGAIN)
     })?
@@ -281,7 +284,10 @@ pub fn send(id: usize, buffer: &[u8]) -> NetResult<usize> {
 pub fn shutdown(id: usize) -> NetResult<()> {
     let result = with_network(|network| {
         let record = network.records.get_mut(&id).ok_or(EBADF)?;
-        network.sockets.get_mut::<tcp::Socket>(record.handle).close();
+        network
+            .sockets
+            .get_mut::<tcp::Socket>(record.handle)
+            .close();
         Ok(())
     })?;
     poll();

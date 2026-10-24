@@ -184,13 +184,7 @@ pub fn close(fd: i32) -> Result<(), i32> {
 }
 
 pub fn socket_id(fd: i32) -> Result<usize, i32> {
-    match DESCRIPTORS
-        .lock()
-        .as_ref()
-        .unwrap()
-        .get(&fd)
-        .ok_or(EBADF)?
-    {
+    match DESCRIPTORS.lock().as_ref().unwrap().get(&fd).ok_or(EBADF)? {
         Descriptor::Socket(socket) => Ok(socket.id),
         _ => Err(EINVAL),
     }
@@ -256,11 +250,7 @@ pub fn read(fd: i32, buffer: &mut [u8]) -> Result<usize, i32> {
         }
         Descriptor::UnixSocket(socket) => {
             let mut pairs = UNIX_PAIRS.lock();
-            let pair = pairs
-                .as_mut()
-                .unwrap()
-                .get_mut(&socket.pair)
-                .ok_or(EBADF)?;
+            let pair = pairs.as_mut().unwrap().get_mut(&socket.pair).ok_or(EBADF)?;
             let peer_closed = pair.closed[1 - socket.endpoint];
             let queue = &mut pair.queues[socket.endpoint];
             if queue.is_empty() {
@@ -304,11 +294,7 @@ pub fn write(fd: i32, buffer: &[u8]) -> Result<usize, i32> {
         }
         Descriptor::UnixSocket(socket) => {
             let mut pairs = UNIX_PAIRS.lock();
-            let pair = pairs
-                .as_mut()
-                .unwrap()
-                .get_mut(&socket.pair)
-                .ok_or(EBADF)?;
+            let pair = pairs.as_mut().unwrap().get_mut(&socket.pair).ok_or(EBADF)?;
             if pair.closed[1 - socket.endpoint] {
                 return Err(32);
             }
@@ -536,11 +522,7 @@ fn descriptor_events(fd: i32) -> Result<u32, i32> {
         return Ok(crate::net::event_flags(id));
     }
     let pairs = UNIX_PAIRS.lock();
-    let pair = pairs
-        .as_ref()
-        .unwrap()
-        .get(&id)
-        .ok_or(EBADF)?;
+    let pair = pairs.as_ref().unwrap().get(&id).ok_or(EBADF)?;
     let peer_closed = pair.closed[1 - endpoint];
     let mut events = 0;
     if !pair.queues[endpoint].is_empty() {
@@ -554,11 +536,7 @@ fn descriptor_events(fd: i32) -> Result<u32, i32> {
     Ok(events)
 }
 
-pub fn epoll_wait(
-    epoll_fd: i32,
-    maximum: usize,
-    timeout_ms: i32,
-) -> Result<Vec<EpollResult>, i32> {
+pub fn epoll_wait(epoll_fd: i32, maximum: usize, timeout_ms: i32) -> Result<Vec<EpollResult>, i32> {
     let interests = {
         let guard = DESCRIPTORS.lock();
         let descriptors = guard.as_ref().unwrap();

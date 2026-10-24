@@ -120,8 +120,12 @@ pub fn dispatch(frame: &mut TrapFrame) {
         56 => openat(arguments),
         57 => crate::fd::close(arguments[0] as i32).map(|_| 0),
         61 => getdents64(arguments),
-        62 => crate::fd::seek(arguments[0] as i32, arguments[1] as i64, arguments[2] as u32)
-            .map(|offset| offset as usize),
+        62 => crate::fd::seek(
+            arguments[0] as i32,
+            arguments[1] as i64,
+            arguments[2] as u32,
+        )
+        .map(|offset| offset as usize),
         63 => read(arguments),
         64 => write(arguments),
         65 => readv(arguments),
@@ -158,8 +162,12 @@ pub fn dispatch(frame: &mut TrapFrame) {
         174 | 175 | 176 | 177 => Ok(0),
         178 => Ok(1),
         179 => sysinfo(arguments[0]),
-        198 => crate::fd::socket(arguments[0] as u32, arguments[1] as u32, arguments[2] as u32)
-            .map(|fd| fd as usize),
+        198 => crate::fd::socket(
+            arguments[0] as u32,
+            arguments[1] as u32,
+            arguments[2] as u32,
+        )
+        .map(|fd| fd as usize),
         199 => socket_pair(arguments),
         200 => socket_bind(arguments),
         201 => crate::fd::listen(arguments[0] as i32).map(|_| 0),
@@ -216,7 +224,9 @@ fn trace(number: usize, arguments: &[usize; 6]) {
 }
 
 fn copy_to_user<T: Copy>(address: usize, value: &T) -> SysResult {
-    memory::write_user(address, value).map(|_| 0).map_err(|_| EFAULT)
+    memory::write_user(address, value)
+        .map(|_| 0)
+        .map_err(|_| EFAULT)
 }
 
 fn read_string(address: usize) -> Result<String, i32> {
@@ -262,11 +272,7 @@ fn write(arguments: [usize; 6]) -> SysResult {
 fn pread64(arguments: [usize; 6]) -> SysResult {
     checked_buffer(arguments[2])?;
     let mut buffer = vec![0; arguments[2]];
-    let count = crate::fd::read_at(
-        arguments[0] as i32,
-        arguments[3] as u64,
-        &mut buffer,
-    )?;
+    let count = crate::fd::read_at(arguments[0] as i32, arguments[3] as u64, &mut buffer)?;
     memory::copy_to_user(arguments[1], &buffer[..count]).map_err(|_| EFAULT)?;
     Ok(count)
 }
@@ -275,19 +281,15 @@ fn pwrite64(arguments: [usize; 6]) -> SysResult {
     checked_buffer(arguments[2])?;
     let mut buffer = vec![0; arguments[2]];
     memory::copy_from_user(arguments[1], &mut buffer).map_err(|_| EFAULT)?;
-    crate::fd::write_at(
-        arguments[0] as i32,
-        arguments[3] as u64,
-        &buffer,
-    )
+    crate::fd::write_at(arguments[0] as i32, arguments[3] as u64, &buffer)
 }
 
 fn readv(arguments: [usize; 6]) -> SysResult {
     let mut total = 0;
     for index in 0..arguments[2] {
         let base = memory::read_user::<u64>(arguments[1] + index * 16).map_err(|_| EFAULT)?;
-        let length = memory::read_user::<usize>(arguments[1] + index * 16 + 8)
-            .map_err(|_| EFAULT)?;
+        let length =
+            memory::read_user::<usize>(arguments[1] + index * 16 + 8).map_err(|_| EFAULT)?;
         checked_buffer(length)?;
         let mut buffer = vec![0; length];
         let count = crate::fd::read(arguments[0] as i32, &mut buffer)?;
@@ -304,8 +306,8 @@ fn writev(arguments: [usize; 6]) -> SysResult {
     let mut total = 0;
     for index in 0..arguments[2] {
         let base = memory::read_user::<u64>(arguments[1] + index * 16).map_err(|_| EFAULT)?;
-        let length = memory::read_user::<usize>(arguments[1] + index * 16 + 8)
-            .map_err(|_| EFAULT)?;
+        let length =
+            memory::read_user::<usize>(arguments[1] + index * 16 + 8).map_err(|_| EFAULT)?;
         checked_buffer(length)?;
         let mut buffer = vec![0; length];
         memory::copy_from_user(base as usize, &mut buffer).map_err(|_| EFAULT)?;
@@ -320,8 +322,7 @@ fn writev(arguments: [usize; 6]) -> SysResult {
 
 fn openat(arguments: [usize; 6]) -> SysResult {
     let path = path_at(arguments[0] as i32, arguments[1])?;
-    crate::fd::open(&path, arguments[2] as u32, arguments[3] as u32)
-        .map(|fd| fd as usize)
+    crate::fd::open(&path, arguments[2] as u32, arguments[3] as u32).map(|fd| fd as usize)
 }
 
 fn getcwd(address: usize, size: usize) -> SysResult {
@@ -353,15 +354,14 @@ fn unlinkat(arguments: [usize; 6]) -> SysResult {
 
 fn faccessat(arguments: [usize; 6]) -> SysResult {
     let path = path_at(arguments[0] as i32, arguments[1])?;
-    crate::fs::metadata(&path, true).map(|_| 0).map_err(|error| {
-        if error == EACCES { EACCES } else { error }
-    })
+    crate::fs::metadata(&path, true)
+        .map(|_| 0)
+        .map_err(|error| if error == EACCES { EACCES } else { error })
 }
 
 fn utimensat(arguments: [usize; 6]) -> SysResult {
     let path = path_at(arguments[0] as i32, arguments[1])?;
-    crate::fs::metadata(&path, arguments[3] & 0x100 == 0)
-        .map(|_| 0)
+    crate::fs::metadata(&path, arguments[3] & 0x100 == 0).map(|_| 0)
 }
 
 fn fchmodat(arguments: [usize; 6]) -> SysResult {
@@ -371,8 +371,7 @@ fn fchmodat(arguments: [usize; 6]) -> SysResult {
 
 fn fchownat(arguments: [usize; 6]) -> SysResult {
     let path = path_at(arguments[0] as i32, arguments[1])?;
-    crate::fs::metadata(&path, arguments[4] & 0x100 == 0)
-        .map(|_| 0)
+    crate::fs::metadata(&path, arguments[4] & 0x100 == 0).map(|_| 0)
 }
 
 fn ftruncate(arguments: [usize; 6]) -> SysResult {
@@ -491,30 +490,22 @@ fn dup3(arguments: [usize; 6]) -> SysResult {
     if arguments[0] == arguments[1] {
         return Err(EINVAL);
     }
-    crate::fd::duplicate(arguments[0] as i32, Some(arguments[1] as i32))
-        .map(|fd| fd as usize)
+    crate::fd::duplicate(arguments[0] as i32, Some(arguments[1] as i32)).map(|fd| fd as usize)
 }
 
 fn ioctl(arguments: [usize; 6]) -> SysResult {
     match arguments[1] as u32 {
         0x5421 => {
             let enabled = memory::read_user::<i32>(arguments[2]).map_err(|_| EFAULT)?;
-            crate::fd::fcntl(
-                arguments[0] as i32,
-                4,
-                if enabled != 0 { 0x800 } else { 0 },
-            )
-            .map(|_| 0)
+            crate::fd::fcntl(arguments[0] as i32, 4, if enabled != 0 { 0x800 } else { 0 })
+                .map(|_| 0)
         }
         0x5450 | 0x5451 => Ok(0),
         0x5413 => {
             let size = [24u16, 80, 0, 0];
-            memory::copy_to_user(
-                arguments[2],
-                unsafe {
-                    core::slice::from_raw_parts(size.as_ptr().cast::<u8>(), size_of_val(&size))
-                },
-            )
+            memory::copy_to_user(arguments[2], unsafe {
+                core::slice::from_raw_parts(size.as_ptr().cast::<u8>(), size_of_val(&size))
+            })
             .map_err(|_| EFAULT)?;
             Ok(0)
         }
@@ -606,7 +597,9 @@ fn munmap(address: usize, length: usize) -> SysResult {
     if address & (memory::PAGE_SIZE - 1) != 0 {
         return Err(EINVAL);
     }
-    memory::unmap_user(address, length).map(|_| 0).map_err(|_| EINVAL)
+    memory::unmap_user(address, length)
+        .map(|_| 0)
+        .map_err(|_| EINVAL)
 }
 
 fn mprotect(arguments: [usize; 6]) -> SysResult {
@@ -828,11 +821,7 @@ fn epoll_wait(arguments: [usize; 6]) -> SysResult {
     if arguments[2] == 0 {
         return Err(EINVAL);
     }
-    let results = crate::fd::epoll_wait(
-        arguments[0] as i32,
-        arguments[2],
-        arguments[3] as i32,
-    )?;
+    let results = crate::fd::epoll_wait(arguments[0] as i32, arguments[2], arguments[3] as i32)?;
     let mut output = Vec::new();
     for result in &results {
         output.extend_from_slice(&result.events.to_le_bytes());
@@ -878,11 +867,7 @@ fn write_sockaddr(
 
 fn socket_pair(arguments: [usize; 6]) -> SysResult {
     let descriptors = crate::fd::socketpair(arguments[0] as u32, arguments[1] as u32)?;
-    memory::write_user(
-        arguments[3],
-        &[descriptors.0, descriptors.1],
-    )
-    .map_err(|_| EFAULT)?;
+    memory::write_user(arguments[3], &[descriptors.0, descriptors.1]).map_err(|_| EFAULT)?;
     Ok(0)
 }
 

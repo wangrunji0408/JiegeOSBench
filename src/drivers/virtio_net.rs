@@ -369,12 +369,8 @@ impl VirtioNet {
         };
 
         compiler_fence(Ordering::SeqCst);
-        self.rx.set_descriptor(
-            descriptor as u16,
-            buffer,
-            PAGE_SIZE as u32,
-            DESC_F_WRITE,
-        );
+        self.rx
+            .set_descriptor(descriptor as u16, buffer, PAGE_SIZE as u32, DESC_F_WRITE);
         self.rx.push_available(descriptor as u16);
         self.mmio.notify(RX_QUEUE);
         packet
@@ -438,12 +434,8 @@ impl VirtioNet {
         };
         let result = f(packet);
         compiler_fence(Ordering::SeqCst);
-        self.tx.set_descriptor(
-            descriptor,
-            buffer,
-            (NET_HEADER_LEN + length) as u32,
-            0,
-        );
+        self.tx
+            .set_descriptor(descriptor, buffer, (NET_HEADER_LEN + length) as u32, 0);
         self.tx.push_available(descriptor);
         self.mmio.notify(TX_QUEUE);
         result

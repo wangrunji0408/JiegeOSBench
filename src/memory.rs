@@ -225,43 +225,32 @@ pub fn translate(virtual_address: usize) -> MemoryResult<Translation> {
 }
 
 pub fn copy_to_user(virtual_address: usize, source: &[u8]) -> MemoryResult<()> {
-    copy_user(virtual_address, source, true, false)
+    copy_user_write(virtual_address, source, true)
 }
 
 pub fn loader_write(virtual_address: usize, source: &[u8]) -> MemoryResult<()> {
-    copy_user(virtual_address, source, true, false)
+    copy_user_write(virtual_address, source, false)
 }
 
-fn copy_user(
+fn copy_user_write(
     virtual_address: usize,
     source: &[u8],
-    write: bool,
     require_writable: bool,
 ) -> MemoryResult<()> {
     let mut copied = 0;
     while copied < source.len() {
         let address = virtual_address.checked_add(copied).ok_or(MemoryError)?;
         let translation = translate(address)?;
-        if translation.flags & PTE_U == 0
-            || (require_writable && translation.flags & PTE_W == 0)
-        {
+        if translation.flags & PTE_U == 0 || (require_writable && translation.flags & PTE_W == 0) {
             return Err(MemoryError);
         }
         let count = (PAGE_SIZE - (address & (PAGE_SIZE - 1))).min(source.len() - copied);
         unsafe {
-            if write {
-                core::ptr::copy_nonoverlapping(
-                    source.as_ptr().add(copied),
-                    translation.physical as *mut u8,
-                    count,
-                );
-            } else {
-                core::ptr::copy_nonoverlapping(
-                    translation.physical as *const u8,
-                    source.as_ptr().add(copied) as *mut u8,
-                    count,
-                );
-            }
+            core::ptr::copy_nonoverlapping(
+                source.as_ptr().add(copied),
+                translation.physical as *mut u8,
+                count,
+            );
         }
         copied += count;
     }
@@ -301,9 +290,8 @@ pub fn read_user<T: Copy>(address: usize) -> MemoryResult<T> {
 }
 
 pub fn write_user<T: Copy>(address: usize, value: &T) -> MemoryResult<()> {
-    let bytes = unsafe {
-        core::slice::from_raw_parts((value as *const T).cast::<u8>(), size_of::<T>())
-    };
+    let bytes =
+        unsafe { core::slice::from_raw_parts((value as *const T).cast::<u8>(), size_of::<T>()) };
     let mut copied = 0;
     while copied < bytes.len() {
         let current = address.checked_add(copied).ok_or(MemoryError)?;
