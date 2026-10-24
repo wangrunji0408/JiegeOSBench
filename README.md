@@ -27,24 +27,25 @@ Prompt:
 | 9 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
 | 10 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
 | 11 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
-| 12 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
-| 13 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
-| 14 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
-| 15 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
-| 16 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
+| 12 | Kimi K3.1 Pro | Max | Kimi Code | 1h 14min | 1h 48min | 323K | $10.7 | 33 | 2026-10-24 | 🧠 Intelligent Jiege |
+| 13 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
+| 14 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
+| 15 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
+| 16 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
+| 17 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Pro (local) | High | CC | 3h 16min | 3h 25min | 488K x2 | self-hosted | 61 | 2026-10-09 | 🤖 Machine Jiege |
-| 17 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
+| 18 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | High | CC | 4h 42min | 4h 44min | 967K x2 | self-hosted | 195 | 2026-10-09 | 🤖 Machine Jiege |
-| 18 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
-| 19 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
+| 19 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 20 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | Max | CC | 7h 55min | 7h 57min | 967K x3 | self-hosted | 320 | 2026-10-06 | 🤖 Machine Jiege |
-| 20 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
-| 21 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
-| 22 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
+| 21 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
+| 22 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
+| 23 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
 
 
 
-Harness: CC = Claude Code, DSH = DeepSeek Harness.
+Harness: CC = Claude Code, DSH = DeepSeek Harness, Kimi Code = Kimi Code CLI.
 QEMU runs: commands that booted QEMU (direct `qemu-system-riscv64` calls plus the run's own wrapper scripts).
 Unranked rows (`—` in the # column) are self-hosted deployments of models already on the board.
 
@@ -282,6 +283,22 @@ Claude Code ran for **~67 minutes** to first HTTP 200, then spent another **58 m
 | 02:00 | 3000/3000 keep-alive requests at 1185 req/s ✅ |
 | 02:01 | 50 concurrent connections + 320 fresh connections ✅ |
 | 02:05 | Final validation complete |
+
+### Kimi K3.1 Pro — 1h 14min / 1h 48min
+
+![Kimi K3.1 Pro Timeline](figures/kimi-k3.1-pro-timeline.png)
+
+Kimi Code CLI with thinking on (which maps to the model's default **max** effort) ran for **108 min of wall time**, reaching the first host HTTP 200 at **74min** (`Server: nginx/1.28.3`): 35.9M tokens (35.0M cache reads), 323K peak context, **$10.7** at Kimi's list prices. It fanned out three subagents — the official Alpine nginx rootfs, a CPIO ramfs and the virtio-net driver — while writing the kernel itself, and re-verified the served page twice after the first success. The turn then ended on repeated 429 "engine overloaded" retries from the Kimi API, after the goal had already been cleared.
+
+| Time | Milestone |
+|------|-----------|
+| 00:04 | Plan mode entered; goal set |
+| 00:05 | Subagent prepares the official Alpine nginx rootfs (done 00:17) |
+| 00:30 | First QEMU boot |
+| 00:38 | Subagent ships the CPIO ramfs; virtio-net subagent finishes at 00:52 |
+| 01:14 | First host HTTP 200 — `Server: nginx/1.28.3` 🎉 |
+| 01:41 | Second verification: 200 OK, same 222-byte page |
+| 01:46–01:48 | Final check, goal cleared; 429 retries from the API afterwards |
 
 ### Kimi K3 — 1h 48min / 2h 19min
 
