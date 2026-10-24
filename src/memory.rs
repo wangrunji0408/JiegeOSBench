@@ -44,12 +44,11 @@ pub const fn align_up(value: usize, align: usize) -> usize {
 
 pub fn init() {
     crate::heap::init();
-    let kernel_end = align_up(&raw const __kernel_end as usize, PAGE_SIZE);
+    let kernel_end = align_up(unsafe { &raw const __kernel_end } as usize, PAGE_SIZE);
     assert!((RAM_START..RAM_END).contains(&kernel_end));
     NEXT_FRAME.store(kernel_end, Ordering::Release);
 
     let root = alloc_frame().expect("initial page table");
-    ROOT_PAGE_TABLE.store(root, Ordering::Release);
     let gigapage_flags = PTE_V | PTE_R | PTE_W | PTE_X | PTE_G | PTE_A | PTE_D;
     page_table(root)[2] = pte(RAM_START, gigapage_flags);
 
@@ -57,6 +56,7 @@ pub fn init() {
     map_supervisor_range(0x0c00_0000, 0x400_0000);
     map_supervisor_range(0x1000_0000, 0x1000);
     map_supervisor_range(0x1000_1000, 0x8000);
+    ROOT_PAGE_TABLE.store(root, Ordering::Release);
     crate::println!(
         "memory: kernel_end={kernel_end:#x}, page_table={root:#x}, frames={}",
         (RAM_END - kernel_end) / PAGE_SIZE
@@ -159,7 +159,7 @@ pub fn map_user(virtual_address: usize, length: usize, flags: usize) -> MemoryRe
                 *entry |= flags | PTE_A | PTE_D;
             } else {
                 let physical = alloc_frame()?;
-                *entry = pte(physical, flags | PTE_V | PTE_U | PTE_A | PTE_D);
+                *entry = pte(physical, flags | PTE_U | PTE_A | PTE_D);
             }
         }
     }
@@ -169,18 +169,14 @@ pub fn map_user(virtual_address: usize, length: usize, flags: usize) -> MemoryRe
 
 pub fn unmap_user(virtual_address: usize, length: usize) -> MemoryResult<()> {
     let start = align_down(virtual_address, PAGE_SIZE);
-    let end = align_up(
-        virtual_address.checked_add(length).ok_or(MemoryError)?,
-        PAGE_SIZE,
-    );
+    let end = align_up(virtual_address + length, PAGE_SIZE);
     for address in (start..end).step_by(PAGE_SIZE) {
-        match translate(address) {
-            Ok(translation) if translation.flags & PTE_U == 0 => return Err(MemoryError),
-            Ok(_) => {
-                let entry = leaf_entry(root(), address, false)?;
-                unsafe { *entry = 0 };
+        let entry = leaf_entry(root(), address, false)?;
+        unsafe {
+            if *entry & PTE_U == 0 {
+                return Err(MemoryError);
             }
-            Err(_) => {}
+            *entry = 0;
         }
     }
     unsafe { asm!("sfence.vma") };
@@ -196,7 +192,7 @@ pub fn protect_user(virtual_address: usize, length: usize, flags: usize) -> Memo
             if *entry & (PTE_V | PTE_U) != (PTE_V | PTE_U) {
                 return Err(MemoryError);
             }
-            *entry = (*entry & !PTE_PERM) | (flags & PTE_PERM) | PTE_U;
+            *entry = (*entry & !PTE_PERM) | (flags & PTE_PERM);
         }
     }
     unsafe { asm!("sfence.vma") };
@@ -225,32 +221,43 @@ pub fn translate(virtual_address: usize) -> MemoryResult<Translation> {
 }
 
 pub fn copy_to_user(virtual_address: usize, source: &[u8]) -> MemoryResult<()> {
-    copy_user_write(virtual_address, source, true)
+    copy_user(virtual_address, source, true, false)
 }
 
 pub fn loader_write(virtual_address: usize, source: &[u8]) -> MemoryResult<()> {
-    copy_user_write(virtual_address, source, false)
+    copy_user(virtual_address, source, true, false)
 }
 
-fn copy_user_write(
+fn copy_user(
     virtual_address: usize,
     source: &[u8],
+    write: bool,
     require_writable: bool,
 ) -> MemoryResult<()> {
     let mut copied = 0;
     while copied < source.len() {
         let address = virtual_address.checked_add(copied).ok_or(MemoryError)?;
         let translation = translate(address)?;
-        if translation.flags & PTE_U == 0 || (require_writable && translation.flags & PTE_W == 0) {
+        if translation.flags & PTE_U == 0
+            || (require_writable && translation.flags & PTE_W == 0)
+        {
             return Err(MemoryError);
         }
         let count = (PAGE_SIZE - (address & (PAGE_SIZE - 1))).min(source.len() - copied);
         unsafe {
-            core::ptr::copy_nonoverlapping(
-                source.as_ptr().add(copied),
-                translation.physical as *mut u8,
-                count,
-            );
+            if write {
+                core::ptr::copy_nonoverlapping(
+                    source.as_ptr().add(copied),
+                    translation.physical as *mut u8,
+                    count,
+                );
+            } else {
+                core::ptr::copy_nonoverlapping(
+                    translation.physical as *const u8,
+                    source.as_ptr().add(copied) as *mut u8,
+                    count,
+                );
+            }
         }
         copied += count;
     }
@@ -290,8 +297,9 @@ pub fn read_user<T: Copy>(address: usize) -> MemoryResult<T> {
 }
 
 pub fn write_user<T: Copy>(address: usize, value: &T) -> MemoryResult<()> {
-    let bytes =
-        unsafe { core::slice::from_raw_parts((value as *const T).cast::<u8>(), size_of::<T>()) };
+    let bytes = unsafe {
+        core::slice::from_raw_parts((value as *const T).cast::<u8>(), size_of::<T>())
+    };
     let mut copied = 0;
     while copied < bytes.len() {
         let current = address.checked_add(copied).ok_or(MemoryError)?;
