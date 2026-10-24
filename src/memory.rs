@@ -208,6 +208,9 @@ pub fn translate(virtual_address: usize) -> MemoryResult<Translation> {
     for level in [2usize, 1, 0] {
         let index = (virtual_address >> (12 + level * 9)) & 0x1ff;
         let entry = unsafe { core::ptr::read((table as *const usize).add(index)) };
+        crate::println!(
+            "translate: va={virtual_address:#x} level={level} table={table:#x} index={index} entry={entry:#x}"
+        );
         if entry & PTE_V == 0 {
             return Err(MemoryError);
         }
