@@ -305,6 +305,18 @@ fn dispatch(frame: &mut TrapFrame, from_user: bool) {
             ),
             Err(_) => crate::println!("fault translation: unmapped"),
         }
+        for index in 0..128usize {
+            if let Ok(value) = crate::memory::read_user::<usize>(frame.regs[2] + index * 8) {
+                if (0x10_0000_0000..0x10_0100_0000).contains(&value) {
+                    crate::println!(
+                        "user stack return candidate: sp+{:#x} value={:#x} offset={:#x}",
+                        index * 8,
+                        value,
+                        value - 0x10_0000_0000
+                    );
+                }
+            }
+        }
     }
     panic!(
         "trap from_user={from_user} cause={:#x} sepc={:#x} stval={:#x}\n{frame:#x?}",
