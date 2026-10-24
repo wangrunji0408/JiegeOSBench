@@ -94,6 +94,11 @@ pub fn dispatch(frame: &mut TrapFrame) {
     ];
     trace(number, &arguments);
     let result = match number {
+        0 => memory::write_user(arguments[1], &1u64)
+            .map(|_| 0)
+            .map_err(|_| EFAULT),
+        1 | 4 => Ok(0),
+        2 | 3 => Err(ENOSYS),
         17 => getcwd(arguments[0], arguments[1]),
         18 => Ok(crate::fd::eventfd(arguments[0] as u32, 0) as usize),
         19 => Ok(crate::fd::eventfd(arguments[0] as u32, arguments[1] as u32) as usize),

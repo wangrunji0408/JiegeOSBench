@@ -160,12 +160,17 @@ pub fn socketpair(domain: u32, kind: u32) -> Result<(i32, i32), i32> {
 }
 
 pub fn close(fd: i32) -> Result<(), i32> {
-    let removed = DESCRIPTORS
-        .lock()
-        .as_mut()
-        .unwrap()
-        .remove(&fd)
-        .ok_or(EBADF)?;
+    let removed = {
+        let mut guard = DESCRIPTORS.lock();
+        let descriptors = guard.as_mut().unwrap();
+        let removed = descriptors.remove(&fd).ok_or(EBADF)?;
+        for descriptor in descriptors.values_mut() {
+            if let Descriptor::Epoll(interests) = descriptor {
+                interests.remove(&fd);
+            }
+        }
+        removed
+    };
     match removed {
         Descriptor::Socket(socket) => crate::net::close(socket.id),
         Descriptor::UnixSocket(socket) => {
