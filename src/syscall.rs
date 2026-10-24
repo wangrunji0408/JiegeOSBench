@@ -491,6 +491,16 @@ fn dup3(arguments: [usize; 6]) -> SysResult {
 
 fn ioctl(arguments: [usize; 6]) -> SysResult {
     match arguments[1] as u32 {
+        0x5421 => {
+            let enabled = memory::read_user::<i32>(arguments[2]).map_err(|_| EFAULT)?;
+            crate::fd::fcntl(
+                arguments[0] as i32,
+                4,
+                if enabled != 0 { 0x800 } else { 0 },
+            )
+            .map(|_| 0)
+        }
+        0x5450 | 0x5451 => Ok(0),
         0x5413 => {
             let size = [24u16, 80, 0, 0];
             memory::copy_to_user(
