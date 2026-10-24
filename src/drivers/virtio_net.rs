@@ -530,11 +530,10 @@ impl Device for VirtioNet {
     }
 
     fn capabilities(&self) -> DeviceCapabilities {
-        DeviceCapabilities {
-            medium: Medium::Ethernet,
-            max_transmission_unit: ETHERNET_MTU,
-            max_burst_size: Some(QUEUE_SIZE),
-            ..DeviceCapabilities::default()
-        }
+        let mut capabilities = DeviceCapabilities::default();
+        capabilities.medium = Medium::Ethernet;
+        capabilities.max_transmission_unit = ETHERNET_MTU;
+        capabilities.max_burst_size = Some(QUEUE_SIZE);
+        capabilities
     }
 }
