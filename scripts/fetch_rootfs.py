@@ -136,6 +136,7 @@ EMPTY_DIRECTORIES = (
     ("run", 0o755),
     ("tmp", 0o1777),
     ("var/log/nginx", 0o755),
+    ("var/lib/nginx/logs", 0o755),
     ("var/lib/nginx/tmp", 0o755),
     ("var/lib/nginx/tmp/client_body", 0o755),
     ("var/lib/nginx/tmp/proxy", 0o755),
