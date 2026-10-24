@@ -24,12 +24,11 @@ extern "C" fn rust_main(hart_id: usize, dtb: usize) -> ! {
     println!("hart={hart_id} dtb={dtb:#x}");
     memory::init();
     memory::activate();
+    fs::init();
+    fd::init();
+    drivers::init();
     arch::init();
-    arch::enable_interrupts();
-    println!("Sv39 active; timer and external interrupts enabled");
-    loop {
-        arch::wait_for_interrupt();
-    }
+    process::start()
 }
 
 #[panic_handler]
