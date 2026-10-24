@@ -169,14 +169,18 @@ pub fn map_user(virtual_address: usize, length: usize, flags: usize) -> MemoryRe
 
 pub fn unmap_user(virtual_address: usize, length: usize) -> MemoryResult<()> {
     let start = align_down(virtual_address, PAGE_SIZE);
-    let end = align_up(virtual_address + length, PAGE_SIZE);
+    let end = align_up(
+        virtual_address.checked_add(length).ok_or(MemoryError)?,
+        PAGE_SIZE,
+    );
     for address in (start..end).step_by(PAGE_SIZE) {
-        let entry = leaf_entry(root(), address, false)?;
-        unsafe {
-            if *entry & PTE_U == 0 {
-                return Err(MemoryError);
+        match translate(address) {
+            Ok(translation) if translation.flags & PTE_U == 0 => return Err(MemoryError),
+            Ok(_) => {
+                let entry = leaf_entry(root(), address, false)?;
+                unsafe { *entry = 0 };
             }
-            *entry = 0;
+            Err(_) => {}
         }
     }
     unsafe { asm!("sfence.vma") };

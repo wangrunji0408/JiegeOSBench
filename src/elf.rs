@@ -12,7 +12,7 @@ const PT_INTERP: u32 = 3;
 const PT_PHDR: u32 = 6;
 const MAIN_BASE: usize = 0x10_0000_0000;
 const INTERP_BASE: usize = 0x20_0000_0000;
-const STACK_TOP: usize = 0x3f00_0000;
+const STACK_TOP: usize = 0x3f_0000_0000;
 const STACK_SIZE: usize = 8 * 1024 * 1024;
 
 #[derive(Debug)]

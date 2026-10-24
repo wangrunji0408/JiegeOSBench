@@ -6,8 +6,12 @@ extern crate alloc;
 mod arch;
 mod console;
 mod drivers;
+mod elf;
+mod fd;
+mod fs;
 mod heap;
 mod memory;
+mod process;
 mod sbi;
 mod syscall;
 
