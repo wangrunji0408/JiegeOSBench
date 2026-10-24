@@ -110,6 +110,55 @@ pub fn socket(domain: u32, kind: u32, _protocol: u32) -> Result<i32, i32> {
     Ok(insert_socket(id, kind & O_NONBLOCK))
 }
 
+pub fn eventfd(initial: u32, flags: u32) -> i32 {
+    insert(
+        DESCRIPTORS.lock().as_mut().unwrap(),
+        Descriptor::EventFd(EventFd {
+            counter: initial as u64,
+            flags,
+        }),
+    )
+}
+
+pub fn socketpair(domain: u32, kind: u32) -> Result<(i32, i32), i32> {
+    if domain != 1 || kind & 0xf != 1 {
+        return Err(EINVAL);
+    }
+    let pair = {
+        let mut next = NEXT_UNIX_PAIR.lock();
+        let pair = *next;
+        *next += 1;
+        pair
+    };
+    UNIX_PAIRS.lock().as_mut().unwrap().insert(
+        pair,
+        UnixPair {
+            queues: [VecDeque::new(), VecDeque::new()],
+            closed: [false; 2],
+        },
+    );
+    let mut guard = DESCRIPTORS.lock();
+    let descriptors = guard.as_mut().unwrap();
+    let flags = kind & O_NONBLOCK;
+    let first = insert(
+        descriptors,
+        Descriptor::UnixSocket(UnixSocketFd {
+            pair,
+            endpoint: 0,
+            flags,
+        }),
+    );
+    let second = insert(
+        descriptors,
+        Descriptor::UnixSocket(UnixSocketFd {
+            pair,
+            endpoint: 1,
+            flags,
+        }),
+    );
+    Ok((first, second))
+}
+
 pub fn close(fd: i32) -> Result<(), i32> {
     let removed = DESCRIPTORS
         .lock()
@@ -117,8 +166,14 @@ pub fn close(fd: i32) -> Result<(), i32> {
         .unwrap()
         .remove(&fd)
         .ok_or(EBADF)?;
-    if let Descriptor::Socket(socket) = removed {
-        crate::net::close(socket.id);
+    match removed {
+        Descriptor::Socket(socket) => crate::net::close(socket.id),
+        Descriptor::UnixSocket(socket) => {
+            if let Some(pair) = UNIX_PAIRS.lock().as_mut().unwrap().get_mut(&socket.pair) {
+                pair.closed[socket.endpoint] = true;
+            }
+        }
+        _ => {}
     }
     Ok(())
 }
