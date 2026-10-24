@@ -136,7 +136,6 @@ EMPTY_DIRECTORIES = (
     ("run", 0o755),
     ("tmp", 0o1777),
     ("var/log/nginx", 0o755),
-    ("var/lib/nginx/logs", 0o755),
     ("var/lib/nginx/tmp", 0o755),
     ("var/lib/nginx/tmp/client_body", 0o755),
     ("var/lib/nginx/tmp/proxy", 0o755),
@@ -298,18 +297,8 @@ def rebuild_rootfs(package_paths):
 
     (ROOTFS / "etc/nginx/nginx.conf").write_bytes(NGINX_CONFIG.encode("utf-8"))
     (ROOTFS / "var/www/html/index.html").write_bytes(INDEX_HTML.encode("utf-8"))
-    (ROOTFS / "etc/passwd").write_text(
-        "root:x:0:0:root:/root:/bin/sh\n"
-        "nginx:x:1000:1000:nginx:/var/lib/nginx:/sbin/nologin\n",
-        encoding="utf-8",
-    )
-    (ROOTFS / "etc/group").write_text(
-        "root:x:0:\nnginx:x:1000:\n", encoding="utf-8"
-    )
 
     required_files = {
-        "etc/group",
-        "etc/passwd",
         "etc/nginx/mime.types",
         "etc/nginx/nginx.conf",
         "lib/ld-musl-riscv64.so.1",
@@ -370,9 +359,7 @@ def write_source_metadata(records, package_paths):
             "elf_bytes_modified": False,
         },
         "locally_generated_files": (
-            "/etc/group",
             "/etc/nginx/nginx.conf",
-            "/etc/passwd",
             "/var/www/html/index.html",
         ),
     }
