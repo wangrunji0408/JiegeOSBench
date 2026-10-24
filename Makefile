@@ -6,7 +6,6 @@ QEMU_FLAGS := -machine virt -m 512M -smp 1 -bios default -nographic -no-reboot -
 
 SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
-.ONESHELL:
 
 .PHONY: build check rootfs run verify clean
 
