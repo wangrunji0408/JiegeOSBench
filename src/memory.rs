@@ -44,11 +44,12 @@ pub const fn align_up(value: usize, align: usize) -> usize {
 
 pub fn init() {
     crate::heap::init();
-    let kernel_end = align_up(unsafe { &raw const __kernel_end } as usize, PAGE_SIZE);
+    let kernel_end = align_up(&raw const __kernel_end as usize, PAGE_SIZE);
     assert!((RAM_START..RAM_END).contains(&kernel_end));
     NEXT_FRAME.store(kernel_end, Ordering::Release);
 
     let root = alloc_frame().expect("initial page table");
+    ROOT_PAGE_TABLE.store(root, Ordering::Release);
     let gigapage_flags = PTE_V | PTE_R | PTE_W | PTE_X | PTE_G | PTE_A | PTE_D;
     page_table(root)[2] = pte(RAM_START, gigapage_flags);
 
@@ -56,7 +57,6 @@ pub fn init() {
     map_supervisor_range(0x0c00_0000, 0x400_0000);
     map_supervisor_range(0x1000_0000, 0x1000);
     map_supervisor_range(0x1000_1000, 0x8000);
-    ROOT_PAGE_TABLE.store(root, Ordering::Release);
     crate::println!(
         "memory: kernel_end={kernel_end:#x}, page_table={root:#x}, frames={}",
         (RAM_END - kernel_end) / PAGE_SIZE
