@@ -369,6 +369,11 @@ pub fn metadata(fd: i32) -> Result<Metadata, i32> {
             size: 0,
             inode: socket.id as u64,
         }),
+        Descriptor::UnixSocket(socket) => Ok(Metadata {
+            mode: 0o140600,
+            size: 0,
+            inode: (socket.pair * 2 + socket.endpoint) as u64,
+        }),
         Descriptor::Epoll(_) => Ok(Metadata {
             mode: 0o100600,
             size: 0,
