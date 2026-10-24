@@ -25,23 +25,24 @@ Prompt:
 | 7 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
 | 8 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
 | 9 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
-| 10 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 11 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
-| 12 | Kimi K3.1 Pro | Max | Kimi Code | 1h 14min | 1h 48min | 323K | $10.7 | 33 | 2026-10-24 | 🧠 Intelligent Jiege |
-| 13 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
-| 14 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
-| 15 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
-| 16 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
-| 17 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
+| 10 | GPT-6 Luna | xHigh | Codex | 50min | 58min | 694K | $1.95 | 86 | 2026-10-24 | 🧠 Intelligent Jiege |
+| 11 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 12 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
+| 13 | Kimi K3.1 Pro | Max | Kimi Code | 1h 14min | 1h 48min | 323K | $10.7 | 33 | 2026-10-24 | 🧠 Intelligent Jiege |
+| 14 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
+| 15 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
+| 16 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
+| 17 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
+| 18 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Pro (local) | High | CC | 3h 16min | 3h 25min | 488K x2 | self-hosted | 61 | 2026-10-09 | 🤖 Machine Jiege |
-| 18 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
+| 19 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | High | CC | 4h 42min | 4h 44min | 967K x2 | self-hosted | 195 | 2026-10-09 | 🤖 Machine Jiege |
-| 19 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
-| 20 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
+| 20 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 21 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | Max | CC | 7h 55min | 7h 57min | 967K x3 | self-hosted | 320 | 2026-10-06 | 🤖 Machine Jiege |
-| 21 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
-| 22 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
-| 23 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
+| 22 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
+| 23 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
+| 24 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
 
 
 
@@ -262,6 +263,22 @@ Claude Code ran for **~45 minutes** of active time to first HTTP 200 (48 minutes
 | 00:41 | nginx config test passes |
 | 00:43 | nginx bind + listen succeeds |
 | 00:45 | nginx official binary returns HTTP 200 🎉 |
+
+### GPT-6 Luna — 50min / 58min
+
+![GPT-6 Luna Timeline](figures/gpt-6-luna-timeline.svg)
+
+Codex at **xHigh** effort finished the whole benchmark in **58 minutes of wall time**, with the first host HTTP 200 at **50min** (`Server: nginx/1.26.3`). It fetched the **official Debian riscv64 `.deb`** for nginx 1.26.3, unpacked its rootfs, and served from a Sv39 + ELF64 kernel with VirtIO-net and smoltcp: 171.2M input tokens (170.4M cache reads) and 330K output, 694K peak context, **$1.95** at the GPT-6 Luna list prices. Only 5 panics across 86 QEMU boots, and four separate 200 checks at the end; the served page was still live on `127.0.0.1:8080` when re-verified after the run.
+
+| Time | Milestone |
+|------|-----------|
+| 00:00 | First QEMU boot (skeleton) |
+| 00:01 | First `cargo build` |
+| 00:03 | Official Debian riscv64 nginx 1.26.3 `.deb` downloaded |
+| 00:30 | User-mode ELF loading + syscall subset in place (from the context curve) |
+| 00:51 | First host HTTP 200 — `Server: nginx/1.26.3` 🎉 |
+| 00:55 | Last of four 200 verifications |
+| 00:58 | Final report; QEMU left running on :8080 |
 
 ### Claude Opus 5 — 1h 7min / 2h 5min
 
