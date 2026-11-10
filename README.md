@@ -25,25 +25,26 @@ Prompt:
 | 7 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
 | 8 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
 | 9 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 10 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
-| 11 | GPT-6 Luna | xHigh | Codex | 50min | 58min | 694K | $1.95 | 86 | 2026-10-24 | 🧠 Intelligent Jiege |
-| 12 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 13 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
-| 14 | Kimi K3.1 Pro | Max | Kimi Code | 1h 14min | 1h 48min | 323K | $10.7 | 33 | 2026-10-24 | 🧠 Intelligent Jiege |
-| 15 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
-| 16 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
-| 17 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
-| 18 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
-| 19 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
+| 10 | Claude Fable 5.2 | High | CC | 42min | 1h 15min | 300K | $29 | 18 | 2026-11-10 | 🧠 Intelligent Jiege |
+| 11 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
+| 12 | GPT-6 Luna | xHigh | Codex | 50min | 58min | 694K | $1.95 | 86 | 2026-10-24 | 🧠 Intelligent Jiege |
+| 13 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 14 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
+| 15 | Kimi K3.1 Pro | Max | Kimi Code | 1h 14min | 1h 48min | 323K | $10.7 | 33 | 2026-10-24 | 🧠 Intelligent Jiege |
+| 16 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
+| 17 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
+| 18 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
+| 19 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
+| 20 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Pro (local) | High | CC | 3h 16min | 3h 25min | 488K x2 | self-hosted | 61 | 2026-10-09 | 🤖 Machine Jiege |
-| 20 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
+| 21 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | High | CC | 4h 42min | 4h 44min | 967K x2 | self-hosted | 195 | 2026-10-09 | 🤖 Machine Jiege |
-| 21 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
-| 22 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
+| 22 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 23 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | Max | CC | 7h 55min | 7h 57min | 967K x3 | self-hosted | 320 | 2026-10-06 | 🤖 Machine Jiege |
-| 23 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
-| 24 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
-| 25 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
+| 24 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
+| 25 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
+| 26 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
 
 
 
@@ -271,6 +272,28 @@ Claude Code ran for **~40min** to first HTTP 200 (complete at 42min). Took the *
 | 00:40 | First HTTP 200 OK from host — `Server: nginx/1.26.2` 🎉 |
 | 00:41 | Sequential + 10 concurrent + 404 + keep-alive reuse ✅ |
 | 00:42 | Dead-code cleanup + goal complete |
+
+### Claude Fable 5.2 — 42min / 1h 15min
+
+![Claude Fable 5.2 Timeline](figures/fable52-timeline.svg)
+
+Claude Code reached the first host HTTP 200 in **~42min** (goal complete at 1h15min; a 5.5-min output-limit resume pause subtracted). It wrote the kernel from scratch in ~32min and served the unmodified official nginx 1.31.8 binary from the Docker Hub `nginx:alpine` riscv64 image. 18 QEMU boots, 73 API requests, 15.4M tokens (91% cache hits), peak context 300K, zero compactions. Cost **$29** (Fable 5.2 at $8/$40 per M in/out, cache read $0.20/M).
+
+| Time | Milestone |
+|------|-----------|
+| 00:00 | Prompt; environment survey |
+| 00:04 | Toolchain check (rustc, qemu, docker, network) |
+| 00:16 | Kernel skeleton: Cargo, entry.S, UART, panic |
+| 00:22 | Sv39 VM + VFS/ramfs |
+| 00:31 | ELF loader, procfs, syscall dispatch |
+| 00:41 | virtio-net + Ethernet/ARP/IPv4/TCP stack |
+| 00:46 | First QEMU boot of the kernel |
+| 00:48 | First host HTTP 200 from guest nginx 1.31.8 |
+| 00:51 | Function suite: `/`, `/50x.html`, 404 |
+| 01:04 | 24MB `sendfile` transfer verified |
+| 01:10 | Host burst test reveals dropped connections |
+| 01:12 | Measurement bug found in the test script; conclusion retracted |
+| 01:15 | Guest loopback suite 15/15 PASS; README + final summary |
 
 ### Claude Opus 4.7 — 45min / 48min
 
