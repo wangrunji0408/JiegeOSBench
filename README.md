@@ -17,34 +17,36 @@ Prompt:
 | # | Model | Effort | Harness | First HTTP 200 | Total | Context | Cost | QEMU runs | Test date | Tier |
 |---|-------|--------|---------|------------|-------|---------|------|-----------|-----------|------|
 | 🏅 | GPT-6 Astra | High | Codex | 6min | 9min | 83K | $4 | 9 | 2026-09-05 | 👑 Jiege |
-| 🥈 | Claude Opus 5.5 | High | CC | 12min | 14min | 109K | $9.5 | 2 | 2026-09-30 | 🧠 Intelligent Jiege |
-| 🥉 | GPT-6.1 Terra | High | Codex | 14min | 17min | 208K | $1.5 | 9 | 2026-10-29 | 🧠 Intelligent Jiege |
-| 4 | GPT-6.1 Sol | High | Codex | 18min | 33min | 132K | $0.95 | 8 | 2026-09-30 | 🧠 Intelligent Jiege |
-| 5 | DeepSeek V4.1 Flash 1017 | High | DSH | 28min | 40min | 323K | $0.26 | 60 | 2026-10-18 | 🧠 Intelligent Jiege |
-| 6 | DeepSeek V4.1 Flash 0910 | High | DSH | 30min | 47min | 350K | $0.28 | 36 | 2026-09-10 | 🧠 Intelligent Jiege |
-| 7 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
-| 8 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
-| 9 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 10 | Claude Fable 5.2 | High | CC | 42min | 1h 15min | 300K | $29 | 18 | 2026-11-10 | 🧠 Intelligent Jiege |
-| 11 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
-| 12 | GPT-6 Luna | xHigh | Codex | 50min | 58min | 694K | $1.95 | 86 | 2026-10-24 | 🧠 Intelligent Jiege |
-| 13 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
-| 14 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
-| 15 | Kimi K3.1 Pro | Max | Kimi Code | 1h 14min | 1h 48min | 323K | $10.7 | 33 | 2026-10-24 | 🧠 Intelligent Jiege |
-| 16 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
-| 17 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
-| 18 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
-| 19 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
-| 20 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
+| 🥈 | GPT-6.2 Astra | High | Codex | 8min | 13min | 72K | $2 | 7 | 2026-11-18 | 🧠 Intelligent Jiege |
+| 🥉 | Claude Opus 5.5 | High | CC | 12min | 14min | 109K | $9.5 | 2 | 2026-09-30 | 🧠 Intelligent Jiege |
+| 4 | GPT-6.2 Sol | High | Codex | 14min | 18min | 102K | $0.9 | 6 | 2026-11-18 | 🧠 Intelligent Jiege |
+| 5 | GPT-6.1 Terra | High | Codex | 14min | 17min | 208K | $1.5 | 9 | 2026-10-29 | 🧠 Intelligent Jiege |
+| 6 | GPT-6.1 Sol | High | Codex | 18min | 33min | 132K | $0.95 | 8 | 2026-09-30 | 🧠 Intelligent Jiege |
+| 7 | DeepSeek V4.1 Flash 1017 | High | DSH | 28min | 40min | 323K | $0.26 | 60 | 2026-10-18 | 🧠 Intelligent Jiege |
+| 8 | DeepSeek V4.1 Flash 0910 | High | DSH | 30min | 47min | 350K | $0.28 | 36 | 2026-09-10 | 🧠 Intelligent Jiege |
+| 9 | GPT 5.6 Sol | High | Codex | 33min | 49min | 222K | $14 | 29 | 2026-07-11 | 🧠 Intelligent Jiege |
+| 10 | Claude Fable 5 | High | CC | 35min | 41min | 155K | $21 | 4 | 2026-07-05 | 🧠 Intelligent Jiege |
+| 11 | Claude Opus 4.8 | High | CC | 40min | 42min | 230K | $12 | 19 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 12 | Claude Fable 5.2 | High | CC | 42min | 1h 15min | 300K | $29 | 18 | 2026-11-10 | 🧠 Intelligent Jiege |
+| 13 | Claude Opus 4.7 | — | CC | 45min | 48min | — | — | — | 2026-04-18 | 🧠 Intelligent Jiege |
+| 14 | GPT-6 Luna | xHigh | Codex | 50min | 58min | 694K | $1.95 | 86 | 2026-10-24 | 🧠 Intelligent Jiege |
+| 15 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
+| 16 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
+| 17 | Kimi K3.1 Pro | Max | Kimi Code | 1h 14min | 1h 48min | 323K | $10.7 | 33 | 2026-10-24 | 🧠 Intelligent Jiege |
+| 18 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
+| 19 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
+| 20 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
+| 21 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
+| 22 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Pro (local) | High | CC | 3h 16min | 3h 25min | 488K x2 | self-hosted | 61 | 2026-10-09 | 🤖 Machine Jiege |
-| 21 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
+| 23 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | High | CC | 4h 42min | 4h 44min | 967K x2 | self-hosted | 195 | 2026-10-09 | 🤖 Machine Jiege |
-| 22 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
-| 23 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
+| 24 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 25 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | Max | CC | 7h 55min | 7h 57min | 967K x3 | self-hosted | 320 | 2026-10-06 | 🤖 Machine Jiege |
-| 24 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
-| 25 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
-| 26 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
+| 26 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
+| 27 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
+| 28 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
 
 
 
@@ -60,7 +62,7 @@ In 2019, Jiege ran nginx on [rCore](https://jia.je/programming/2019/03/08/runnin
 
 ![GPT-6 Astra Timeline](figures/gpt6-astra-timeline.png)
 
-OpenAI Codex (desktop) ran for **~6min** to first HTTP 200 — by far the fastest run on this board, ~6× quicker than the previous record (GPT 5.6 Sol, 33min). The kernel came out almost entirely in two first-pass writing bursts: **zero kernel panics, zero web searches** (pure black-box), zero context compactions, one uninterrupted turn (32 API requests, 31 bash tool calls, 1.74M tokens total, peak context 83K). Cost **$4**. Took the Alpine official-APK route — unmodified nginx 1.30.4 (riscv64) + musl/OpenSSL/PCRE2/zlib, byte-verified against the APK; acceptance suite green by ~8min, goal complete at 8.8min.
+OpenAI Codex (desktop) ran for **~6min** to first HTTP 200. The kernel came out almost entirely in two first-pass writing bursts: **zero kernel panics, zero web searches** (pure black-box), zero context compactions, one uninterrupted turn (32 API requests, 31 bash tool calls, 1.74M tokens total, peak context 83K). Cost **$4**. Took the Alpine official-APK route — unmodified nginx 1.30.4 (riscv64) + musl/OpenSSL/PCRE2/zlib, byte-verified against the APK; acceptance suite green by ~8min, goal complete at 8.8min.
 
 | Time | Milestone |
 |------|-----------|
@@ -74,11 +76,32 @@ OpenAI Codex (desktop) ran for **~6min** to first HTTP 200 — by far the fastes
 | 00:08 | Final acceptance: 8-way × 120 req, 24MiB, 25 keep-alive, 1MiB file ✅ |
 | 00:09 | Goal complete — README + make start/test/verify |
 
+## GPT-6.2 Astra — 8min / 13min
+
+![GPT-6.2 Astra Timeline](figures/gpt62-astra-timeline.svg)
+
+OpenAI Codex (desktop), **High** effort, 2026-11-18. First host HTTP 200 at **7min 54s**, done at **13min 28s** in a single uninterrupted turn (28 API requests, 27 tool calls, **7 QEMU boots**, zero compactions, peak context 72K). Cost **~$2.0** at GPT-6.2 Astra rates ($8 input / $40 output / $0.40 cached read per M), 20% cheaper per token than GPT-6 Astra.
+
+Took the **Docker Official Image route**: unmodified nginx **1.30.6** (`linux/riscv64`) pulled layer by layer from the OCI registry and SHA-256-verified (`image.lock`); there is no Linux kernel inside QEMU. The kernel is Rust with Sv39, a PIE `PT_INTERP` ELF loader, an in-memory filesystem, a hand-written virtio-mmio network driver on smoltcp, and the Linux ABI subset nginx needs. Acceptance covers 59 responses — home page byte-compare, HEAD, Range (206), ETag (304), 404 and six concurrent keep-alive connections — over both loopback and the LAN address.
+
+> Scope: single hart, 256 MiB, one nginx process (`master_process off`); no fork, signals or persistent storage; TLS and arbitrary nginx configurations untested.
+
+| Time (active) | Milestone |
+|------|-----------|
+| 00:01 | OCI fetch script written; official nginx riscv64 layers pinned in `image.lock` |
+| 00:02 | Rootfs assembled, image digest verified |
+| 00:04 | Sv39 paging and virtio-net MMIO driver in place |
+| 00:06 | First QEMU boot; nginx starts in U-mode |
+| 00:07 | Socket/fd syscall fixes; nginx reaches `listen` |
+| 00:08 | **First host HTTP 200** — `Server: nginx/1.30.6` 🎉 |
+| 00:09 | Black-box check script written |
+| 00:13 | 59 responses pass on loopback and LAN; done |
+
 ## Claude Opus 5.5 — 12min / 14min
 
 ![Claude Opus 5.5 Timeline](figures/opus55-timeline.png)
 
-Claude Code (CLI 2.1.285), **High** effort, 2026-09-30. First host HTTP 200 at **11min 56s** of active time and done at **14min 17s** (wall clock 14min 31s / 16min 52s; one **2min 35s network stall** mid-turn — a ~700-token response that took 160s to arrive — is subtracted). Second place on the board by first HTTP 200. One uninterrupted turn: 30 API requests, 29 tool calls, **zero web searches**, zero kernel panics, zero context compactions, **2 QEMU boots**. 2.37M tokens (0.70M cache read, 1.60M cache write, 68K output), peak context **109K**. Cost **~$9.5** at Opus 5.5 rates ($4/$20 per M input/output, $5 cache write, $0.20 cache read).
+Claude Code (CLI 2.1.285), **High** effort, 2026-09-30. First host HTTP 200 at **11min 56s** of active time and done at **14min 17s** (wall clock 14min 31s / 16min 52s; one **2min 35s network stall** mid-turn — a ~700-token response that took 160s to arrive — is subtracted). One uninterrupted turn: 30 API requests, 29 tool calls, **zero web searches**, zero kernel panics, zero context compactions, **2 QEMU boots**. 2.37M tokens (0.70M cache read, 1.60M cache write, 68K output), peak context **109K**. Cost **~$9.5** at Opus 5.5 rates ($4/$20 per M input/output, $5 cache write, $0.20 cache read).
 
 Took the **official Alpine APK route**: unmodified nginx **1.28.3-r7** (v3.22 main/riscv64) plus musl/OpenSSL/PCRE2/zlib; the embedded `/usr/sbin/nginx` has the same SHA-256 as the one extracted from the APK. Launched with Alpine's stock `nginx.conf` via `-g "daemon off; master_process off;"`; only `http.d/default.conf` was replaced (the stock one returns 404 for everything) and `/etc/passwd`/`group` were added. About 4 of the first 5 minutes went into one long design pass. After that the kernel was written file by file with no compile-test loop in between: **~2,700 lines of Rust** (boot/trap assembly inline), in about 5 minutes. It has Sv39 with the kernel identity-mapped by gigapages in the one shared page table, lazy demand paging through VMAs (anonymous and file-backed; working mmap/munmap/mprotect/brk), a PIE + `PT_INTERP` ELF loader, and an in-memory VFS built from an embedded ustar. Networking is a from-scratch legacy virtio-mmio net driver under smoltcp. Listen backlog is a pool of pre-armed smoltcp listen sockets. Epoll supports LT and ET, with ET tracked through a per-file operation generation counter. Epoll registrations hold `Weak` refs, because nginx closes connections without `EPOLL_CTL_DEL`. Only one change was made after the whole kernel was written and before the first build: switching those registrations to `Weak`. The first build had 3 errors (a Makefile dependency on a dangling symlink and 2 type errors). **The first QEMU boot served HTTP 200.** The second boot ran the full acceptance script: 100 sequential requests, 25 keep-alive requests on 1 connection, 404/HEAD/Range, a 1 MiB file via sendfile matching byte for byte, 8×60 parallel requests, and 8 parallel 1 MiB downloads — all pass.
 
@@ -98,11 +121,32 @@ Took the **official Alpine APK route**: unmodified nginx **1.28.3-r7** (v3.22 ma
 | 00:13:36 | Acceptance ALL PASS |
 | 00:14 | README + SHA256SUMS, done |
 
+## GPT-6.2 Sol — 14min / 18min
+
+![GPT-6.2 Sol Timeline](figures/gpt62-sol-timeline.svg)
+
+OpenAI Codex (desktop), **High** effort, 2026-11-18. First host HTTP 200 at **13min 39s**, done at **17min 44s** (38 API requests, 38 tool calls, **6 QEMU boots**, zero compactions, peak context 102K). Cost **~$0.9** at GPT-6.2 Sol rates ($2 input / $10 output / $0.10 cached read per M).
+
+Took the **Docker Official Image route**: unmodified nginx **1.30.6** (`linux/riscv64`), SHA-256-verified, no Linux kernel inside QEMU. The kernel is Rust booted by OpenSBI, with the Linux ABI subset nginx needs (epoll, sockets, mmap), a virtio-net driver over smoltcp, and a journaled in-memory filesystem image. `make test` boots QEMU on a temporary host port and checks the welcome page, a static file, HEAD, 404, a 384 KiB file, Range, keep-alive and eight-way concurrency; loopback and the LAN address both return 200.
+
+> Scope: single hart, 256 MiB, single process; no fork, signals or disk persistence; TLS untested.
+
+| Time (active) | Milestone |
+|------|-----------|
+| 00:01 | Repo inspected; Docker image prepare script written |
+| 00:02 | Cargo project and kernel skeleton |
+| 00:05 | Sv39 VM layer with user/kernel separation |
+| 00:09 | Linux ABI modules: file, socket, mmap |
+| 00:12 | First boot trace; errno and path fixes |
+| 00:14 | **First host HTTP 200** — `Server: nginx/1.30.6` 🎉 |
+| 00:16 | tcpdump capture and smoke suite |
+| 00:18 | README and final verification; done |
+
 ## GPT-6.1 Terra — 14min / 17min
 
 ![GPT-6.1 Terra Timeline](figures/gpt61-terra-timeline.svg)
 
-OpenAI Codex (desktop), **High** effort, 2026-10-29. First host HTTP 200 at **14min 20s** of active time, finished at **17min 02s** (wall 17min 58s; the **56 s** pause before the first `goal` reminder is subtracted). Third fastest on this board. It took **three turns**: the first stopped with a booting prototype but no nginx, and two `goal` reminders carried it to completion. Zero context compactions, **9 QEMU boots**, API-equivalent cost **~$1.5** at Terra Standard rates; not a measured subscription charge.
+OpenAI Codex (desktop), **High** effort, 2026-10-29. First host HTTP 200 at **14min 20s** of active time, finished at **17min 02s** (wall 17min 58s; the **56 s** pause before the first `goal` reminder is subtracted). It took **three turns**: the first stopped with a booting prototype but no nginx, and two `goal` reminders carried it to completion. Zero context compactions, **9 QEMU boots**, API-equivalent cost **~$1.5** at Terra Standard rates; not a measured subscription charge.
 
 Took the **Docker Official Image route**: unmodified nginx **1.31.8** (`riscv64/nginx:alpine-slim`) plus the musl interpreter and four shared libraries, all SHA-256-verified against the pinned manifest. The kernel (`river-kernel`, Rust + assembly) has Sv39 with user/kernel isolation, a PIE `PT_INTERP` ELF loader, an in-memory read-only filesystem, an original virtio-mmio network driver with vendored smoltcp, and the Linux ABI subset nginx needs (epoll, sockets, mmap). The final suite covers repeated GET, HEAD/404, ARP, host↔guest TCP echo and the nginx binary hash; the local and LAN (`192.168.1.14:8080`) URLs both returned 200.
 
@@ -128,7 +172,7 @@ Took the **Docker Official Image route**: unmodified nginx **1.31.8** (`riscv64/
 
 ![GPT-6.1 Sol Timeline](figures/gpt61-sol-timeline.png)
 
-OpenAI Codex (desktop), **High** effort, reached first host HTTP 200 at **18min 28s** and finished at **32min 51s** on 2026-09-30 — fourth fastest on this board by first HTTP 200. One uninterrupted turn, 38 recorded model responses, 43 shell commands, **3.36M tokens** including cached input (95.9% input cache hit), peak input context **132K**, zero context compactions, and **8 QEMU boots**. Three web calls (one search query) checked Linux syscall numbers and libslirp host forwarding; no OS repository was cloned. The API-equivalent token cost is **~$0.95**, estimated at the [official Standard rates](https://developers.openai.com/api/docs/models/gpt-6.1-sol) of $2/$0.10/$10 per M uncached input/cached input/output tokens; this is not a measured Codex subscription charge and excludes web-tool fees.
+OpenAI Codex (desktop), **High** effort, reached first host HTTP 200 at **18min 28s** and finished at **32min 51s** on 2026-09-30. One uninterrupted turn, 38 recorded model responses, 43 shell commands, **3.36M tokens** including cached input (95.9% input cache hit), peak input context **132K**, zero context compactions, and **8 QEMU boots**. Three web calls (one search query) checked Linux syscall numbers and libslirp host forwarding; no OS repository was cloned. The API-equivalent token cost is **~$0.95**, estimated at the [official Standard rates](https://developers.openai.com/api/docs/models/gpt-6.1-sol) of $2/$0.10/$10 per M uncached input/cached input/output tokens; this is not a measured Codex subscription charge and excludes web-tool fees.
 
 Took the **official Alpine APK route**: unmodified nginx **1.28.3-r7** plus musl/OpenSSL/PCRE2/zlib, with all 12 packaged RISC-V ELFs byte-verified against SHA-256-pinned archives. The original kernel is **1,918 lines of Rust + 171 lines of assembly**: Sv39, ELF64 interpreter loading, an embedded RAM filesystem, a Linux ABI subset, an original legacy VirtIO MMIO driver, smoltcp TCP, and epoll/eventfd/Unix socket pairs. Two early kernel panics preceded first HTTP 200; debugging addressed an nginx load-address overlap with UART MMIO, heap exhaustion, incorrect syscall numbers, then a 1 MiB sendfile stall through recorded epoll readiness transitions. The complete fresh-guest suite passed at ~29min and again at ~32min: 100 independent connections, 26 requests on one unchanged keep-alive socket, HEAD/404/Range/pipelining, eight clients × 120 concurrent requests, eight concurrent 1 MiB transfers, and no panic/fault/nginx emerg or alert in the final test log.
 
@@ -152,11 +196,25 @@ Took the **official Alpine APK route**: unmodified nginx **1.28.3-r7** plus musl
 | 00:32 | Final suite passes again; KERNEL.md documents scope; formatting and Python syntax checks pass |
 | 00:33 | Host HTTP rechecked after startup; final response completes ✅ |
 
+## DeepSeek V4.1 Flash 1017 — 28min / 40min
+
+![DeepSeek V4.1 Flash 1017 Timeline](figures/deepseek-v4.1-flash-1017-timeline.png)
+
+The same **DeepSeek-V4.1-Flash (1017)** model on DSH's **standard** preset, rerun with a completely different design: **28 minutes to the first host HTTP 200, 40 minutes total**, no idle gaps, peak context 323K, **$0.26** at the off-peak rates. This kernel has **no MMU** (single address space; nginx runs in S-mode behind a syscall shim) and serves from the **official Alpine apk set** — nginx 1.26.3 + pcre2/zlib/openssl unpacked from `dl-cdn.alpinelinux.org`, binary untouched, musl dynamic — with nginx as a single process (`master_process off`). 60 QEMU boots, 1 panic, pure black-box (0 web searches, 0 git clones); verified by `curl -i` → `200 OK`, `Server: nginx/1.26.3`, 211-byte page.
+
+| Time | Milestone |
+|------|-----------|
+| 00:02 | Alpine 3.20 riscv64 apks (nginx 1.26.3 + pcre2/zlib/openssl) fetched and unpacked into an embedded rootfs; first QEMU boot |
+| 00:13 | nginx 1.26.3 running in the guest (musl dynamic, unmodified) |
+| 00:25 | First panic (memory path), fixed |
+| 00:28 | First host HTTP 200 — `Server: nginx/1.26.3` 🎉 |
+| 00:40 | Final `curl -i`: 211-byte page with keep-alive + ETag; objective complete |
+
 ## DeepSeek V4.1 Flash 0910 — 30min / 47min
 
 ![DeepSeek V4.1 Flash 0910 Timeline](figures/deepseek-v4.1-flash-timeline.png)
 
-DeepSeek Harness ran for **~47min** (first HTTP 200 at 30min) with the **standard agent preset** (write/edit/read available) — the fastest DeepSeek run by a wide margin, and the cheapest successful run on the board at **$0.28**. 158 model steps, 31.0M tokens total (99.6% cache hit), peak context 350K, zero kernel panics, zero context compactions, zero web searches and zero git clones — the 6,283-line `no_std` Rust kernel (Sv39 paging, ELF64 loader, ~150 Linux asm-generic syscalls, ramfs + initramfs, virtio-net + smoltcp + epoll/eventfd/timerfd) is entirely its own. Took the **static musl cross-compile route**: the unmodified official nginx 1.27.4 source built with `zig cc -target riscv64-linux-musl` into a single static riscv64 ELF. It reached HTTP 200 in only ~36 QEMU boots — 12 hand-found bugs, no blind churn.
+DeepSeek Harness ran for **~47min** (first HTTP 200 at 30min) with the **standard agent preset** (write/edit/read available) and the cheapest successful run on the board at **$0.28**. 158 model steps, 31.0M tokens total (99.6% cache hit), peak context 350K, zero kernel panics, zero context compactions, zero web searches and zero git clones — the 6,283-line `no_std` Rust kernel (Sv39 paging, ELF64 loader, ~150 Linux asm-generic syscalls, ramfs + initramfs, virtio-net + smoltcp + epoll/eventfd/timerfd) is entirely its own. Took the **static musl cross-compile route**: the unmodified official nginx 1.27.4 source built with `zig cc -target riscv64-linux-musl` into a single static riscv64 ELF. It reached HTTP 200 in only ~36 QEMU boots — 12 hand-found bugs, no blind churn.
 
 | Time | Milestone |
 |------|-----------|
@@ -179,60 +237,6 @@ DeepSeek Harness ran for **~47min** (first HTTP 200 at 30min) with the **standar
 | 00:44 | Source-integrity check added — the build tree is re-diffed against the official nginx tarball |
 | 00:47 | `ALL 14 CHECKS PASSED`; goal complete — single commit, clean tree ✅ |
 
-## Claude Fable 5 — 35min / 41min
-
-![Claude Fable 5 Timeline](figures/fable5-timeline.png)
-
-Claude Code ran for **~41min**, 65 API requests. Total cost approximately **$21**. Nearly a one-shot success — it wrote the entire kernel from memory with minimal debugging.
-
-| Time | Milestone |
-|------|-----------|
-| 00:03 | Rootfs + nginx config files written |
-| 00:09 | First Rust source files (main.rs, sbi.rs, ...) |
-| 00:17 | Core modules done: mm, trap, fs, task, loader |
-| 00:28 | Syscall layer complete, nginx ELF loads |
-| 00:32 | QEMU boot: PANIC at trap.rs — page fault |
-| 00:34 | QEMU boot: nginx listening on port 80 🎉 |
-| 00:35 | First HTTP 200 OK from host — `Server: nginx/1.28.3` 🎉 |
-| 00:37 | Post-fix cleanup (sendfile, README) |
-| 00:41 | Final acceptance: full suite green + README written ✅ |
-
-### Claude Fable 5.1 — 58min / 1h 45min
-
-![Claude Fable 5.1 Timeline](figures/fable51-timeline.png)
-
-Claude Code ran for **~58min** to first HTTP 200 (goal complete at 105min) — the deepest kernel of any run: real **fork with two nginx worker processes** (signals + CoW), AF_UNIX with SCM_RIGHTS, epoll, smoltcp TCP, and busybox sh as init. One kernel panic (+49min, VMA range not free) fixed on the first retry. 163 API requests, 49.5M tokens total (98.7% cache hits), peak context 516K, zero compactions, zero web searches. Cost **$34** (Fable 5.1, $10/$50 per M in/out, cache read $0.25/M). Official-Alpine-APK route (nginx 1.28.3, dynamically linked); `io_setup` left unimplemented — nginx logs one `[emerg]` at startup but serves normally. Function suite (index/404/HEAD/sendfile 4MiB/keep-alive) green at 62min; signal/concurrency/leak/throughput suites + README + git commit by 105min.
-
-| Time | Milestone |
-|------|-----------|
-| 00:01 | Environment survey + overall plan |
-| 00:06 | Official Alpine riscv64 nginx 1.28.3 + musl/OpenSSL/PCRE2/zlib ready |
-| 00:08 | Kernel skeleton: Cargo, linker script, entry.S, UART, panic handler |
-| 00:17 | Trap handling + task/scheduler core |
-| 00:22 | VFS + file-description/fd-table layer |
-| 00:31 | smoltcp TCP glue + socket syscalls |
-| 00:42 | Process/fork/signal/futex syscalls |
-| 00:47 | Main entry wired; first compile — only 11 errors |
-| 00:49 | KERNEL PANIC #1 (VMA range not free) → fixed; busybox sh boots on the first try — fork/exec/wait all work |
-| 00:55 | `nginx -t` passes (getpwnam//dev/stderr fixes) |
-| 00:58 | First HTTP 200 OK from host — `Server: nginx/1.28.3` 🎉 |
-| 01:02 | Suite green: index/404/HEAD/sendfile 4MiB/keep-alive |
-| 01:45 | Signal/concurrency/leak/throughput suites, README, git commit ✅ |
-
-## DeepSeek V4.1 Flash 1017 — 28min / 40min
-
-![DeepSeek V4.1 Flash 1017 Timeline](figures/deepseek-v4.1-flash-1017-timeline.png)
-
-The same **DeepSeek-V4.1-Flash (1017)** model on DSH's **standard** preset, rerun with a completely different design: **28 minutes to the first host HTTP 200, 40 minutes total**, no idle gaps, peak context 323K, **$0.26** at the off-peak rates. This kernel has **no MMU** (single address space; nginx runs in S-mode behind a syscall shim) and serves from the **official Alpine apk set** — nginx 1.26.3 + pcre2/zlib/openssl unpacked from `dl-cdn.alpinelinux.org`, binary untouched, musl dynamic — with nginx as a single process (`master_process off`). 60 QEMU boots, 1 panic, pure black-box (0 web searches, 0 git clones); verified by `curl -i` → `200 OK`, `Server: nginx/1.26.3`, 211-byte page.
-
-| Time | Milestone |
-|------|-----------|
-| 00:02 | Alpine 3.20 riscv64 apks (nginx 1.26.3 + pcre2/zlib/openssl) fetched and unpacked into an embedded rootfs; first QEMU boot |
-| 00:13 | nginx 1.26.3 running in the guest (musl dynamic, unmodified) |
-| 00:25 | First panic (memory path), fixed |
-| 00:28 | First host HTTP 200 — `Server: nginx/1.26.3` 🎉 |
-| 00:40 | Final `curl -i`: 211-byte page with keep-alive + ETag; objective complete |
-
 ### GPT 5.6 Sol — 33min / 49min
 
 ![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
@@ -252,6 +256,24 @@ OpenAI Codex ran for **~33 minutes** to first HTTP 200 (it claimed PASS at 36min
 | 00:36 | Initial PASS claimed; second request silently fails |
 | 00:43 – 00:49 | User prompt → fix TCP FIN lifecycle + virtio TX descriptor pool |
 | 00:49 | Final PASS: 2 sequential HTTP 200 ✅ |
+
+## Claude Fable 5 — 35min / 41min
+
+![Claude Fable 5 Timeline](figures/fable5-timeline.png)
+
+Claude Code ran for **~41min**, 65 API requests. Total cost approximately **$21**. Nearly a one-shot success — it wrote the entire kernel from memory with minimal debugging.
+
+| Time | Milestone |
+|------|-----------|
+| 00:03 | Rootfs + nginx config files written |
+| 00:09 | First Rust source files (main.rs, sbi.rs, ...) |
+| 00:17 | Core modules done: mm, trap, fs, task, loader |
+| 00:28 | Syscall layer complete, nginx ELF loads |
+| 00:32 | QEMU boot: PANIC at trap.rs — page fault |
+| 00:34 | QEMU boot: nginx listening on port 80 🎉 |
+| 00:35 | First HTTP 200 OK from host — `Server: nginx/1.28.3` 🎉 |
+| 00:37 | Post-fix cleanup (sendfile, README) |
+| 00:41 | Final acceptance: full suite green + README written ✅ |
 
 ### Claude Opus 4.8 — 40min / 42min
 
@@ -330,6 +352,28 @@ Codex at **xHigh** effort finished the whole benchmark in **58 minutes of wall t
 | 00:55 | Last of four 200 verifications |
 | 00:58 | Final report; QEMU left running on :8080 |
 
+### Claude Fable 5.1 — 58min / 1h 45min
+
+![Claude Fable 5.1 Timeline](figures/fable51-timeline.png)
+
+Claude Code ran for **~58min** to first HTTP 200 (goal complete at 105min) — the deepest kernel of any run: real **fork with two nginx worker processes** (signals + CoW), AF_UNIX with SCM_RIGHTS, epoll, smoltcp TCP, and busybox sh as init. One kernel panic (+49min, VMA range not free) fixed on the first retry. 163 API requests, 49.5M tokens total (98.7% cache hits), peak context 516K, zero compactions, zero web searches. Cost **$34** (Fable 5.1, $10/$50 per M in/out, cache read $0.25/M). Official-Alpine-APK route (nginx 1.28.3, dynamically linked); `io_setup` left unimplemented — nginx logs one `[emerg]` at startup but serves normally. Function suite (index/404/HEAD/sendfile 4MiB/keep-alive) green at 62min; signal/concurrency/leak/throughput suites + README + git commit by 105min.
+
+| Time | Milestone |
+|------|-----------|
+| 00:01 | Environment survey + overall plan |
+| 00:06 | Official Alpine riscv64 nginx 1.28.3 + musl/OpenSSL/PCRE2/zlib ready |
+| 00:08 | Kernel skeleton: Cargo, linker script, entry.S, UART, panic handler |
+| 00:17 | Trap handling + task/scheduler core |
+| 00:22 | VFS + file-description/fd-table layer |
+| 00:31 | smoltcp TCP glue + socket syscalls |
+| 00:42 | Process/fork/signal/futex syscalls |
+| 00:47 | Main entry wired; first compile — only 11 errors |
+| 00:49 | KERNEL PANIC #1 (VMA range not free) → fixed; busybox sh boots on the first try — fork/exec/wait all work |
+| 00:55 | `nginx -t` passes (getpwnam//dev/stderr fixes) |
+| 00:58 | First HTTP 200 OK from host — `Server: nginx/1.28.3` 🎉 |
+| 01:02 | Suite green: index/404/HEAD/sendfile 4MiB/keep-alive |
+| 01:45 | Signal/concurrency/leak/throughput suites, README, git commit ✅ |
+
 ### Claude Opus 5 — 1h 7min / 2h 5min
 
 ![Claude Opus 5 Timeline](figures/opus5-timeline.png)
@@ -367,6 +411,27 @@ Kimi Code CLI with thinking on (which maps to the model's default **max** effort
 | 01:41 | Second verification: 200 OK, same 222-byte page |
 | 01:46–01:48 | Final check, goal cleared; 429 retries from the API afterwards |
 
+### DeepSeek V4 Pro — 1h 46min / 1h 48min
+
+![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
+
+Ran for **~108min** of active time with the harness's **minimal agent preset**. First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.86** — the cheapest DeepSeek run, edging out DeepSeek V4 Flash's $1.60 (until V4.1 Flash's $0.28). Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent (DeepSeek V4 Flash, 11.7M tokens, $0.09) while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
+
+| Time | Milestone |
+|------|-----------|
+| 00:00 | Kernel project setup: Cargo, linker script, boot code |
+| 00:10 | `__trap_return` register-restore bug fixed |
+| 00:13 | Timer + trap handling work; memory subsystem (frame allocator, Sv39 page tables) |
+| 00:16 | Frame allocator double-lock deadlock fixed |
+| 00:22 | Hello world runs in user mode; subagent static nginx ready (ET_EXEC) |
+| 00:34 | VFS + file syscalls wired up |
+| 01:02 | musl malloc mmap overlap with TLS region fixed (mmap region tracking) |
+| 01:08 | Networking stage: virtio-net + smoltcp TCP/IP + socket syscalls |
+| 01:23 | virtio-net MMIO slot 7 (`0x10008000`) mapping fixed |
+| 01:32 | `gettimeofday` SBI bug fixed (time-cache freeze) |
+| 01:45 | First HTTP 200 OK 🎉 |
+| 01:48 | Release build verified + goal complete |
+
 ### Kimi K3 — 1h 48min / 2h 19min
 
 ![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
@@ -385,6 +450,23 @@ Claude Code ran for **~2h 19min**. 151 API requests, 26.3M tokens total (includi
 | 01:49–02:07 | Multiple PANIC fixes (virtio, task scheduler — 7 bugs total) |
 | 02:15 | nginx stable again |
 | 02:19 | Final validation: SHA256 + 100 concurrent requests all 200 ✅ |
+
+### Claude Sonnet 5 — 2h 31min / 2h 49min
+
+![Claude Sonnet 5 Timeline](figures/sonnet5-timeline.png)
+
+Claude Code ran for **~2h 49min** (active time, 77min permission gap excluded). 616 API requests. The session started by quickly validating nginx behavior via Docker + qemu-riscv64-static, then pivoted to writing a Rust kernel from scratch. The self-written kernel achieved HTTP 200 twice. Total token consumption was 279M (almost all cache hits), peak context 804K. Cost approximately **$64**.
+
+| Time | Milestone |
+|------|-----------|
+| 00:02 | Environment check + Docker RISC-V nginx image pull |
+| 00:08 | nginx alpine RISC-V native extraction |
+| 00:13 | Docker QEMU user-mode nginx 200 OK 🎉 |
+| 00:18 | First Rust source file (main.rs) |
+| 00:23 | QEMU self-written kernel boot: PANIC |
+| 01:27 | **77min permission wait** |
+| 02:31 | QEMU self-written kernel: nginx 200 OK 🎉 |
+| 02:48 | Second self-kernel success, stable responses |
 
 ### GPT 5.6 Luna — 2h 35min / 2h 45min
 
@@ -422,22 +504,28 @@ Claude Code ran for **~2h 46min**.
 | 02:45 | Fix virtio-net recv + epoll data bug |
 | 02:46 | nginx returns HTTP 200 🎉 |
 
-### Claude Sonnet 5 — 2h 31min / 2h 49min
+### DeepSeek V4 Pro (local) — 3h 16min / 3h 25min
 
-![Claude Sonnet 5 Timeline](figures/sonnet5-timeline.png)
+![DeepSeek V4 Pro (local) Timeline](figures/deepseek-v4-pro-local-timeline.png)
 
-Claude Code ran for **~2h 49min** (active time, 77min permission gap excluded). 616 API requests. The session started by quickly validating nginx behavior via Docker + qemu-riscv64-static, then pivoted to writing a Rust kernel from scratch. The self-written kernel achieved HTTP 200 twice. Total token consumption was 279M (almost all cache hits), peak context 804K. Cost approximately **$64**.
+Self-hosted **DeepSeek-V4-Pro-0813** (512K window) through Claude Code at **High** effort, against the original prompt. PASS: first host HTTP 200 at 3h16min (`Server: nginx/1.28.3`) — that first body was truncated (`curl: (18)`); `sendfile()` landed four minutes later and served the complete 642-byte page, and the run closed at 3h25min with multi-request keep-alive and 404 handling verified. Route: nginx **cross-compiled from the official nginx.org source** into a 461KB static musl riscv64 binary (only `auto/feature`-style build scripts adjusted for cross-compilation, nginx itself untouched), loaded out of a ramfs by a from-scratch Sv39 kernel the agent named Shenhe. 371 API rounds, 451 tool calls (249 bash, 119 edit, 56 write), 84.0M input tokens (99.8% cache hit) + 0.51M output, peak context 488K with **1 compaction**, 61 QEMU boots, no web search, and no self-built QEMU. Unranked row: a self-hosted deployment of a model already on the board.
 
 | Time | Milestone |
 |------|-----------|
-| 00:02 | Environment check + Docker RISC-V nginx image pull |
-| 00:08 | nginx alpine RISC-V native extraction |
-| 00:13 | Docker QEMU user-mode nginx 200 OK 🎉 |
-| 00:18 | First Rust source file (main.rs) |
-| 00:23 | QEMU self-written kernel boot: PANIC |
-| 01:27 | **77min permission wait** |
-| 02:31 | QEMU self-written kernel: nginx 200 OK 🎉 |
-| 02:48 | Second self-kernel success, stable responses |
+| 00:05 | Toolchain recon: Rust + `riscv64gc` target, QEMU, cross gcc, network |
+| 00:10 | First QEMU boot → silent console; first kernel PANIC (wrong SBI debug-console FID) |
+| 00:38 | `opt-level=0` pinned — an optimized numeric-formatting miscompile was the root cause |
+| 01:08 | User mode up: "hello world" from a user program, clean exit |
+| 01:14 | Official nginx 1.28.3 source starts configuring and building in the background |
+| 02:02 | virtio-net MMIO: modern (v2) register interface adopted after finding QEMU's legacy default |
+| 02:19 | Full path works — host `curl` returns "hello, world!" through virtio-net → smoltcp → the kernel's socket ABI |
+| 02:24 | nginx built (461KB static musl riscv64); kernel rebuilt to embed it via `build.rs` |
+| 02:38 | Context compact #1 (492K pre-compact — the 512K window filling) |
+| 03:04 | `getrlimit(RLIMIT_NOFILE)` returned garbage, so nginx's `ngx_calloc` failed silently |
+| 03:11 | nginx event loop stays up instead of exiting |
+| 03:16 | First host HTTP 200 — `Server: nginx/1.28.3` (body truncated) |
+| 03:20 | `sendfile()` implemented — the full 642-byte page arrives |
+| 03:25 | Stable keep-alive / concurrent requests; goal complete |
 
 ### GLM 5.3 — 3h 50min / 3h 52min
 
@@ -459,6 +547,28 @@ Claude Code ran for **~3h 52min** (continuous — no idle or API-retry gaps), 35
 | 03:52 | Stable: 4 sequential + 3 concurrent requests all 200 ✅ |
 | 03:53 | README written, goal complete |
 
+### DeepSeek V4 Flash (local) — 4h 42min / 4h 44min
+
+![DeepSeek V4 Flash (local) Timeline](figures/deepseek-v4-flash-local-high-timeline.png)
+
+Self-hosted **DeepSeek-V4-Flash-0731** (1M window) through Claude Code at **High** effort, same original prompt. PASS: first host HTTP 200 at 4h42min, consecutive 200s and a correct 404 within two minutes, all from the **unmodified official Debian riscv64 nginx 1.30.4** binary (the `.deb` route). The kernel is from-scratch, **MMU-less** and fully **polling** (interrupts off in kernel mode, blocking calls timed out with `rdtime`), which makes `fork` unable to give nginx a private address space — the run switched nginx to its supported single-process mode (`master_process off`, binary untouched) and kept going. 1,139 API rounds, 1,272 tool calls (903 bash, 294 edit), 520M input tokens (99.9% cache hit) + 1.07M output, peak context 967K with **1 compaction**, 195 QEMU boots, no web search, and no self-built QEMU. Unranked row: a self-hosted deployment of a model already on the board.
+
+| Time | Milestone |
+|------|-----------|
+| 00:04 | First kernel: boot.S, SBI console, allocator, traps, timer |
+| 00:14 | Design decision: a polling kernel — no nested traps, blocking paths timed out via `rdtime` |
+| 00:51 | glibc dynamic-linking path works (`-static-pie` hello through the PIE loader) |
+| 01:07 | brk/mmap collision fixed — brk gets a reserved region, Linux-style |
+| 01:12 | nginx reaches `socket()`; the network stack is the last blocker |
+| 02:07 | No MMU ⇒ `fork` cannot privatise memory; nginx runs single-process instead |
+| 02:39 | Legacy virtio ring layout fixed (avail follows the descriptor table; used 4K-aligned) |
+| 02:47 | RX works — frames arrive from slirp |
+| 03:36 | virtio-net header sized correctly (10 bytes) — ARP replies and TX counters move |
+| 03:45 | TCP up: SYN/ACK exchange with slirp |
+| 04:33 | Root cause of the recurring boot-1 resets: `trap_entry` was 2-byte aligned, so the `stvec` write was silently ignored (reserved mode) |
+| 04:41 | epoll event-array stride mismatch (12 bytes in the kernel vs nginx's ×16) fixed — **first HTTP 200**, `Server: nginx/1.30.4` 🎉 |
+| 04:43 | Consecutive 200s + correct 404, one clean boot, zero crashes; goal complete |
+
 ### GLM 5.3 Flash (fp8) — 6h 2min / 7h 10min
 
 ![GLM 5.3 Flash Timeline](figures/glm53-flash-timeline.png)
@@ -477,22 +587,6 @@ Self-hosted **GLM-5.3-Flash-fp8** (sglang, 1M context) run with Claude Code agai
 | 06:19 | Final cluster: TCP checksum off-by-24, AF_UNIX EOF notification, trap register save |
 | 06:46 | First HTTP 200 from official nginx 🎉 |
 | 07:09 | Stable: 8/8 requests 200, README written ✅ |
-
-### Claude Sonnet 4.6 — 16h / 16h
-
-Claude Code ran for **16 hours**. The total cost was approximately $60.
-
-| Time  | Milestone |
-|-------|-----------|
-| 01:27 | Kernel boots + VirtIO NIC initialized |
-| 02:07 | musl dynamic linker successfully loads nginx ELF |
-| 05:00 | nginx completes initialization, writes PID file |
-| 06:18 | TCP three-way handshake succeeds, curl connects to port 8080 |
-| 06:24 | nginx successfully forks worker process |
-| 08:40 | Worker enters epoll event loop |
-| 09:30 | curl first establishes TCP connection (empty reply) |
-| 10:00 | curl first receives response (connection reset) |
-| 16:00 | nginx returns HTTP 200 with complete welcome page 🎉 |
 
 ### DeepSeek V4 Flash — 6h 30min / 6h 35min
 
@@ -534,71 +628,21 @@ Self-hosted **DeepSeek-V4-Flash-0731** (1M context) run through Claude Code at *
 | 07:55 | First HTTP 200 from host — `Server: nginx/1.26.3` 🎉 |
 | 07:57 | Stable: 3 consecutive 200s (35-byte page, real guest headers); goal complete |
 
-### DeepSeek V4 Flash (local) — 4h 42min / 4h 44min
+### Claude Sonnet 4.6 — 16h / 16h
 
-![DeepSeek V4 Flash (local) Timeline](figures/deepseek-v4-flash-local-high-timeline.png)
+Claude Code ran for **16 hours**. The total cost was approximately $60.
 
-Self-hosted **DeepSeek-V4-Flash-0731** (1M window) through Claude Code at **High** effort, same original prompt. PASS: first host HTTP 200 at 4h42min, consecutive 200s and a correct 404 within two minutes, all from the **unmodified official Debian riscv64 nginx 1.30.4** binary (the `.deb` route). The kernel is from-scratch, **MMU-less** and fully **polling** (interrupts off in kernel mode, blocking calls timed out with `rdtime`), which makes `fork` unable to give nginx a private address space — the run switched nginx to its supported single-process mode (`master_process off`, binary untouched) and kept going. 1,139 API rounds, 1,272 tool calls (903 bash, 294 edit), 520M input tokens (99.9% cache hit) + 1.07M output, peak context 967K with **1 compaction**, 195 QEMU boots, no web search, and no self-built QEMU. Unranked row: a self-hosted deployment of a model already on the board.
-
-| Time | Milestone |
-|------|-----------|
-| 00:04 | First kernel: boot.S, SBI console, allocator, traps, timer |
-| 00:14 | Design decision: a polling kernel — no nested traps, blocking paths timed out via `rdtime` |
-| 00:51 | glibc dynamic-linking path works (`-static-pie` hello through the PIE loader) |
-| 01:07 | brk/mmap collision fixed — brk gets a reserved region, Linux-style |
-| 01:12 | nginx reaches `socket()`; the network stack is the last blocker |
-| 02:07 | No MMU ⇒ `fork` cannot privatise memory; nginx runs single-process instead |
-| 02:39 | Legacy virtio ring layout fixed (avail follows the descriptor table; used 4K-aligned) |
-| 02:47 | RX works — frames arrive from slirp |
-| 03:36 | virtio-net header sized correctly (10 bytes) — ARP replies and TX counters move |
-| 03:45 | TCP up: SYN/ACK exchange with slirp |
-| 04:33 | Root cause of the recurring boot-1 resets: `trap_entry` was 2-byte aligned, so the `stvec` write was silently ignored (reserved mode) |
-| 04:41 | epoll event-array stride mismatch (12 bytes in the kernel vs nginx's ×16) fixed — **first HTTP 200**, `Server: nginx/1.30.4` 🎉 |
-| 04:43 | Consecutive 200s + correct 404, one clean boot, zero crashes; goal complete |
-
-### DeepSeek V4 Pro — 1h 46min / 1h 48min
-
-![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
-
-Ran for **~108min** of active time with the harness's **minimal agent preset**. First HTTP 200 at 105.6min. 373 model steps, 97.9M tokens total (99.9% cache hit), peak context 503K. Cost approximately **$0.86** — the cheapest DeepSeek run, edging out DeepSeek V4 Flash's $1.60 (until V4.1 Flash's $0.28). Zero kernel panics, zero context compactions. The static musl nginx binary was built in parallel by a background subagent (DeepSeek V4 Flash, 11.7M tokens, $0.09) while the main agent wrote the kernel from scratch; two web searches (musl TLS layout, QEMU virtio MMIO) were technical lookups, not solution-finding.
-
-| Time | Milestone |
-|------|-----------|
-| 00:00 | Kernel project setup: Cargo, linker script, boot code |
-| 00:10 | `__trap_return` register-restore bug fixed |
-| 00:13 | Timer + trap handling work; memory subsystem (frame allocator, Sv39 page tables) |
-| 00:16 | Frame allocator double-lock deadlock fixed |
-| 00:22 | Hello world runs in user mode; subagent static nginx ready (ET_EXEC) |
-| 00:34 | VFS + file syscalls wired up |
-| 01:02 | musl malloc mmap overlap with TLS region fixed (mmap region tracking) |
-| 01:08 | Networking stage: virtio-net + smoltcp TCP/IP + socket syscalls |
-| 01:23 | virtio-net MMIO slot 7 (`0x10008000`) mapping fixed |
-| 01:32 | `gettimeofday` SBI bug fixed (time-cache freeze) |
-| 01:45 | First HTTP 200 OK 🎉 |
-| 01:48 | Release build verified + goal complete |
-
-### DeepSeek V4 Pro (local) — 3h 16min / 3h 25min
-
-![DeepSeek V4 Pro (local) Timeline](figures/deepseek-v4-pro-local-timeline.png)
-
-Self-hosted **DeepSeek-V4-Pro-0813** (512K window) through Claude Code at **High** effort, against the original prompt. PASS: first host HTTP 200 at 3h16min (`Server: nginx/1.28.3`) — that first body was truncated (`curl: (18)`); `sendfile()` landed four minutes later and served the complete 642-byte page, and the run closed at 3h25min with multi-request keep-alive and 404 handling verified. Route: nginx **cross-compiled from the official nginx.org source** into a 461KB static musl riscv64 binary (only `auto/feature`-style build scripts adjusted for cross-compilation, nginx itself untouched), loaded out of a ramfs by a from-scratch Sv39 kernel the agent named Shenhe. 371 API rounds, 451 tool calls (249 bash, 119 edit, 56 write), 84.0M input tokens (99.8% cache hit) + 0.51M output, peak context 488K with **1 compaction**, 61 QEMU boots, no web search, and no self-built QEMU. Unranked row: a self-hosted deployment of a model already on the board.
-
-| Time | Milestone |
-|------|-----------|
-| 00:05 | Toolchain recon: Rust + `riscv64gc` target, QEMU, cross gcc, network |
-| 00:10 | First QEMU boot → silent console; first kernel PANIC (wrong SBI debug-console FID) |
-| 00:38 | `opt-level=0` pinned — an optimized numeric-formatting miscompile was the root cause |
-| 01:08 | User mode up: "hello world" from a user program, clean exit |
-| 01:14 | Official nginx 1.28.3 source starts configuring and building in the background |
-| 02:02 | virtio-net MMIO: modern (v2) register interface adopted after finding QEMU's legacy default |
-| 02:19 | Full path works — host `curl` returns "hello, world!" through virtio-net → smoltcp → the kernel's socket ABI |
-| 02:24 | nginx built (461KB static musl riscv64); kernel rebuilt to embed it via `build.rs` |
-| 02:38 | Context compact #1 (492K pre-compact — the 512K window filling) |
-| 03:04 | `getrlimit(RLIMIT_NOFILE)` returned garbage, so nginx's `ngx_calloc` failed silently |
-| 03:11 | nginx event loop stays up instead of exiting |
-| 03:16 | First host HTTP 200 — `Server: nginx/1.28.3` (body truncated) |
-| 03:20 | `sendfile()` implemented — the full 642-byte page arrives |
-| 03:25 | Stable keep-alive / concurrent requests; goal complete |
+| Time  | Milestone |
+|-------|-----------|
+| 01:27 | Kernel boots + VirtIO NIC initialized |
+| 02:07 | musl dynamic linker successfully loads nginx ELF |
+| 05:00 | nginx completes initialization, writes PID file |
+| 06:18 | TCP three-way handshake succeeds, curl connects to port 8080 |
+| 06:24 | nginx successfully forks worker process |
+| 08:40 | Worker enters epoll event loop |
+| 09:30 | curl first establishes TCP connection (empty reply) |
+| 10:00 | curl first receives response (connection reset) |
+| 16:00 | nginx returns HTTP 200 with complete welcome page 🎉 |
 
 ### DeepSeek V4 Pro Preview — ❌
 

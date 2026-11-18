@@ -10,34 +10,36 @@
 | # | 模型 | 思考强度 | Harness | 首次HTTP200时间 | 总时间 | 上下文 | 成本 | QEMU 运行次数 | 测试日期 | 段位 |
 |:--|:------|:--------|:---------|:----------|:------|:------|:------|:--------------|:--------|:----|
 | 🏅 | GPT-6 Astra | 高 | Codex | 6分钟 | 9分钟 | 83K | $4 | 9 | 2026-09-05 | 👑 杰哥 |
-| 🥈 | Claude Opus 5.5 | 高 | CC | 12分钟 | 14分钟 | 109K | $9.5 | 2 | 2026-09-30 | 🧠 智能杰哥 |
-| 🥉 | GPT-6.1 Terra | 高 | Codex | 14分钟 | 17分钟 | 208K | $1.5 | 9 | 2026-10-29 | 🧠 智能杰哥 |
-| 4 | GPT-6.1 Sol | 高 | Codex | 18分钟 | 33分钟 | 132K | $0.95 | 8 | 2026-09-30 | 🧠 智能杰哥 |
-| 5 | DeepSeek V4.1 Flash 1017 | 高 | DSH | 28分钟 | 40分钟 | 323K | $0.26 | 60 | 2026-10-18 | 🧠 智能杰哥 |
-| 6 | DeepSeek V4.1 Flash 0910 | 高 | DSH | 30分钟 | 47分钟 | 350K | $0.28 | 36 | 2026-09-10 | 🧠 智能杰哥 |
-| 7 | GPT 5.6 Sol | 高 | Codex | 33分钟 | 49分钟 | 222K | $14 | 29 | 2026-07-11 | 🧠 智能杰哥 |
-| 8 | Claude Fable 5 | 高 | CC | 35分钟 | 41分钟 | 155K | $21 | 4 | 2026-07-05 | 🧠 智能杰哥 |
-| 9 | Claude Opus 4.8 | 高 | CC | 40分钟 | 42分钟 | 230K | $12 | 19 | 2026-09-05 | 🧠 智能杰哥 |
-| 10 | Claude Fable 5.2 | 高 | CC | 42分钟 | 1小时15分 | 300K | $29 | 18 | 2026-11-10 | 🧠 智能杰哥 |
-| 11 | Claude Opus 4.7 | — | CC | 45分钟 | 48分钟 | — | — | — | 2026-04-18 | 🧠 智能杰哥 |
-| 12 | GPT-6 Luna | 极高 | Codex | 50分钟 | 58分钟 | 694K | $1.95 | 86 | 2026-10-24 | 🧠 智能杰哥 |
-| 13 | Claude Fable 5.1 | 高 | CC | 58分钟 | 1小时45分 | 516K | $34 | 13 | 2026-09-05 | 🧠 智能杰哥 |
-| 14 | Claude Opus 5 | 高 | CC | 1小时7分 | 2小时5分 | 334K | $26 | 57 | 2026-07-27 | 🧠 智能杰哥 |
-| 15 | Kimi K3.1 Pro | 最高 | Kimi Code | 1小时14分 | 1小时48分 | 323K | $10.7 | 33 | 2026-10-24 | 🧠 智能杰哥 |
-| 16 | DeepSeek V4 Pro | 高 | DSH | 1小时46分 | 1小时48分 | 503K | $0.86 | 113 | 2026-08-12 | 🧠 智能杰哥 |
-| 17 | Kimi K3 | 高 | CC | 1小时48分 | 2小时19分 | 270K | $11 | 39 | 2026-07-18 | 🧠 智能杰哥 |
-| 18 | Claude Sonnet 5 | 极高 | CC | 2小时31分 | 2小时49分 | 804K | $64 | 65 | 2026-07-18 | 🤖 机器杰哥 |
-| 19 | GPT 5.6 Luna | 极高 | Codex | 2小时35分 | 2小时45分 | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 机器杰哥 |
-| 20 | Claude Opus 4.6 | — | CC | 2小时46分 | 2小时46分 | — | — | — | 2026-03-24 | 🤖 机器杰哥 |
+| 🥈 | GPT-6.2 Astra | 高 | Codex | 8分钟 | 13分钟 | 72K | $2 | 7 | 2026-11-18 | 🧠 智能杰哥 |
+| 🥉 | Claude Opus 5.5 | 高 | CC | 12分钟 | 14分钟 | 109K | $9.5 | 2 | 2026-09-30 | 🧠 智能杰哥 |
+| 4 | GPT-6.2 Sol | 高 | Codex | 14分钟 | 18分钟 | 102K | $0.9 | 6 | 2026-11-18 | 🧠 智能杰哥 |
+| 5 | GPT-6.1 Terra | 高 | Codex | 14分钟 | 17分钟 | 208K | $1.5 | 9 | 2026-10-29 | 🧠 智能杰哥 |
+| 6 | GPT-6.1 Sol | 高 | Codex | 18分钟 | 33分钟 | 132K | $0.95 | 8 | 2026-09-30 | 🧠 智能杰哥 |
+| 7 | DeepSeek V4.1 Flash 1017 | 高 | DSH | 28分钟 | 40分钟 | 323K | $0.26 | 60 | 2026-10-18 | 🧠 智能杰哥 |
+| 8 | DeepSeek V4.1 Flash 0910 | 高 | DSH | 30分钟 | 47分钟 | 350K | $0.28 | 36 | 2026-09-10 | 🧠 智能杰哥 |
+| 9 | GPT 5.6 Sol | 高 | Codex | 33分钟 | 49分钟 | 222K | $14 | 29 | 2026-07-11 | 🧠 智能杰哥 |
+| 10 | Claude Fable 5 | 高 | CC | 35分钟 | 41分钟 | 155K | $21 | 4 | 2026-07-05 | 🧠 智能杰哥 |
+| 11 | Claude Opus 4.8 | 高 | CC | 40分钟 | 42分钟 | 230K | $12 | 19 | 2026-09-05 | 🧠 智能杰哥 |
+| 12 | Claude Fable 5.2 | 高 | CC | 42分钟 | 1小时15分 | 300K | $29 | 18 | 2026-11-10 | 🧠 智能杰哥 |
+| 13 | Claude Opus 4.7 | — | CC | 45分钟 | 48分钟 | — | — | — | 2026-04-18 | 🧠 智能杰哥 |
+| 14 | GPT-6 Luna | 极高 | Codex | 50分钟 | 58分钟 | 694K | $1.95 | 86 | 2026-10-24 | 🧠 智能杰哥 |
+| 15 | Claude Fable 5.1 | 高 | CC | 58分钟 | 1小时45分 | 516K | $34 | 13 | 2026-09-05 | 🧠 智能杰哥 |
+| 16 | Claude Opus 5 | 高 | CC | 1小时7分 | 2小时5分 | 334K | $26 | 57 | 2026-07-27 | 🧠 智能杰哥 |
+| 17 | Kimi K3.1 Pro | 最高 | Kimi Code | 1小时14分 | 1小时48分 | 323K | $10.7 | 33 | 2026-10-24 | 🧠 智能杰哥 |
+| 18 | DeepSeek V4 Pro | 高 | DSH | 1小时46分 | 1小时48分 | 503K | $0.86 | 113 | 2026-08-12 | 🧠 智能杰哥 |
+| 19 | Kimi K3 | 高 | CC | 1小时48分 | 2小时19分 | 270K | $11 | 39 | 2026-07-18 | 🧠 智能杰哥 |
+| 20 | Claude Sonnet 5 | 极高 | CC | 2小时31分 | 2小时49分 | 804K | $64 | 65 | 2026-07-18 | 🤖 机器杰哥 |
+| 21 | GPT 5.6 Luna | 极高 | Codex | 2小时35分 | 2小时45分 | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 机器杰哥 |
+| 22 | Claude Opus 4.6 | — | CC | 2小时46分 | 2小时46分 | — | — | — | 2026-03-24 | 🤖 机器杰哥 |
 | — | DeepSeek V4 Pro（本地部署） | 高 | CC | 3小时16分 | 3小时25分 | 488K x2 | 自部署 | 61 | 2026-10-09 | 🤖 机器杰哥 |
-| 21 | GLM 5.3 | 高 | CC | 3小时50分 | 3小时52分 | 593K | $34 | 206 | 2026-08-20 | 🤖 机器杰哥 |
+| 23 | GLM 5.3 | 高 | CC | 3小时50分 | 3小时52分 | 593K | $34 | 206 | 2026-08-20 | 🤖 机器杰哥 |
 | — | DeepSeek V4 Flash（本地部署） | 高 | CC | 4小时42分 | 4小时44分 | 967K x2 | 自部署 | 195 | 2026-10-09 | 🤖 机器杰哥 |
-| 22 | GLM 5.3 Flash (fp8) | — | CC | 6小时2分 | 7小时10分 | 967K | 自部署 | — | 2026-08-31 | 🤖 机器杰哥 |
-| 23 | DeepSeek V4 Flash | 高 | DSH | 6小时30分 | 6小时35分 | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 机器杰哥 |
+| 24 | GLM 5.3 Flash (fp8) | — | CC | 6小时2分 | 7小时10分 | 967K | 自部署 | — | 2026-08-31 | 🤖 机器杰哥 |
+| 25 | DeepSeek V4 Flash | 高 | DSH | 6小时30分 | 6小时35分 | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 机器杰哥 |
 | — | DeepSeek V4 Flash（本地部署） | 最高 | CC | 7小时55分 | 7小时57分 | 967K x3 | 自部署 | 320 | 2026-10-06 | 🤖 机器杰哥 |
-| 24 | Claude Sonnet 4.6 | — | CC | 16小时 | 16小时 | — | $60 | — | 2026-03-18 | 🤖 机器杰哥 |
-| 25 | DeepSeek V4 Pro 预览版 | 最高 | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 损坏杰哥 |
-| 26 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 损坏杰哥 |
+| 26 | Claude Sonnet 4.6 | — | CC | 16小时 | 16小时 | — | $60 | — | 2026-03-18 | 🤖 机器杰哥 |
+| 27 | DeepSeek V4 Pro 预览版 | 最高 | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 损坏杰哥 |
+| 28 | DeepSeek V4 Flash Vision | 高 | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 损坏杰哥 |
 
 
 
@@ -67,11 +69,32 @@ OpenAI Codex（桌面版）运行 **约 6 分钟** 即拿到首次 HTTP 200—�
 | 00:08 | 完整验收通过：8 路并发 ×120 请求、24MiB、25 次 keep-alive、1MiB 文件 ✅ |
 | 00:09 | Goal complete（README + make start/test/verify） |
 
+## GPT-6.2 Astra — 8分钟 / 13分钟
+
+![GPT-6.2 Astra Timeline](figures/gpt62-astra-timeline.svg)
+
+OpenAI Codex（桌面版），**高**强度，2026-11-18。**7 分 54 秒**拿到首次宿主 HTTP 200，**13 分 28 秒**完成，单一回合无中断（28 次 API 请求、27 次工具调用、**7 次 QEMU 启动**、零压缩、上下文峰值 72K）。成本 **约 $2.0**（GPT-6.2 Astra 定价 $8 输入 / $40 输出 / $0.40 缓存读，每百万 token），比 GPT-6 Astra 便宜 20%。
+
+走 **Docker 官方镜像**路线：未修改的 nginx **1.30.6**（`linux/riscv64`）从 OCI 仓库逐层拉取并做 SHA-256 校验（`image.lock`），QEMU 内没有 Linux 内核。内核用 Rust 实现 Sv39、PIE `PT_INTERP` ELF 加载器、内存文件系统、手写 virtio-mmio 网卡驱动 + smoltcp，以及 nginx 需要的 Linux ABI 子集。验收覆盖 59 个响应——首页逐字节比对、HEAD、Range（206）、ETag（304）、404 和六条并发长连接——回环与局域网地址都通过。
+
+> 范围：单 hart、256 MiB、单 nginx 进程（`master_process off`）；无 fork、信号和持久存储；未测试 TLS 与任意 nginx 配置。
+
+| 时间（活跃） | 里程碑 |
+|------|-----------|
+| 00:01 | 写好 OCI 拉取脚本；官方 nginx riscv64 层锁定在 `image.lock` |
+| 00:02 | 组装 rootfs，校验镜像摘要 |
+| 00:04 | Sv39 分页与 virtio-net MMIO 驱动就位 |
+| 00:06 | 首次启动 QEMU，nginx 进入 U 态 |
+| 00:07 | 修 socket/fd 系统调用，nginx 进入 `listen` |
+| 00:08 | **首次宿主 HTTP 200** — `Server: nginx/1.30.6` 🎉 |
+| 00:09 | 写好黑盒检查脚本 |
+| 00:13 | 回环与局域网 59 个响应全过，完成 |
+
 ## Claude Opus 5.5 — 12分钟 / 14分钟
 
 ![Claude Opus 5.5 Timeline](figures/opus55-timeline.png)
 
-Claude Code（CLI 2.1.285），思考强度 **High**，2026-09-30 运行。按有效时间 **11分56秒** 首次从宿主机拿到 HTTP 200，**14分17秒** 结束（墙钟 14分31秒 / 16分52秒；中途一次 **2分35秒的网络卡顿**——一条约 700 token 的回复用了 160 秒才返回——已扣除）。按首次 HTTP 200 排名为本榜第二。单一回合无中断：30 次 API 请求、29 次工具调用、**零联网搜索**、零内核 panic、零上下文压缩、**2 次 QEMU 启动**。累计 2.37M token（缓存读 0.70M、缓存写 1.60M、输出 68K），峰值上下文 **109K**。按 Opus 5.5 价格（输入/输出每 M token $4/$20，缓存写 $5，缓存读 $0.20）估算成本 **约 $9.5**。
+Claude Code（CLI 2.1.285），思考强度 **High**，2026-09-30 运行。按有效时间 **11分56秒** 首次从宿主机拿到 HTTP 200，**14分17秒** 结束（墙钟 14分31秒 / 16分52秒；中途一次 **2分35秒的网络卡顿**——一条约 700 token 的回复用了 160 秒才返回——已扣除）。单一回合无中断：30 次 API 请求、29 次工具调用、**零联网搜索**、零内核 panic、零上下文压缩、**2 次 QEMU 启动**。累计 2.37M token（缓存读 0.70M、缓存写 1.60M、输出 68K），峰值上下文 **109K**。按 Opus 5.5 价格（输入/输出每 M token $4/$20，缓存写 $5，缓存读 $0.20）估算成本 **约 $9.5**。
 
 走 **Alpine 官方 APK 路线**：未经修改的 nginx **1.28.3-r7**（v3.22 main/riscv64）+ musl/OpenSSL/PCRE2/zlib，内核镜像内的 `/usr/sbin/nginx` 与 APK 解出的文件 SHA-256 一致。使用 Alpine 原版 `nginx.conf`，通过 `-g "daemon off; master_process off;"` 启动；只替换了 `http.d/default.conf`（原版对所有请求返回 404），并补充了 `/etc/passwd`/`group`。前 5 分钟里约 4 分钟用于一次长时间的整体设计。之后逐个文件写出内核，中间没有编译测试循环：**约 2,700 行 Rust**（启动/trap 汇编内联），用时约 5 分钟。内核采用 Sv39，内核用 1GB 大页恒等映射在唯一的共享页表里；通过 VMA 做按需分页（匿名与文件映射，mmap/munmap/mprotect/brk 均真实生效）；有 PIE + `PT_INTERP` ELF 加载器，以及由内嵌 ustar 构建的内存 VFS。网络是自写的 legacy virtio-mmio 网卡驱动，上层用 smoltcp。监听 backlog 用一组预先 listen 的 smoltcp socket 实现。epoll 支持水平触发和边沿触发，边沿触发通过每个文件的操作代数计数器来判断。epoll 注册只持有 `Weak` 引用，因为 nginx 关闭连接时不做 `EPOLL_CTL_DEL`。整个内核写完后、首次编译前只改了一处：把这些注册改为 `Weak`。首次编译有 3 个错误（Makefile 依赖了悬空符号链接，以及 2 个类型错误）。**第一次启动 QEMU 就返回了 HTTP 200。** 第二次启动跑完整验收脚本：100 次顺序请求、单连接 25 次 keep-alive、404/HEAD/Range、1 MiB 文件经 sendfile 逐字节一致、8×60 并发请求、8 路并发 1 MiB 下载，全部通过。
 
@@ -91,11 +114,32 @@ Claude Code（CLI 2.1.285），思考强度 **High**，2026-09-30 运行。按�
 | 00:13:36 | 验收全部通过 |
 | 00:14 | README + SHA256SUMS，完成 |
 
+## GPT-6.2 Sol — 14分钟 / 18分钟
+
+![GPT-6.2 Sol Timeline](figures/gpt62-sol-timeline.svg)
+
+OpenAI Codex（桌面版），**高**强度，2026-11-18。**13 分 39 秒**拿到首次宿主 HTTP 200，**17 分 44 秒**完成（38 次 API 请求、38 次工具调用、**6 次 QEMU 启动**、零压缩、上下文峰值 102K）。成本 **约 $0.9**（GPT-6.2 Sol 定价 $2 输入 / $10 输出 / $0.10 缓存读，每百万 token）。
+
+走 **Docker 官方镜像**路线：未修改的 nginx **1.30.6**（`linux/riscv64`），SHA-256 校验，QEMU 内没有 Linux 内核。内核用 Rust，由 OpenSBI 引导，实现 nginx 需要的 Linux ABI 子集（epoll、socket、mmap）、virtio-net + smoltcp 网卡，以及带日志的内存文件系统镜像。`make test` 在临时宿主端口启动 QEMU，检查首页、静态文件、HEAD、404、384 KiB 文件、Range、keep-alive 与八路并发；回环和局域网地址都返回 200。
+
+> 范围：单 hart、256 MiB、单进程；无 fork、信号和磁盘持久化；未测试 TLS。
+
+| 时间（活跃） | 里程碑 |
+|------|-----------|
+| 00:01 | 检查仓库，写 Docker 镜像准备脚本 |
+| 00:02 | Cargo 工程与内核骨架 |
+| 00:05 | Sv39 虚拟内存层，用户/内核隔离 |
+| 00:09 | Linux ABI 模块：file、socket、mmap |
+| 00:12 | 首次启动 trace；修 errno 与路径问题 |
+| 00:14 | **首次宿主 HTTP 200** — `Server: nginx/1.30.6` 🎉 |
+| 00:16 | tcpdump 抓包与 smoke 套件 |
+| 00:18 | 写 README 与最终验证，完成 |
+
 ## GPT-6.1 Terra — 14分钟 / 17分钟
 
 ![GPT-6.1 Terra 时间线](figures/gpt61-terra-timeline.svg)
 
-OpenAI Codex（桌面版），**高**强度，2026-10-29。首次宿主机 HTTP 200 出现在**活跃时间 14 分 20 秒**，**17 分 02 秒**完成（墙钟 17 分 58 秒，已扣除第一次停下后设置 `goal` 前的 **56 秒停顿**）。全榜第三快。这次跑了**三轮**：第一轮停下时原型能启动但还跑不了 nginx，之后靠两次 `goal` 提醒才推进到完成。零上下文压缩、**9 次 QEMU 启动**；按 Terra 标准价折算约 **$1.5**，不是订阅实测账单。
+OpenAI Codex（桌面版），**高**强度，2026-10-29。首次宿主机 HTTP 200 出现在**活跃时间 14 分 20 秒**，**17 分 02 秒**完成（墙钟 17 分 58 秒，已扣除第一次停下后设置 `goal` 前的 **56 秒停顿**）。这次跑了**三轮**：第一轮停下时原型能启动但还跑不了 nginx，之后靠两次 `goal` 提醒才推进到完成。零上下文压缩、**9 次 QEMU 启动**；按 Terra 标准价折算约 **$1.5**，不是订阅实测账单。
 
 走的是 **Docker 官方镜像**路线：未修改的 nginx **1.31.8**（`riscv64/nginx:alpine-slim`）加 musl 解释器和四个共享库，全部按固定 manifest 做 SHA-256 校验。内核 `river-kernel`（Rust + 汇编）实现了 Sv39 与用户/内核隔离、PIE `PT_INTERP` ELF 加载、内存只读文件系统、自写 virtio-mmio 网卡驱动 + 固定版本 smoltcp，以及 nginx 需要的那部分 Linux ABI（epoll、socket、mmap）。最终验收覆盖重复 GET、HEAD/404、ARP、宿主机↔guest TCP 收发和 nginx 二进制哈希；本机与局域网地址（`192.168.1.14:8080`）都返回 200。
 
@@ -121,7 +165,7 @@ OpenAI Codex（桌面版），**高**强度，2026-10-29。首次宿主机 HTTP 
 
 ![GPT-6.1 Sol Timeline](figures/gpt61-sol-timeline.png)
 
-OpenAI Codex（桌面版），思考强度 **High**，于 2026-09-30 运行，**18分28秒**首次从宿主机拿到 HTTP 200，**32分51秒**结束——按首次 HTTP 200 排名为本榜第四。单一回合无中断，38 条模型响应记录、43 次 shell 命令、累计 **3.36M token**（含缓存输入，输入缓存命中率 95.9%）、输入上下文峰值 **132K**，零上下文压缩，共 **8 次 QEMU 启动**。3 次 web 调用（其中 1 次搜索查询），用于核对 Linux 系统调用编号和 libslirp 宿主机端口转发；未克隆现成 OS 仓库。按[官方 Standard 定价](https://developers.openai.com/api/docs/models/gpt-6.1-sol)估算，未缓存输入 / 缓存输入 / 输出每 M token 分别为 $2 / $0.10 / $10，**API 等价 token 成本约 $0.95**；这不是实测 Codex 订阅扣费，也不包含 web 工具费用。
+OpenAI Codex（桌面版），思考强度 **High**，于 2026-09-30 运行，**18分28秒**首次从宿主机拿到 HTTP 200，**32分51秒**结束。单一回合无中断，38 条模型响应记录、43 次 shell 命令、累计 **3.36M token**（含缓存输入，输入缓存命中率 95.9%）、输入上下文峰值 **132K**，零上下文压缩，共 **8 次 QEMU 启动**。3 次 web 调用（其中 1 次搜索查询），用于核对 Linux 系统调用编号和 libslirp 宿主机端口转发；未克隆现成 OS 仓库。按[官方 Standard 定价](https://developers.openai.com/api/docs/models/gpt-6.1-sol)估算，未缓存输入 / 缓存输入 / 输出每 M token 分别为 $2 / $0.10 / $10，**API 等价 token 成本约 $0.95**；这不是实测 Codex 订阅扣费，也不包含 web 工具费用。
 
 走 **Alpine 官方 APK 路线**：未经修改的 nginx **1.28.3-r7** + musl/OpenSSL/PCRE2/zlib，全部 12 个 RISC-V ELF 均与 SHA-256 锁定的归档逐字节一致。自写内核共 **1,918 行 Rust + 171 行汇编**：Sv39、ELF64 解释器加载、嵌入式 RAM 文件系统、Linux ABI 子集、自写 legacy VirtIO MMIO 驱动、smoltcp TCP，以及 epoll/eventfd/Unix socketpair。首次 HTTP 200 前出现两次内核 panic；调试涉及 nginx 加载地址与 UART MMIO 重叠、堆耗尽、系统调用编号错误，随后通过记录 epoll 就绪状态变化修复 1 MiB sendfile 卡住的问题。约 29 分钟完整新 guest 验收通过，约 32 分钟再次通过：100 次独立连接、同一 socket 上 26 次 keep-alive 请求、HEAD/404/Range/pipelining、8 路 × 120 次并发请求、8 路并发 1 MiB 文件传输，最终测试日志无 panic/fault/nginx emerg 或 alert。
 
@@ -144,6 +188,20 @@ OpenAI Codex（桌面版），思考强度 **High**，于 2026-09-30 运行，**
 | 00:29 | 新 guest 完整验收通过：ELF 一致性、HTTP 语义、960 次并发请求 + 8 MiB 文件传输 |
 | 00:32 | 最终套件再次通过；KERNEL.md 记录限制；格式与 Python 语法检查通过 |
 | 00:33 | 启动后重新确认宿主机 HTTP；最终回复完成 ✅ |
+
+## DeepSeek V4.1 Flash 1017 — 28分钟 / 40分钟
+
+![DeepSeek V4.1 Flash 1017 Timeline](figures/deepseek-v4.1-flash-1017-timeline.png)
+
+同一个 **DeepSeek-V4.1-Flash（1017）**、DSH **标准模式**，换了一套完全不同的设计重跑：**首次 host 侧 HTTP 200 用 28 分钟，总时长 40 分钟**，无停顿，上下文峰值 323K，非峰价 **$0.26**。这次内核**没有 MMU**（单地址空间，nginx 在 S 态经系统调用兼容层直接运行），rootfs 用**官方 Alpine apk 原包**——nginx 1.26.3 + pcre2/zlib/openssl，从 `dl-cdn.alpinelinux.org` 解包、二进制未改、musl 动态链接——nginx 单进程运行（`master_process off`）。60 次 QEMU 启动、1 次 panic、纯黑盒（0 搜索、0 clone）；验证：`curl -i` → `200 OK`、`Server: nginx/1.26.3`、211 字节页面。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:02 | 拉取 Alpine 3.20 riscv64 apk（nginx 1.26.3 + pcre2/zlib/openssl）解包进内嵌 rootfs；首次 QEMU 启动 |
+| 00:13 | guest 内 nginx 1.26.3 跑起来（musl 动态、未改） |
+| 00:25 | 首次 panic（内存路径），随后修复 |
+| 00:28 | 宿主机首次 HTTP 200 —— `Server: nginx/1.26.3` 🎉 |
+| 00:40 | 最终 `curl -i`：211 字节页面，keep-alive + ETag；目标达成 |
 
 ## DeepSeek V4.1 Flash 0910 — 30分钟 / 47分钟
 
@@ -172,60 +230,6 @@ DSH 有效运行 **~47 分钟**（30 分钟首次 HTTP 200），使用 **标准�
 | 00:44 | 加入源码一致性检查——构建源树与官方 nginx tarball 重新逐字节 diff |
 | 00:47 | `ALL 14 CHECKS PASSED`；目标完成——单次提交、工作区干净 ✅ |
 
-## Claude Fable 5 — 35分钟 / 41分钟
-
-![Claude Fable 5 Timeline](figures/fable5-timeline.png)
-
-Claude Code 运行时长约 **41分钟**，65 次 API 请求。总成本约 **$21**。几乎是一次默写成功——凭记忆写出整个内核，几乎没怎么调试。
-
-| 时间 | 里程碑 |
-|------|--------|
-| 00:03 | Rootfs + nginx 配置文件写入 |
-| 00:09 | 第一个 Rust 源文件（main.rs, sbi.rs, ...） |
-| 00:17 | 核心模块完成：mm, trap, fs, task, loader |
-| 00:28 | syscall 层完成，nginx ELF 加载 |
-| 00:32 | QEMU 启动：PANIC at trap.rs — 页错误 |
-| 00:34 | QEMU 启动：nginx listening on port 80 🎉 |
-| 00:35 | 宿主机首次 HTTP 200 OK——`Server: nginx/1.28.3` 🎉 |
-| 00:37 | 收尾修复（sendfile 等 syscall, README） |
-| 00:41 | 最终验收：功能测试全绿 + README 完成 ✅ |
-
-### Claude Fable 5.1 — 58分钟 / 1小时45分
-
-![Claude Fable 5.1 Timeline](figures/fable51-timeline.png)
-
-Claude Code 运行 **约 58 分钟** 达成首次 HTTP 200（105 分钟全部完成）——目前所有跑次里工程量最深的内核：真正 **fork 出两个 nginx worker 进程**（信号 + CoW）、AF_UNIX + SCM_RIGHTS、epoll、smoltcp TCP、busybox sh 作 init。途中 1 次内核 panic（+49 分钟，VMA 区间不空闲），一次修复即通过。163 次 API 请求、共 49.5M token（98.7% 缓存命中）、峰值上下文 516K、零压缩、零联网搜索。成本 **$34**（Fable 5.1：输入/输出 $10/$50 每 M，缓存读取 $0.25/M）。走 Alpine 官方 APK 路线（nginx 1.28.3，动态链接）；`io_setup` 未实现——nginx 启动打一条 `[emerg]` 后照常服务。功能套件（index/404/HEAD/sendfile 4MiB/keep-alive）62 分钟全绿；信号/并发/泄漏/吞吐套件 + README + git 提交于 105 分钟完成。
-
-| 时间 | 里程碑 |
-|------|--------|
-| 00:01 | 环境勘察 + 整体规划 |
-| 00:06 | 官方 Alpine riscv64 nginx 1.28.3 + musl/OpenSSL/PCRE2/zlib 就位 |
-| 00:08 | 内核骨架：Cargo、链接脚本、entry.S、UART、panic 处理 |
-| 00:17 | trap 处理 + 任务/调度核心 |
-| 00:22 | VFS + 文件描述符/fd 表 |
-| 00:31 | smoltcp TCP 粘合 + socket syscall |
-| 00:42 | 进程/fork/信号/futex syscall |
-| 00:47 | 主入口接好；首次编译仅 11 个 error |
-| 00:49 | KERNEL PANIC #1（VMA 区间不空闲）→ 修复；busybox sh 首启即跑——fork/exec/wait 全通 |
-| 00:55 | `nginx -t` 通过（getpwnam//dev/stderr 修复） |
-| 00:58 | 宿主机首次 HTTP 200 OK——`Server: nginx/1.28.3` 🎉 |
-| 01:02 | 套件全绿：index/404/HEAD/sendfile 4MiB/keep-alive |
-| 01:45 | 信号/并发/泄漏/吞吐套件、README、git 提交 ✅ |
-
-## DeepSeek V4.1 Flash 1017 — 28分钟 / 40分钟
-
-![DeepSeek V4.1 Flash 1017 Timeline](figures/deepseek-v4.1-flash-1017-timeline.png)
-
-同一个 **DeepSeek-V4.1-Flash（1017）**、DSH **标准模式**，换了一套完全不同的设计重跑：**首次 host 侧 HTTP 200 用 28 分钟，总时长 40 分钟**，无停顿，上下文峰值 323K，非峰价 **$0.26**。这次内核**没有 MMU**（单地址空间，nginx 在 S 态经系统调用兼容层直接运行），rootfs 用**官方 Alpine apk 原包**——nginx 1.26.3 + pcre2/zlib/openssl，从 `dl-cdn.alpinelinux.org` 解包、二进制未改、musl 动态链接——nginx 单进程运行（`master_process off`）。60 次 QEMU 启动、1 次 panic、纯黑盒（0 搜索、0 clone）；验证：`curl -i` → `200 OK`、`Server: nginx/1.26.3`、211 字节页面。
-
-| 时间 | 里程碑 |
-|------|--------|
-| 00:02 | 拉取 Alpine 3.20 riscv64 apk（nginx 1.26.3 + pcre2/zlib/openssl）解包进内嵌 rootfs；首次 QEMU 启动 |
-| 00:13 | guest 内 nginx 1.26.3 跑起来（musl 动态、未改） |
-| 00:25 | 首次 panic（内存路径），随后修复 |
-| 00:28 | 宿主机首次 HTTP 200 —— `Server: nginx/1.26.3` 🎉 |
-| 00:40 | 最终 `curl -i`：211 字节页面，keep-alive + ETag；目标达成 |
-
 ### GPT 5.6 Sol — 33分钟 / 49分钟
 
 ![GPT 5.6 Sol Timeline](figures/gpt56-timeline.png)
@@ -245,6 +249,24 @@ OpenAI Codex 运行 **~33 分钟** 拿到首次 HTTP 200（36 分钟时宣称完
 | 00:36 | 初次宣称 PASS；第二次请求静默失败 |
 | 00:43 – 00:49 | 用户提示 → 修复 TCP FIN 生命周期 + virtio TX descriptor 池 |
 | 00:49 | 最终 PASS：连续两次 HTTP 200 ✅ |
+
+## Claude Fable 5 — 35分钟 / 41分钟
+
+![Claude Fable 5 Timeline](figures/fable5-timeline.png)
+
+Claude Code 运行时长约 **41分钟**，65 次 API 请求。总成本约 **$21**。几乎是一次默写成功——凭记忆写出整个内核，几乎没怎么调试。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:03 | Rootfs + nginx 配置文件写入 |
+| 00:09 | 第一个 Rust 源文件（main.rs, sbi.rs, ...） |
+| 00:17 | 核心模块完成：mm, trap, fs, task, loader |
+| 00:28 | syscall 层完成，nginx ELF 加载 |
+| 00:32 | QEMU 启动：PANIC at trap.rs — 页错误 |
+| 00:34 | QEMU 启动：nginx listening on port 80 🎉 |
+| 00:35 | 宿主机首次 HTTP 200 OK——`Server: nginx/1.28.3` 🎉 |
+| 00:37 | 收尾修复（sendfile 等 syscall, README） |
+| 00:41 | 最终验收：功能测试全绿 + README 完成 ✅ |
 
 ### Claude Opus 4.8 — 40分钟 / 42分钟
 
@@ -323,6 +345,28 @@ Codex、**极高（xHigh）**思考强度，**58 分钟墙钟**跑完整个 benc
 | 00:55 | 第四次 200 验证完成 |
 | 00:58 | 最终汇报；QEMU 保留在 :8080 运行 |
 
+### Claude Fable 5.1 — 58分钟 / 1小时45分
+
+![Claude Fable 5.1 Timeline](figures/fable51-timeline.png)
+
+Claude Code 运行 **约 58 分钟** 达成首次 HTTP 200（105 分钟全部完成）——目前所有跑次里工程量最深的内核：真正 **fork 出两个 nginx worker 进程**（信号 + CoW）、AF_UNIX + SCM_RIGHTS、epoll、smoltcp TCP、busybox sh 作 init。途中 1 次内核 panic（+49 分钟，VMA 区间不空闲），一次修复即通过。163 次 API 请求、共 49.5M token（98.7% 缓存命中）、峰值上下文 516K、零压缩、零联网搜索。成本 **$34**（Fable 5.1：输入/输出 $10/$50 每 M，缓存读取 $0.25/M）。走 Alpine 官方 APK 路线（nginx 1.28.3，动态链接）；`io_setup` 未实现——nginx 启动打一条 `[emerg]` 后照常服务。功能套件（index/404/HEAD/sendfile 4MiB/keep-alive）62 分钟全绿；信号/并发/泄漏/吞吐套件 + README + git 提交于 105 分钟完成。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:01 | 环境勘察 + 整体规划 |
+| 00:06 | 官方 Alpine riscv64 nginx 1.28.3 + musl/OpenSSL/PCRE2/zlib 就位 |
+| 00:08 | 内核骨架：Cargo、链接脚本、entry.S、UART、panic 处理 |
+| 00:17 | trap 处理 + 任务/调度核心 |
+| 00:22 | VFS + 文件描述符/fd 表 |
+| 00:31 | smoltcp TCP 粘合 + socket syscall |
+| 00:42 | 进程/fork/信号/futex syscall |
+| 00:47 | 主入口接好；首次编译仅 11 个 error |
+| 00:49 | KERNEL PANIC #1（VMA 区间不空闲）→ 修复；busybox sh 首启即跑——fork/exec/wait 全通 |
+| 00:55 | `nginx -t` 通过（getpwnam//dev/stderr 修复） |
+| 00:58 | 宿主机首次 HTTP 200 OK——`Server: nginx/1.28.3` 🎉 |
+| 01:02 | 套件全绿：index/404/HEAD/sendfile 4MiB/keep-alive |
+| 01:45 | 信号/并发/泄漏/吞吐套件、README、git 提交 ✅ |
+
 ### Claude Opus 5 — 1小时7分 / 2小时5分
 
 ![Claude Opus 5 Timeline](figures/opus5-timeline.png)
@@ -360,6 +404,27 @@ Kimi Code CLI（thinking 开启，映射到模型默认的 **max** 档）跑了 
 | 01:41 | 第二次验证：200 OK，同一个 222 字节页面 |
 | 01:46–01:48 | 最终检查、清除目标；之后 API 返回 429 重试 |
 
+### DeepSeek V4 Pro — 1小时46分 / 1小时48分
+
+![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
+
+有效运行约 **108 分钟**（harness **极简模式 agent preset**）。开跑后 105.6 分钟首次拿到 HTTP 200。共 373 个模型步，累计 9790 万 token（99.9% 缓存命中），上下文峰值 503K。成本约 **$0.86**——DeepSeek 系里最便宜的成功方案，比 DeepSeek V4 Flash 的 $1.60 还低（直到 V4.1 Flash 的 $0.28）。零内核 panic、零上下文压缩。静态 musl nginx 二进制由后台子代理（DeepSeek V4 Flash，1170 万 token，$0.09）与主线写内核并行构建；两次网络搜索（musl TLS 布局、QEMU virtio MMIO）均为技术查询，非找答案。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:00 | 内核项目搭建：Cargo、链接脚本、启动代码 |
+| 00:10 | 修复 `__trap_return` 寄存器恢复 bug |
+| 00:13 | 定时器 + trap 处理打通；内存子系统（frame allocator、Sv39 页表） |
+| 00:16 | 修复 frame allocator 双重加锁死锁 |
+| 00:22 | Hello world 用户态运行；子代理静态 nginx 就绪（ET_EXEC） |
+| 00:34 | VFS + 文件 syscall 打通 |
+| 01:02 | 修复 musl malloc mmap 与 TLS 区域重叠（mmap 区域跟踪） |
+| 01:08 | 网络阶段：virtio-net + smoltcp TCP/IP + socket syscall |
+| 01:23 | 修复 virtio-net MMIO slot 7（`0x10008000`）映射 |
+| 01:32 | 修复 `gettimeofday` SBI bug（时间缓存冻结） |
+| 01:45 | 首次 HTTP 200 OK 🎉 |
+| 01:48 | Release 构建验证 + 目标完成 |
+
 ### Kimi K3 — 1小时48分 / 2小时19分
 
 ![Kimi K3 Timeline](figures/kimi-k3-timeline.png)
@@ -378,6 +443,23 @@ Claude Code 运行约 **2小时19分钟**。151 次 API 请求，累计 2630 万
 | 01:49–02:07 | 多轮 PANIC 修复（virtio, task scheduler 共 7 个 bug） |
 | 02:15 | nginx 恢复稳定 |
 | 02:19 | 最终验证：SHA256 校验 + 100 并发全部 200 ✅ |
+
+### Claude Sonnet 5 — 2小时31分 / 2小时49分
+
+![Claude Sonnet 5 Timeline](figures/sonnet5-timeline.png)
+
+Claude Code 运行约 **2小时49分钟**（有效活跃时间，扣除了 77 分钟权限等待）。616 次 API 请求。会话从 Docker + qemu-riscv64-static 快速验证 nginx 行为开始，随后转向自写 Rust kernel。QEMU 自写内核两次成功返回 HTTP 200。总 token 消耗 2.79 亿（几乎全为缓存命中），峰值上下文 804K。成本约 **$64**。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:02 | 环境检查 + Docker RISC-V nginx 镜像拉取 |
+| 00:08 | nginx alpine RISC-V 原生提取 |
+| 00:13 | Docker QEMU user-mode nginx 200 OK 🎉 |
+| 00:18 | 第一个 Rust 源文件（main.rs） |
+| 00:23 | QEMU 自写 kernel 启动：PANIC |
+| 01:27 | **77 分钟权限等待** |
+| 02:31 | QEMU 自写 kernel：nginx 200 OK 🎉 |
+| 02:48 | 第二次自写 kernel 成功，稳定响应 |
 
 ### GPT 5.6 Luna — 2小时35分 / 2小时45分
 
@@ -415,22 +497,28 @@ Claude Code 全程运行约 **2小时46分钟**。
 | 02:45 | 修复 virtio-net 接收 + epoll data 指针 bug |
 | 02:46 | nginx 成功返回 HTTP 200 🎉 |
 
-### Claude Sonnet 5 — 2小时31分 / 2小时49分
+### DeepSeek V4 Pro（本地部署） — 3小时16分 / 3小时25分
 
-![Claude Sonnet 5 Timeline](figures/sonnet5-timeline.png)
+![DeepSeek V4 Pro (local) Timeline](figures/deepseek-v4-pro-local-timeline.png)
 
-Claude Code 运行约 **2小时49分钟**（有效活跃时间，扣除了 77 分钟权限等待）。616 次 API 请求。会话从 Docker + qemu-riscv64-static 快速验证 nginx 行为开始，随后转向自写 Rust kernel。QEMU 自写内核两次成功返回 HTTP 200。总 token 消耗 2.79 亿（几乎全为缓存命中），峰值上下文 804K。成本约 **$64**。
+本地自部署 **DeepSeek-V4-Pro-0813**（512K 窗口），经 Claude Code 以 **高** 思考强度运行原版提示词。首次 HTTP 200 出现在 3小时16分（`Server: nginx/1.28.3`），但该次响应体被截断（`curl: (18)`）——四分钟后补上 `sendfile()` 才完整送出 642 字节首页，3小时25分收尾，多请求 keep-alive 与 404 均验证通过。路线：nginx 由 **nginx.org 官方源码交叉编译**为 461KB 静态 musl riscv64 二进制（仅调整 `auto/feature` 一类构建脚本以支持交叉编译，nginx 本体未改），由 agent 命名为 Shenhe 的从零 Sv39 内核从 ramfs 加载。371 次 API 请求、451 次工具调用（bash 249、edit 119、write 56）、输入 84.0M tokens（缓存命中 99.8%）+ 输出 0.51M、峰值上下文 488K 且 **压缩 1 次**、61 次 QEMU 启动、无联网搜索、未自建 QEMU。未计名次：已有模型的本地部署记录。
 
 | 时间 | 里程碑 |
 |------|--------|
-| 00:02 | 环境检查 + Docker RISC-V nginx 镜像拉取 |
-| 00:08 | nginx alpine RISC-V 原生提取 |
-| 00:13 | Docker QEMU user-mode nginx 200 OK 🎉 |
-| 00:18 | 第一个 Rust 源文件（main.rs） |
-| 00:23 | QEMU 自写 kernel 启动：PANIC |
-| 01:27 | **77 分钟权限等待** |
-| 02:31 | QEMU 自写 kernel：nginx 200 OK 🎉 |
-| 02:48 | 第二次自写 kernel 成功，稳定响应 |
+| 00:05 | 环境勘察：Rust + `riscv64gc` 目标、QEMU、交叉 gcc、网络 |
+| 00:10 | 首次 QEMU 启动 → 控制台无输出；首次内核 PANIC（SBI 调试控制台 FID 用错） |
+| 00:38 | 定位为优化版数字格式化的误编译，固定 `opt-level=0` |
+| 01:08 | 进入用户态：用户程序打印 "hello world" 并正常退出 |
+| 01:14 | 官方 nginx 1.28.3 源码开始后台 configure / 编译 |
+| 02:02 | virtio-net MMIO：发现 QEMU 默认 legacy 后改用现代（v2）寄存器接口 |
+| 02:19 | 全链路打通——宿主机 `curl` 经 virtio-net → smoltcp → 自研 socket ABI 返回 "hello, world!" |
+| 02:24 | nginx 编译完成（461KB 静态 musl riscv64），内核经 `build.rs` 重新嵌入 |
+| 02:38 | 上下文压缩 #1（压缩前 492K，512K 窗口触顶） |
+| 03:04 | `getrlimit(RLIMIT_NOFILE)` 未填结构体，nginx 的 `ngx_calloc` 静默失败 |
+| 03:11 | nginx 事件循环稳定运行，不再退出 |
+| 03:16 | 首个宿主机 HTTP 200 —— `Server: nginx/1.28.3`（响应体被截断） |
+| 03:20 | 实现 `sendfile()`，642 字节首页完整送达 |
+| 03:25 | keep-alive / 并发请求稳定，目标完成 |
 
 ### GLM 5.3 — 3小时50分 / 3小时52分
 
@@ -452,6 +540,28 @@ Claude Code 连续运行约 **3小时52分钟**（无空闲/断线间隙），35
 | 03:52 | 稳定：4 次串行 + 3 次并发全部 200 ✅ |
 | 03:53 | 写 README，目标达成 |
 
+### DeepSeek V4 Flash（本地部署） — 4小时42分 / 4小时44分
+
+![DeepSeek V4 Flash (local) Timeline](figures/deepseek-v4-flash-local-high-timeline.png)
+
+本地自部署 **DeepSeek-V4-Flash-0731**（1M 窗口），经 Claude Code 以 **高** 思考强度运行原版提示词。首次 HTTP 200 出现在 4小时42分，两分钟内连续 200 与 404 均正确，运行的是**未修改的官方 Debian riscv64 nginx 1.30.4** 二进制（走 `.deb` 路线）。内核为从零实现、**无 MMU**、全**轮询**模型（内核态关中断，阻塞调用靠 `rdtime` 截止时间轮询），因此 `fork` 无法为 nginx 提供私有地址空间——于是改用 nginx 官方支持的单进程模式（`master_process off`，二进制未改）继续推进。1,139 次 API 请求、1,272 次工具调用（bash 903、edit 294）、输入 520M tokens（缓存命中 99.9%）+ 输出 1.07M、峰值上下文 967K 且 **压缩 1 次**、195 次 QEMU 启动、无联网搜索、未自建 QEMU。未计名次：已有模型的本地部署记录。
+
+| 时间 | 里程碑 |
+|------|--------|
+| 00:04 | 内核首版：boot.S、SBI 控制台、分配器、陷阱、定时器 |
+| 00:14 | 关键决策：全轮询内核——内核态关中断，一切阻塞用 `rdtime` 截止时间轮询 |
+| 00:51 | glibc 动态链接路径打通（`-static-pie` hello 经 PIE 加载器） |
+| 01:07 | brk 与 mmap 冲突修复：为 brk 预留固定区域，符合 Linux 语义 |
+| 01:12 | nginx 跑到 `socket()` 失败，网络栈成为最后一块硬骨头 |
+| 02:07 | 无 MMU 下 `fork` 无法私有化内存，改用 nginx 单进程模式绕开 |
+| 02:39 | legacy virtio 环布局修正（avail 紧跟 desc 表、used 按 4K 对齐） |
+| 02:47 | RX 打通，收到 slirp 发来的帧 |
+| 03:36 | virtio-net 头部长度确认（10 字节），ARP 回复与 TX 计数开始动 |
+| 03:45 | TCP 建立：与 slirp 完成 SYN/ACK 交换 |
+| 04:33 | 冷启动反复重启的终极根因：`trap_entry` 未 4 字节对齐，`stvec` 写入被静默忽略（保留 mode） |
+| 04:41 | epoll 事件数组步长不匹配（内核 12 字节 vs nginx ×16）修复 —— **首个 HTTP 200**，`Server: nginx/1.30.4` 🎉 |
+| 04:43 | 连续 200 与 404 均正确，单次 clean boot、零崩溃，目标完成 |
+
 ### GLM 5.3 Flash (fp8) — 6小时2分 / 7小时10分
 
 ![GLM 5.3 Flash Timeline](figures/glm53-flash-timeline.png)
@@ -470,22 +580,6 @@ Claude Code 连续运行约 **3小时52分钟**（无空闲/断线间隙），35
 | 06:19 | 收官簇：TCP 校验和差 24、AF_UNIX EOF 通知、trap 寄存器保存 |
 | 06:46 | 官方 nginx 首次 HTTP 200 🎉 |
 | 07:09 | 稳定：8/8 请求 200，README 完成 ✅ |
-
-### Claude Sonnet 4.6 — 16小时 / 16小时
-
-Claude Code 全程运行共 16 小时。总成本约 60 美元。
-
-| 时长  | 里程碑 |
-|-------|--------|
-| 01:27 | 内核成功启动 + VirtIO 网卡初始化 |
-| 02:07 | musl ld 成功加载 nginx ELF |
-| 05:00 | nginx 完成初始化，写 PID 文件 |
-| 06:18 | TCP 三次握手成功，curl 能连到 8080 |
-| 06:24 | nginx 成功 fork 出 worker 进程 |
-| 08:40 | worker 进入 epoll 事件循环 |
-| 09:30 | curl 首次建立 TCP 连接（Empty reply） |
-| 10:00 | curl 首次收到响应（Connection reset） |
-| 16:00 | nginx 成功返回 HTTP 200，欢迎页完整响应 🎉 |
 
 ### DeepSeek V4 Flash — 6小时30分 / 6小时35分
 
@@ -527,71 +621,21 @@ Claude Code 全程运行共 16 小时。总成本约 60 美元。
 | 07:55 | 宿主机首次 HTTP 200 —— `Server: nginx/1.26.3` 🎉 |
 | 07:57 | 稳定：连续 3 次 200（35 字节页面 + 真实客户机响应头）；目标完成 |
 
-### DeepSeek V4 Flash（本地部署） — 4小时42分 / 4小时44分
+### Claude Sonnet 4.6 — 16小时 / 16小时
 
-![DeepSeek V4 Flash (local) Timeline](figures/deepseek-v4-flash-local-high-timeline.png)
+Claude Code 全程运行共 16 小时。总成本约 60 美元。
 
-本地自部署 **DeepSeek-V4-Flash-0731**（1M 窗口），经 Claude Code 以 **高** 思考强度运行原版提示词。首次 HTTP 200 出现在 4小时42分，两分钟内连续 200 与 404 均正确，运行的是**未修改的官方 Debian riscv64 nginx 1.30.4** 二进制（走 `.deb` 路线）。内核为从零实现、**无 MMU**、全**轮询**模型（内核态关中断，阻塞调用靠 `rdtime` 截止时间轮询），因此 `fork` 无法为 nginx 提供私有地址空间——于是改用 nginx 官方支持的单进程模式（`master_process off`，二进制未改）继续推进。1,139 次 API 请求、1,272 次工具调用（bash 903、edit 294）、输入 520M tokens（缓存命中 99.9%）+ 输出 1.07M、峰值上下文 967K 且 **压缩 1 次**、195 次 QEMU 启动、无联网搜索、未自建 QEMU。未计名次：已有模型的本地部署记录。
-
-| 时间 | 里程碑 |
-|------|--------|
-| 00:04 | 内核首版：boot.S、SBI 控制台、分配器、陷阱、定时器 |
-| 00:14 | 关键决策：全轮询内核——内核态关中断，一切阻塞用 `rdtime` 截止时间轮询 |
-| 00:51 | glibc 动态链接路径打通（`-static-pie` hello 经 PIE 加载器） |
-| 01:07 | brk 与 mmap 冲突修复：为 brk 预留固定区域，符合 Linux 语义 |
-| 01:12 | nginx 跑到 `socket()` 失败，网络栈成为最后一块硬骨头 |
-| 02:07 | 无 MMU 下 `fork` 无法私有化内存，改用 nginx 单进程模式绕开 |
-| 02:39 | legacy virtio 环布局修正（avail 紧跟 desc 表、used 按 4K 对齐） |
-| 02:47 | RX 打通，收到 slirp 发来的帧 |
-| 03:36 | virtio-net 头部长度确认（10 字节），ARP 回复与 TX 计数开始动 |
-| 03:45 | TCP 建立：与 slirp 完成 SYN/ACK 交换 |
-| 04:33 | 冷启动反复重启的终极根因：`trap_entry` 未 4 字节对齐，`stvec` 写入被静默忽略（保留 mode） |
-| 04:41 | epoll 事件数组步长不匹配（内核 12 字节 vs nginx ×16）修复 —— **首个 HTTP 200**，`Server: nginx/1.30.4` 🎉 |
-| 04:43 | 连续 200 与 404 均正确，单次 clean boot、零崩溃，目标完成 |
-
-### DeepSeek V4 Pro — 1小时46分 / 1小时48分
-
-![DeepSeek V4 Pro Timeline](figures/deepseek-v4-pro-timeline.png)
-
-有效运行约 **108 分钟**（harness **极简模式 agent preset**）。开跑后 105.6 分钟首次拿到 HTTP 200。共 373 个模型步，累计 9790 万 token（99.9% 缓存命中），上下文峰值 503K。成本约 **$0.86**——DeepSeek 系里最便宜的成功方案，比 DeepSeek V4 Flash 的 $1.60 还低（直到 V4.1 Flash 的 $0.28）。零内核 panic、零上下文压缩。静态 musl nginx 二进制由后台子代理（DeepSeek V4 Flash，1170 万 token，$0.09）与主线写内核并行构建；两次网络搜索（musl TLS 布局、QEMU virtio MMIO）均为技术查询，非找答案。
-
-| 时间 | 里程碑 |
-|------|--------|
-| 00:00 | 内核项目搭建：Cargo、链接脚本、启动代码 |
-| 00:10 | 修复 `__trap_return` 寄存器恢复 bug |
-| 00:13 | 定时器 + trap 处理打通；内存子系统（frame allocator、Sv39 页表） |
-| 00:16 | 修复 frame allocator 双重加锁死锁 |
-| 00:22 | Hello world 用户态运行；子代理静态 nginx 就绪（ET_EXEC） |
-| 00:34 | VFS + 文件 syscall 打通 |
-| 01:02 | 修复 musl malloc mmap 与 TLS 区域重叠（mmap 区域跟踪） |
-| 01:08 | 网络阶段：virtio-net + smoltcp TCP/IP + socket syscall |
-| 01:23 | 修复 virtio-net MMIO slot 7（`0x10008000`）映射 |
-| 01:32 | 修复 `gettimeofday` SBI bug（时间缓存冻结） |
-| 01:45 | 首次 HTTP 200 OK 🎉 |
-| 01:48 | Release 构建验证 + 目标完成 |
-
-### DeepSeek V4 Pro（本地部署） — 3小时16分 / 3小时25分
-
-![DeepSeek V4 Pro (local) Timeline](figures/deepseek-v4-pro-local-timeline.png)
-
-本地自部署 **DeepSeek-V4-Pro-0813**（512K 窗口），经 Claude Code 以 **高** 思考强度运行原版提示词。首次 HTTP 200 出现在 3小时16分（`Server: nginx/1.28.3`），但该次响应体被截断（`curl: (18)`）——四分钟后补上 `sendfile()` 才完整送出 642 字节首页，3小时25分收尾，多请求 keep-alive 与 404 均验证通过。路线：nginx 由 **nginx.org 官方源码交叉编译**为 461KB 静态 musl riscv64 二进制（仅调整 `auto/feature` 一类构建脚本以支持交叉编译，nginx 本体未改），由 agent 命名为 Shenhe 的从零 Sv39 内核从 ramfs 加载。371 次 API 请求、451 次工具调用（bash 249、edit 119、write 56）、输入 84.0M tokens（缓存命中 99.8%）+ 输出 0.51M、峰值上下文 488K 且 **压缩 1 次**、61 次 QEMU 启动、无联网搜索、未自建 QEMU。未计名次：已有模型的本地部署记录。
-
-| 时间 | 里程碑 |
-|------|--------|
-| 00:05 | 环境勘察：Rust + `riscv64gc` 目标、QEMU、交叉 gcc、网络 |
-| 00:10 | 首次 QEMU 启动 → 控制台无输出；首次内核 PANIC（SBI 调试控制台 FID 用错） |
-| 00:38 | 定位为优化版数字格式化的误编译，固定 `opt-level=0` |
-| 01:08 | 进入用户态：用户程序打印 "hello world" 并正常退出 |
-| 01:14 | 官方 nginx 1.28.3 源码开始后台 configure / 编译 |
-| 02:02 | virtio-net MMIO：发现 QEMU 默认 legacy 后改用现代（v2）寄存器接口 |
-| 02:19 | 全链路打通——宿主机 `curl` 经 virtio-net → smoltcp → 自研 socket ABI 返回 "hello, world!" |
-| 02:24 | nginx 编译完成（461KB 静态 musl riscv64），内核经 `build.rs` 重新嵌入 |
-| 02:38 | 上下文压缩 #1（压缩前 492K，512K 窗口触顶） |
-| 03:04 | `getrlimit(RLIMIT_NOFILE)` 未填结构体，nginx 的 `ngx_calloc` 静默失败 |
-| 03:11 | nginx 事件循环稳定运行，不再退出 |
-| 03:16 | 首个宿主机 HTTP 200 —— `Server: nginx/1.28.3`（响应体被截断） |
-| 03:20 | 实现 `sendfile()`，642 字节首页完整送达 |
-| 03:25 | keep-alive / 并发请求稳定，目标完成 |
+| 时长  | 里程碑 |
+|-------|--------|
+| 01:27 | 内核成功启动 + VirtIO 网卡初始化 |
+| 02:07 | musl ld 成功加载 nginx ELF |
+| 05:00 | nginx 完成初始化，写 PID 文件 |
+| 06:18 | TCP 三次握手成功，curl 能连到 8080 |
+| 06:24 | nginx 成功 fork 出 worker 进程 |
+| 08:40 | worker 进入 epoll 事件循环 |
+| 09:30 | curl 首次建立 TCP 连接（Empty reply） |
+| 10:00 | curl 首次收到响应（Connection reset） |
+| 16:00 | nginx 成功返回 HTTP 200，欢迎页完整响应 🎉 |
 
 ### DeepSeek V4 Pro 预览版 — ❌
 
