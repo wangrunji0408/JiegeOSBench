@@ -32,21 +32,22 @@ Prompt:
 | 14 | GPT-6 Luna | xHigh | Codex | 50min | 58min | 694K | $1.95 | 86 | 2026-10-24 | 🧠 Intelligent Jiege |
 | 15 | Claude Fable 5.1 | High | CC | 58min | 1h 45min | 516K | $34 | 13 | 2026-09-05 | 🧠 Intelligent Jiege |
 | 16 | Claude Opus 5 | High | CC | 1h 7min | 2h 5min | 334K | $26 | 57 | 2026-07-27 | 🧠 Intelligent Jiege |
-| 17 | Kimi K3.1 Pro | Max | Kimi Code | 1h 14min | 1h 48min | 323K | $10.7 | 33 | 2026-10-24 | 🧠 Intelligent Jiege |
-| 18 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
-| 19 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
-| 20 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
-| 21 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
-| 22 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
+| 17 | Gemini 4 Carbon | High | Pi | 1h 7min | 1h 12min | 347K | $7.4 | 13 | 2026-11-21 | 🧠 Intelligent Jiege |
+| 18 | Kimi K3.1 Pro | Max | Kimi Code | 1h 14min | 1h 48min | 323K | $10.7 | 33 | 2026-10-24 | 🧠 Intelligent Jiege |
+| 19 | DeepSeek V4 Pro | High | DSH | 1h 46min | 1h 48min | 503K | $0.86 | 113 | 2026-08-12 | 🧠 Intelligent Jiege |
+| 20 | Kimi K3 | High | CC | 1h 48min | 2h 19min | 270K | $11 | 39 | 2026-07-18 | 🧠 Intelligent Jiege |
+| 21 | Claude Sonnet 5 | xHigh | CC | 2h 31min | 2h 49min | 804K | $64 | 65 | 2026-07-18 | 🤖 Machine Jiege |
+| 22 | GPT 5.6 Luna | xHigh | Codex | 2h 35min | 2h 45min | 243K x4 | $2.3 | 112 | 2026-08-08 | 🤖 Machine Jiege |
+| 23 | Claude Opus 4.6 | — | CC | 2h 46min | 2h 46min | — | — | — | 2026-03-24 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Pro (local) | High | CC | 3h 16min | 3h 25min | 488K x2 | self-hosted | 61 | 2026-10-09 | 🤖 Machine Jiege |
-| 23 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
+| 24 | GLM 5.3 | High | CC | 3h 50min | 3h 52min | 593K | $34 | 206 | 2026-08-20 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | High | CC | 4h 42min | 4h 44min | 967K x2 | self-hosted | 195 | 2026-10-09 | 🤖 Machine Jiege |
-| 24 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
-| 25 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
+| 25 | GLM 5.3 Flash (fp8) | — | CC | 6h 2min | 7h 10min | 967K | self-hosted | — | 2026-08-31 | 🤖 Machine Jiege |
+| 26 | DeepSeek V4 Flash | High | DSH | 6h 30min | 6h 35min | 792K x3 | $1.60 | 216 | 2026-08-01 | 🤖 Machine Jiege |
 | — | DeepSeek V4 Flash (local) | Max | CC | 7h 55min | 7h 57min | 967K x3 | self-hosted | 320 | 2026-10-06 | 🤖 Machine Jiege |
-| 26 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
-| 27 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
-| 28 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
+| 27 | Claude Sonnet 4.6 | — | CC | 16h | 16h | — | $60 | — | 2026-03-18 | 🤖 Machine Jiege |
+| 28 | DeepSeek V4 Pro Preview | Max | CC | ❌ | ❌ | — | — | 413 | 2026-07-05 | 💥 Broken Jiege |
+| 29 | DeepSeek V4 Flash Vision | High | DSH | ❌ | ❌ | — | — | 112 | 2026-08-21 | 💥 Broken Jiege |
 
 
 
@@ -394,6 +395,23 @@ Claude Code ran for **~67 minutes** to first HTTP 200, then spent another **58 m
 | 02:00 | 3000/3000 keep-alive requests at 1185 req/s ✅ |
 | 02:01 | 50 concurrent connections + 320 fresh connections ✅ |
 | 02:05 | Final validation complete |
+
+### Gemini 4 Carbon — 1h 7min / 1h 12min
+
+![Gemini 4 Carbon Timeline](figures/gemini4-carbon-timeline.svg)
+
+Pi (pi-coding-agent 1.6.0), **High** effort, 2026-11-21. First host HTTP 200 at **67min 00s**, completion message at **72min 24s** — one uninterrupted turn, peak context **347K**, zero context compactions, **13 QEMU boots**.
+
+Took the **Docker Official Image route**: unmodified nginx **1.31.9** (`linux/riscv64`) taken from the official image and SHA-256-verified, with no Linux kernel inside QEMU. The kernel is zero-dependency Rust (no external crates) with Sv39 paging, an ELF loader, an in-memory filesystem and a hand-written virtio-net stack, running nginx in user mode with the Linux ABI subset it needs.
+
+| Time | Milestone |
+|------|-----------|
+| 00:01 | Environment survey; official nginx riscv64 image route chosen |
+| 00:46 | First QEMU boot attempt |
+| 00:50–01:06 | Boot/fix loop: ELF loader, Linux ABI syscalls, virtio-net |
+| 01:07 | **First host HTTP 200** — `Server: nginx/1.31.9` 🎉 |
+| 01:09 | `make test` and run scripts; second and third boots |
+| 01:12 | Completion message |
 
 ### Kimi K3.1 Pro — 1h 14min / 1h 48min
 
